@@ -10,6 +10,7 @@
 <body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
         
+        <!-- HEADER -->
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
@@ -21,8 +22,10 @@
             </button>
         </header>
 
+        <!-- GRIGLIA SUPERIORE: INSERIMENTO E ANAGRAFICA -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             
+            <!-- FORM AGGIUNGI DIPENDENTE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
                 <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-sky-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
@@ -57,6 +60,7 @@
                 </div>
             </div>
 
+            <!-- TABELLA LISTA DIPENDENTI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-between">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-slate-800">
@@ -75,14 +79,17 @@
                                 </tr>
                             </thead>
                             <tbody id="tabella-dipendenti" class="text-sm divide-y divide-slate-100">
-                                </tbody>
+                                <!-- Righe popolate da JS -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- SEZIONE GIUSTIFICATIVI E INSERIMENTO MANUALE TIMBRATURE -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- REGISTRAZIONE GIUSTIFICATIVI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-emerald-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -115,6 +122,7 @@
                 </button>
             </div>
 
+            <!-- INSERIMENTO MANUALE TIMBRATURE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-indigo-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -143,6 +151,7 @@
             </div>
         </div>
 
+        <!-- SEZIONE REPORT INTERNO ED EDITING DELLE TIMBRATURE -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
                 <div>
@@ -158,6 +167,7 @@
                 </div>
             </div>
 
+            <!-- SELEZIONE PERIODO PERSONALIZZATO -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-end gap-4 text-xs">
                 <div>
                     <label class="block font-bold uppercase text-slate-500 mb-1">Data Inizio (Dal)</label>
@@ -172,6 +182,7 @@
                 </button>
             </div>
 
+            <!-- RISULTATI DEI RESOCONTI CALCOLATI -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center md:text-left">
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
                     <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Oggi</span>
@@ -191,6 +202,7 @@
                 </div>
             </div>
 
+            <!-- TABELLA DETTAGLIATA DEL PERIODO -->
             <div class="overflow-x-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -212,6 +224,7 @@
 
     </div>
 
+    <!-- MODAL DI MODIFICA TIMBRATURA -->
     <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
@@ -403,38 +416,34 @@
             caricaReportSpecifico();
         }
 
-       // --- FORZATURA MANUALE NUOVA TIMBRATURA CON BYPASS GEOFENCE ---
-async function inserisciTimbraturaManuale() {
-    const dipendenteId = document.getElementById('form-manuale-dipendente').value;
-    const tipoAzione = document.getElementById('form-manuale-tipo').value;
-    const orarioLocale = document.getElementById('form-manuale-orario').value;
+        // --- FORZATURA MANUALE NUOVA TIMBRATURA (PULITA) ---
+        async function inserisciTimbraturaManuale() {
+            const dipendenteId = document.getElementById('form-manuale-dipendente').value;
+            const tipoAzione = document.getElementById('form-manuale-tipo').value;
+            const orarioLocale = document.getElementById('form-manuale-orario').value;
 
-    if(!dipendenteId || !orarioLocale) {
-        alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
-        return;
-    }
+            if(!dipendenteId || !orarioLocale) {
+                alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
+                return;
+            }
 
-    const orarioISO = new Date(orarioLocale).toISOString();
+            const orarioISO = new Date(orarioLocale).toISOString();
 
-    // Inviamo coordinate fittizie (0, 0) e una nota esplicita.
-    // Questo permette di superare i vincoli di colonne obbligatorie e segnala al DB di non controllare il geofence.
-    const { error } = await supabaseClient.from('timbrature').insert({
-        dipendente_id: dipendenteId,
-        tipo_azione: tipoAzione,
-        orario: orarioISO,
-        latitudine: 0,
-        longitudine: 0,
-        note: 'Inserimento manuale amministratore'
-    });
+            // Inviamo SOLO i tre campi strutturali per evitare errori di schema cache
+            const { error } = await supabaseClient.from('timbrature').insert({
+                dipendente_id: dipendenteId,
+                tipo_azione: tipoAzione,
+                orario: orarioISO
+            });
 
-    if (error) {
-        alert("Errore di inserimento: " + error.message);
-    } else {
-        alert("Timbratura forzata inserita a registro con bypass geofence!");
-        document.getElementById('form-manuale-orario').value = '';
-        await caricaReportSpecifico();
-    }
-}
+            if (error) {
+                alert("Errore di inserimento: " + error.message);
+            } else {
+                alert("Timbratura forzata inserita a registro con successo!");
+                document.getElementById('form-manuale-orario').value = '';
+                await caricaReportSpecifico();
+            }
+        }
 
         // --- CORE ANALYSIS & CALCOLI PERIODICI E FILTRO TABELLARE ---
         async function caricaReportSpecifico() {
@@ -450,11 +459,9 @@ async function inserisciTimbraturaManuale() {
                 return;
             }
 
-            // Lettura delle date scelte dall'amministratore per il filtro periodico
             const filtroInizioRaw = document.getElementById('filtro-inizio').value;
             const filtroFineRaw = document.getElementById('filtro-fine').value;
 
-            // Trasforma in oggetti data standardizzando gli estremi (inizio giornata e fine giornata)
             const limiteInizio = filtroInizioRaw ? new Date(filtroInizioRaw + "T00:00:00") : null;
             const limiteFine = filtroFineRaw ? new Date(filtroFineRaw + "T23:59:59") : null;
 
@@ -462,7 +469,7 @@ async function inserisciTimbraturaManuale() {
                 .from('timbrature')
                 .select('*')
                 .eq('dipendente_id', dipendenteId)
-                .order('orario', { ascending: true }); // Manteniamo cronologico per accoppiamento lineare
+                .order('orario', { ascending: true });
 
             if (error) {
                 console.error(error);
@@ -493,19 +500,15 @@ async function inserisciTimbraturaManuale() {
                     const diffMs = dataT - ultimoIngresso;
                     const diffOre = diffMs / (1000 * 60 * 60);
 
-                    // 1. Resoconto statico Giornaliero
                     if (dataT.toDateString() === oggi.toDateString()) {
                         oreOggi += diffOre;
                     }
-                    // 2. Resoconto statico Settimanale
                     if (dataT >= correnteLunedi) {
                         oreSettimana += diffOre;
                     }
-                    // 3. Resoconto statico Mensile
                     if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) {
                         oreMese += diffOre;
                     }
-                    // 4. NUOVO: Resoconto del periodo personalizzato deciso dall'utente
                     if ((!limiteInizio || dataT >= limiteInizio) && (!limiteFine || dataT <= limiteFine)) {
                         orePeriodoPersonalizzato += diffOre;
                     }
@@ -514,13 +517,11 @@ async function inserisciTimbraturaManuale() {
                 }
             });
 
-            // Scrittura dei KPI a schermo
             document.getElementById('ore-oggi').innerText = `${oreOggi.toFixed(1)} ore`;
             document.getElementById('ore-settimana').innerText = `${oreSettimana.toFixed(1)} ore`;
             document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
             document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
 
-            // Rigenera la visualizzazione tabellare FILTRATA per il periodo
             const timbratureInvertite = [...timbrature].reverse();
             corpoTabella.innerHTML = '';
 
@@ -529,7 +530,6 @@ async function inserisciTimbraturaManuale() {
             timbratureInvertite.forEach(t => {
                 const dataOggetto = new Date(t.orario);
 
-                // Applica il filtro di esclusione della riga dalla tabella se fuori intervallo
                 if (limiteInizio && dataOggetto < limiteInizio) return;
                 if (limiteFine && dataOggetto > limiteFine) return;
 
@@ -609,7 +609,7 @@ async function inserisciTimbraturaManuale() {
             }
         }
 
-        async function eliminaTimbratura(id) {
+        async function eliminarTimbratura(id) {
             const conferma = confirm("Vuoi eliminare definitivamente questa timbratura?");
             if (!conferma) return;
 
