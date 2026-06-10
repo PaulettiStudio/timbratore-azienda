@@ -295,4 +295,328 @@
                 }
 
                 dipendenti.forEach(d => {
-                    //
+                    // Costruzione tabella
+                    tabella.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-semibold text-slate-900">${d.cognome} ${d.nome}</td>
+                        <td class="p-3 font-mono text-xs text-slate-500">${d.email}</td>
+                        <td class="p-3 text-center text-slate-600">${d.ore_settimanali_contratto}h</td>
+                        <td class="p-3 text-center font-bold text-slate-700">${d.saldo_ferie_ore}h</td>
+                        <td class="p-3 text-center">
+                            <button onclick="eliminaDipendente('${d.id}', '${d.nome} ${d.cognome}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1 rounded-md border border-red-200 transition">
+                                Elimina
+                            </button>
+                        </td>
+                    </tr>`;
+
+                    // Costruzione select
+                    const opzioneHtml = `<option value="${d.id}">${d.cognome} ${d.nome}</option>`;
+                    selectAssenze.innerHTML += opzioneHtml;
+                    selectManuale.innerHTML += opzioneHtml;
+                    selectReport.innerHTML += opzioneHtml;
+                });
+
+                if (vecchioValoreReport) selectReport.value = vecchioValoreReport;
+
+            } catch (err) {
+                console.error("Errore caricamento anagrafica:", err);
+            }
+        }
+
+        async function aggiungiDipendente() {
+            const nome = document.getElementById('dip-nome').value.trim();
+            const cognome = document.getElementById('dip-cognome').value.trim();
+            const email = document.getElementById('dip-email').value.trim();
+            const ore = parseInt(document.getElementById('dip-ore').value) || 40;
+            const ferie = parseFloat(document.getElementById('dip-ferie').value) || 0;
+
+            if (!nome || !cognome || !email) {
+                alert("Compila tutti i campi anagrafici (Nome, Cognome, Email)!");
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('dipendenti').insert({
+                    nome: nome,
+                    cognome: cognome,
+                    email: email,
+                    ore_settimanali_contratto: ore,
+                    saldo_ferie_ore: ferie
+                });
+
+                if (error) throw error;
+
+                alert("Dipendente salvato con successo!");
+                document.getElementById('dip-nome').value = '';
+                document.getElementById('dip-cognome').value = '';
+                document.getElementById('dip-email').value = '';
+                
+                await caricaListaDipendenti();
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore durante l'inserimento: " + err.message);
+            }
+        }
+
+        async function eliminaDipendente(id, nominativo) {
+            if (!confirm(`Sei sicuro di voler eliminare definitivamente ${nominativo}? Verranno eliminate anche tutte le sue timbrature.`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
+                if (error) throw error;
+                
+                alert("Dipendente rimosso dall'anagrafica.");
+                await caricaListaDipendenti();
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore durante l'eliminazione: " + err.message);
+            }
+        }
+
+        // --- GESTIONE ASSENZE E FERIE ---
+        async function creaRichiestaAssenza() {
+            const dipendenteId = document.getElementById('form-assenza-dipendente').value;
+            const tipo = document.getElementById('form-assenza-tipo').value;
+            const dataInizio = document.getElementById('form-assenza-inizio').value;
+            const oreDaScalare = parseFloat(document.getElementById('form-assenza-ore').value);
+
+            if (!dipendenteId || !dataInizio || isNaN(oreDaScalare)) {
+                alert("Tutti i dati dell'assenza sono obbligatori!");
+                return;
+            }
+
+            try {
+                // Recupero saldo attuale
+                const { data: dip, error: errFetch } = await supabaseClient.from('dipendenti').select('saldo_ferie_ore').eq('id', dipendenteId).single();
+                if (errFetch) throw errFetch;
+                
+                const nuovoSaldo = dip.saldo_ferie_ore - oreDaScalare;
+
+                // Inserimento assenza
+                const { error: errAssenza } = await supabaseClient.from('richieste_assenza').insert({
+                    dipendente_id: dipendenteId,
+                    tipo: tipo,
+                    data_inizio: dataInizio,
+                    data_fine: dataInizio,
+                    ore_totali: oreDaScalare,
+                    stato: 'approvato'
+                });
+                if (errAssenza) throw errAssenza;
+
+                // Aggiornamento monte ore dipendente
+                const { error: errUpdate } = await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
+                if (errUpdate) throw errUpdate;
+
+                alert("Giustificativo registrato e ore scalate correttamente!");
+                document.getElementById('form-assenza-ore').value = '';
+                await caricaListaDipendenti();
+            } catch (err) {
+                alert("Errore salvataggio giustificativo: " + err.message);
+            }
+        }
+
+        // --- INSERIMENTO MANUALE TIMBRATURA ---
+        async function inserisciTimbraturaManuale() {
+            const dipendenteId = document.getElementById('form-manuale-dipendente').value;
+            const tipoAzione = document.getElementById('form-manuale-tipo').value;
+            const orarioLocale = document.getElementById('form-manuale-orario').value;
+
+            if(!dipendenteId || !orarioLocale) {
+                alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
+                return;
+            }
+
+            try {
+                const orarioISO = new Date(orarioLocale).toISOString();
+
+                // Coordinate 0,0 per bypassare i vincoli NOT NULL del database
+                const { error } = await supabaseClient.from('timbrature').insert({
+                    dipendente_id: dipendenteId,
+                    tipo_azione: tipoAzione,
+                    orario: orarioISO,
+                    latitudine: 0, 
+                    longitudine: 0
+                });
+
+                if (error) throw error;
+
+                alert("Timbratura forzata inserita a registro con successo!");
+                document.getElementById('form-manuale-orario').value = '';
+                await caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore di inserimento: " + err.message);
+            }
+        }
+
+        // --- REPORTISTICA E CALCOLO ORE ---
+        async function caricaReportSpecifico() {
+            const dipendenteId = document.getElementById('select-report-dipendente').value;
+            const corpoTabella = document.getElementById('tabella-report-corpo');
+
+            // Reset UI
+            if (!dipendenteId) {
+                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
+                document.getElementById('ore-oggi').innerText = "0.0 ore";
+                document.getElementById('ore-settimana').innerText = "0.0 ore";
+                document.getElementById('ore-mese').innerText = "0.0 ore";
+                document.getElementById('ore-periodo').innerText = "0.0 ore";
+                return;
+            }
+
+            try {
+                // Lettura dei filtri data (limiteInizio a inizio giornata, limiteFine a fine giornata)
+                const filtroInizioRaw = document.getElementById('filtro-inizio').value;
+                const filtroFineRaw = document.getElementById('filtro-fine').value;
+                const limiteInizio = filtroInizioRaw ? new Date(filtroInizioRaw + "T00:00:00") : null;
+                const limiteFine = filtroFineRaw ? new Date(filtroFineRaw + "T23:59:59") : null;
+
+                const { data: timbrature, error } = await supabaseClient
+                    .from('timbrature')
+                    .select('*')
+                    .eq('dipendente_id', dipendenteId)
+                    .order('orario', { ascending: true }); // Ascending è fondamentale per accoppiare In e Out
+
+                if (error) throw error;
+
+                let oreOggi = 0, oreSettimana = 0, oreMese = 0, orePeriodoPersonalizzato = 0;
+                
+                const oggi = new Date();
+                const correnteLunedi = new Date(oggi);
+                const numeroGiorno = correnteLunedi.getDay();
+                const diffLunedi = correnteLunedi.getDate() - numeroGiorno + (numeroGiorno === 0 ? -6 : 1);
+                correnteLunedi.setDate(diffLunedi);
+                correnteLunedi.setHours(0,0,0,0);
+
+                let ultimoIngresso = null;
+
+                timbrature.forEach(t => {
+                    const dataT = new Date(t.orario);
+                    
+                    if (t.tipo_azione === 'ingresso') {
+                        ultimoIngresso = dataT;
+                    } else if (t.tipo_azione === 'uscita' && ultimoIngresso) {
+                        const diffMs = dataT - ultimoIngresso;
+                        const diffOre = diffMs / (1000 * 60 * 60);
+
+                        if (dataT.toDateString() === oggi.toDateString()) oreOggi += diffOre;
+                        if (dataT >= correnteLunedi) oreSettimana += diffOre;
+                        if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) oreMese += diffOre;
+                        if ((!limiteInizio || dataT >= limiteInizio) && (!limiteFine || dataT <= limiteFine)) orePeriodoPersonalizzato += diffOre;
+
+                        ultimoIngresso = null; // Resetta la coppia per i prossimi calcoli
+                    }
+                });
+
+                // Aggiornamento KPI
+                document.getElementById('ore-oggi').innerText = `${oreOggi.toFixed(1)} ore`;
+                document.getElementById('ore-settimana').innerText = `${oreSettimana.toFixed(1)} ore`;
+                document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
+                document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
+
+                // Renderizzazione righe in tabella filtrata (in ordine inverso per comodità di lettura)
+                const timbratureInvertite = [...timbrature].reverse();
+                corpoTabella.innerHTML = '';
+                let conteggioRecordVisibili = 0;
+
+                timbratureInvertite.forEach(t => {
+                    const dataOggetto = new Date(t.orario);
+
+                    // Applica i filtri data alla tabella
+                    if (limiteInizio && dataOggetto < limiteInizio) return;
+                    if (limiteFine && dataOggetto > limiteFine) return;
+                    conteggioRecordVisibili++;
+
+                    const isIngresso = t.tipo_azione === 'ingresso';
+                    const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
+                    const giorno = dataOggetto.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const ora = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                    corpoTabella.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wide ${badgeColor}">
+                                ${t.tipo_azione}
+                            </span>
+                        </td>
+                        <td class="p-3 text-slate-700 capitalize font-medium">${giorno}</td>
+                        <td class="p-3 font-mono text-sm text-slate-600 font-bold">${ora}</td>
+                        <td class="p-3 text-center space-x-3">
+                            <button onclick="apriModificaModal('${t.id}', '${t.tipo_azione}', '${t.orario}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded border border-sky-200 transition">
+                                Modifica
+                            </button>
+                            <button onclick="eliminaTimbratura('${t.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2 py-1 rounded border border-rose-200 transition">
+                                Elimina
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+
+                if (conteggioRecordVisibili === 0) {
+                    corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record trovato per l'intervallo selezionato.</td></tr>`;
+                }
+            } catch (err) {
+                console.error("Errore caricamento report:", err);
+            }
+        }
+
+        // --- GESTIONE MODIFICA E CANCELLAZIONE SINGOLE TIMBRATURE ---
+        function apriModificaModal(id, tipo, orario) {
+            document.getElementById('edit-timbratura-id').value = id;
+            document.getElementById('edit-tipo').value = tipo;
+            
+            // Format datetime per input locale
+            const d = new Date(orario);
+            const offset = d.getTimezoneOffset() * 60000;
+            const formatoLocale = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+            
+            document.getElementById('edit-orario').value = formatoLocale;
+            document.getElementById('modal-modifica').classList.remove('hidden');
+        }
+
+        function chiudiModificaModal() {
+            document.getElementById('modal-modifica').classList.add('hidden');
+        }
+
+        async function salvaModificaTimbratura() {
+            const id = document.getElementById('edit-timbratura-id').value;
+            const nuovoTipo = document.getElementById('edit-tipo').value;
+            const nuovoOrarioInput = document.getElementById('edit-orario').value;
+
+            if(!nuovoOrarioInput) {
+                alert("Inserisci un orario valido!");
+                return;
+            }
+
+            try {
+                const orarioISO = new Date(nuovoOrarioInput).toISOString();
+                const { error } = await supabaseClient.from('timbrature').update({ tipo_azione: nuovoTipo, orario: orarioISO }).eq('id', id);
+                
+                if (error) throw error;
+
+                alert("Timbratura aggiornata!");
+                chiudiModificaModal();
+                await caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore modifica: " + err.message);
+            }
+        }
+
+        async function eliminaTimbratura(id) {
+            if (!confirm("Vuoi eliminare definitivamente questa singola timbratura?")) return;
+
+            try {
+                const { error } = await supabaseClient.from('timbrature').delete().eq('id', id);
+                if (error) throw error;
+
+                alert("Record timbratura eliminato.");
+                await caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore eliminazione: " + err.message);
+            }
+        }
+
+        // Avvio iniziale
+        inizializzaPannello();
+    </script>
+</body>
+</html>
