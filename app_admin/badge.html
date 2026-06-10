@@ -5,7 +5,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Badge Presenze">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/128/8061/8061970.png">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/128/16999/16999629.png">
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -174,17 +174,34 @@
         }
 
         async function verificaAccessoEIdentita() {
-            const parametriUrl = new URLSearchParams(window.location.search);
-            dipendenteId = parametriUrl.get('id');
-            if (!dipendenteId) { mostraErroreCritico("Link Errato", "Codice identificativo mancante."); return; }
-            try {
-                const { data: dipendente, error } = await supabaseClient.from('dipendenti').select('nome, cognome').eq('id', dipendenteId).single();
-                if (error || !dipendente) throw new Error();
-                document.getElementById('nome-dipendente').innerText = `${dipendente.nome} ${dipendente.cognome}`;
-                document.getElementById('loading-screen').classList.add('opacity-0');
-                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); avviaMonitoraggioGPS(); }, 300);
-            } catch (err) { mostraErroreCritico("Errore", "Badge non riconosciuto."); }
-        }
+    const parametriUrl = new URLSearchParams(window.location.search);
+    let idUrl = parametriUrl.get('id');
+    
+    // Se l'ID è presente nell'URL, lo salviamo nella memoria del telefono
+    if (idUrl) {
+        localStorage.setItem('badge_dipendente_id', idUrl);
+        dipendenteId = idUrl;
+    } else {
+        // Se l'ID non è nell'URL (perché la PWA si è aperta pulita), lo recuperiamo dalla memoria
+        dipendenteId = localStorage.getItem('badge_dipendente_id');
+    }
+
+    // Se non troviamo l'ID né nell'URL né in memoria, allora diamo l'errore
+    if (!dipendenteId) { 
+        mostraErroreCritico("Link Errato", "Codice identificativo mancante."); 
+        return; 
+    }
+
+    try {
+        const { data: dipendente, error } = await supabaseClient.from('dipendenti').select('nome, cognome').eq('id', dipendenteId).single();
+        if (error || !dipendente) throw new Error();
+        document.getElementById('nome-dipendente').innerText = `${dipendente.nome} ${dipendente.cognome}`;
+        document.getElementById('loading-screen').classList.add('opacity-0');
+        setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); avviaMonitoraggioGPS(); }, 300);
+    } catch (err) { 
+        mostraErroreCritico("Errore", "Badge non riconosciuto."); 
+    }
+}
 
         function mostraErroreCritico(titolo, messaggio) {
             document.getElementById('loading-screen').classList.add('hidden');
