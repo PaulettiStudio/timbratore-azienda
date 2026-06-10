@@ -84,7 +84,7 @@
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <h2 class="text-lg font-bold mb-4 text-emerald-700 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
                 Registrazione Giustificativi (Ferie / Permessi / Riposo)
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -169,13 +169,11 @@
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Funzione di avvio globale
         async function inizializzaPannello() {
             await caricaListaDipendenti();
             caricaReportSpecifico();
         }
 
-        // 1. CARICA LA LISTA COMPLETA DEI DIPENDENTI NELLE TABELLE E NEI MENU A TENDINA
         async function caricaListaDipendenti() {
             const { data: dipendenti, error } = await supabaseClient
                 .from('dipendenti')
@@ -187,26 +185,23 @@
                 return;
             }
 
-            // Popolamento Tabella Organico Amministrativa
             const tabella = document.getElementById('tabella-dipendenti');
             tabella.innerHTML = '';
             
-            // Popolamento Menu Tendina (Giustificativi e Report)
             const selectAssenze = document.getElementById('form-assenza-dipendente');
             const selectReport = document.getElementById('select-report-dipendente');
             
-            const vecchioValoreReport = selectReport.value; // Conserva la selezione se esisteva
+            const vecchioValoreReport = selectReport.value;
 
             selectAssenze.innerHTML = '';
             selectReport.innerHTML = '';
 
-            if(dipendenti.length === 0) {
+            if(!dipendenti || dipendenti.length === 0) {
                 tabella.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Nessun dipendente registrato in azienda.</td></tr>`;
                 return;
             }
 
             dipendenti.forEach(d => {
-                // Riga Tabella Organico
                 tabella.innerHTML += `
                 <tr class="hover:bg-slate-50 transition">
                     <td class="p-3 font-semibold text-slate-900">${d.cognome} ${d.nome}</td>
@@ -220,7 +215,6 @@
                     </td>
                 </tr>`;
 
-                // Opzioni Tendine
                 const opzioneHtml = `<option value="${d.id}">${d.cognome} ${d.nome}</option>`;
                 selectAssenze.innerHTML += opzioneHtml;
                 selectReport.innerHTML += opzioneHtml;
@@ -231,7 +225,6 @@
             }
         }
 
-        // 2. AGGIUNGI UN NUOVO DIPENDENTE
         async function aggiungiDipendente() {
             const nome = document.getElementById('dip-nome').value.trim();
             const cognome = document.getElementById('dip-cognome').value.trim();
@@ -240,7 +233,7 @@
             const ferie = parseFloat(document.getElementById('dip-ferie').value);
 
             if (!nome || !cognome || !email) {
-                alert("Per favore, compila tutti i campi anagrafici essenziali (Nome, Cognome, Email).");
+                alert("Compila tutti i campi!");
                 return;
             }
 
@@ -253,10 +246,9 @@
             });
 
             if (error) {
-                alert("Errore durante l'inserimento: " + error.message);
+                alert("Errore inserimento: " + error.message);
             } else {
-                alert("Nuovo dipendente inserito correttamente con successo!");
-                // Resetta form
+                alert("Dipendente salvato!");
                 document.getElementById('dip-nome').value = '';
                 document.getElementById('dip-cognome').value = '';
                 document.getElementById('dip-email').value = '';
@@ -265,26 +257,21 @@
             }
         }
 
-        // 3. ELIMINA UN DIPENDENTE DALL'ORGANICO (Cancellazione a cascata automatica)
-        async function物理 eliminaDipendente(id, nominativo) {
-            const conferma = confirm(`Sei sicuro di voler eliminare definitivamente ${nominativo} dall'azienda?\n\nATTENZIONE: Verranno rimosse istantaneamente anche tutte le sue timbrature storiche e le ferie associate dal database!`);
+        async function eliminaDipendente(id, nominativo) {
+            const conferma = confirm(`Eliminare definitivamente ${nominativo}?`);
             if (!conferma) return;
 
-            const { error } = await supabaseClient
-                .from('dipendenti')
-                .delete()
-                .eq('id', id);
+            const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
 
             if (error) {
-                alert("Impossibile completare l'eliminazione: " + error.message);
+                alert("Errore: " + error.message);
             } else {
-                alert("Dipendente rimosso dall'organico aziendale.");
+                alert("Dipendente rimosso.");
                 await caricaListaDipendenti();
                 caricaReportSpecifico();
             }
         }
 
-        // 4. REGISTRA E APPROVA UN'ASSENZA SCALANDO LE ORE
         async function creaRichiestaAssenza() {
             const dipendenteId = document.getElementById('form-assenza-dipendente').value;
             const tipo = document.getElementById('form-assenza-tipo').value;
@@ -292,15 +279,13 @@
             const oreDaScalare = parseFloat(document.getElementById('form-assenza-ore').value);
 
             if (!dipendenteId || !dataInizio || !oreDaScalare) {
-                alert("Tutti i dati dell'assenza sono obbligatori per procedere alla registrazione.");
+                alert("Tutti i dati sono obbligatori!");
                 return;
             }
 
-            // Recupera lo stato attuale del saldo ferie
             const { data: dip } = await supabaseClient.from('dipendenti').select('saldo_ferie_ore').eq('id', dipendenteId).single();
             const nuovoSaldo = dip.saldo_ferie_ore - oreDaScalare;
 
-            // Transazione manuale lato client: inserisce assenza ed aggiorna il saldo del dipendente
             const { error: errAssenza } = await supabaseClient.from('richieste_assenza').insert({
                 dipendente_id: dipendenteId,
                 tipo: tipo,
@@ -311,45 +296,36 @@
             });
 
             if (errAssenza) {
-                alert("Errore inserimento assenza: " + errAssenza.message);
+                alert("Errore: " + errAssenza.message);
                 return;
             }
 
-            // Aggiorna saldo ore
-            await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
+            await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuevoSaldo }).eq('id', dipendenteId);
 
-            alert("Giustificativo registrato ed ore scalate dal monte ferie con successo!");
+            alert("Giustificativo registrato e ore scalate!");
             document.getElementById('form-assenza-ore').value = '';
-            await initPannelloId();
-        }
-
-        // Helper per aggiornare i dati mantenendo le selezioni
-        async function initPannelloId() {
             await caricaListaDipendenti();
             caricaReportSpecifico();
         }
 
-        // 5. GENERA IL REPORT IN TEMPO REALE FILTRATO PER IL DIPENDENTE SELEZIONATO
         async function caricaReportSpecifico() {
             const dipendenteId = document.getElementById('select-report-dipendente').value;
             const corpoTabella = document.getElementById('tabella-report-corpo');
 
             if (!dipendenteId) {
-                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato nell'organico.</td></tr>`;
+                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
                 document.getElementById('stat-contratto').innerText = "-";
                 document.getElementById('stat-ferie').innerText = "-";
                 document.getElementById('stat-tot-timbrature').innerText = "-";
                 return;
             }
 
-            // A: Recupera info anagrafica per le schede contatori superiori
             const { data: infoDip } = await supabaseClient.from('dipendenti').select('*').eq('id', dipendenteId).single();
             if(infoDip) {
-                document.getElementById('stat-contratto').innerText = `${infoDip.ore_settimanali_contratto} ore / settimana`;
-                document.getElementById('stat-ferie').innerText = `${infoDip.saldo_ferie_ore} ore rimanenti`;
+                document.getElementById('stat-contratto').innerText = `${infoDip.ore_settimanali_contratto} ore / sett`;
+                document.getElementById('stat-ferie').innerText = `${infoDip.saldo_ferie_ore} ore`;
             }
 
-            // B: Recupera storico timbrature del dipendente specifico
             const { data: timbrature, error } = await supabaseClient
                 .from('timbrature')
                 .select('*')
@@ -357,7 +333,7 @@
                 .order('orario', { ascending: false });
 
             if (error) {
-                console.error("Errore report:", error);
+                console.error(error);
                 return;
             }
 
@@ -365,7 +341,7 @@
             corpoTabella.innerHTML = '';
 
             if (timbrature.length === 0) {
-                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessun record di timbratura geofencing trovato in archivio per questo dipendente.</td></tr>`;
+                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessuna timbratura presente.</td></tr>`;
                 return;
             }
 
@@ -384,13 +360,12 @@
                             ${t.tipo_azione}
                         </span>
                     </td>
-                    <td class="p-3 text-slate-700 capitalize font-medium">${giorno}</td>
+                    <td class="p-3 text-slate-700 capitalize">${giorno}</td>
                     <td class="p-3 font-mono text-sm text-slate-600 font-bold">${ora}</td>
                 </tr>`;
             });
         }
 
-        // Avvio automatico ed immediato del caricamento all'apertura del browser
         inizializzaPannello();
     </script>
 </body>
