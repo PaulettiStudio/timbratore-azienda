@@ -480,7 +480,7 @@
 
                 if (error) throw error;
 
-                // 1. CALCOLO STATISTICHE ORARIE COERENTI
+                // 1. CALCOLO STATISTICHE ORARIE
                 let oreOggi = 0, oreSettimana = 0, oreMese = 0, orePeriodoPersonalizzato = 0;
                 const oggi = new Date();
                 const correnteLunedi = new Date(oggi);
@@ -515,7 +515,7 @@
                 document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
                 document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
 
-                // 2. RENDER VISTA 1: TABELLA DETTAGLIATA (REGISTRO)
+                // 2. RENDER VISTA TABELLA (REGISTRO)
                 const timbratureInvertite = [...timbrature].reverse();
                 corpoTabella.innerHTML = '';
                 let recordVisibili = 0;
@@ -530,7 +530,6 @@
                     const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
                     const labelAzione = isIngresso ? 'INGRESSO' : 'USCITA';
 
-                    // FORMATI RICHIESTI: gg/mm/aaaa e Ora 24h italiana
                     const dataFormattata = dataOggetto.toLocaleDateString('it-IT'); 
                     const oraFormattata = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -550,33 +549,29 @@
                     corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record per il periodo.</td></tr>`;
                 }
 
-                // 3. RENDER VISTA 2: GRIGLIA A CALENDARIO MENSILE
+                // 3. RENDER VISTA CALENDARIO MENSILE
                 grigliaCal.innerHTML = '';
                 const baseMese = limiteInizio ? new Date(limiteInizio) : new Date();
                 const primoDelMese = new Date(baseMese.getFullYear(), baseMese.getMonth(), 1);
                 const ultimoDelMese = new Date(baseMese.getFullYear(), baseMese.getMonth() + 1, 0);
 
-                // Allineamento lunedì (offset griglia vuota)
                 let spaziVuotiIniziali = primoDelMese.getDay() === 0 ? 6 : primoDelMese.getDay() - 1;
                 for(let i = 0; i < spaziVuotiIniziali; i++) {
                     grigliaCal.innerHTML += `<div class="bg-slate-100/50 rounded-lg p-1 min-h-[75px] border border-dashed border-slate-200"></div>`;
                 }
 
-                // Ciclo effettivo dei giorni del mese corrente
                 for(let giornoCorrente = 1; giornoCorrente <= ultimoDelMese.getDate(); giornoCorrente++) {
                     const dataStringCercata = `${baseMese.getFullYear()}-${(baseMese.getMonth()+1).toString().padStart(2,'0')}-${giornoCorrente.toString().padStart(2,'0')}`;
                     const timbratureDelGiorno = timbrature.filter(t => t.orario.startsWith(dataStringCercata));
 
                     let stringaEventiGiorno = timbratureDelGiorno.map(t => {
                         const dObj = new Date(t.orario);
-                        // Forza orario 24h compatto a due cifre
                         const oreMinuti = dObj.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
                         const coloreTesto = t.tipo_azione.toUpperCase() === 'INGRESSO' ? 'text-green-600 font-bold' : 'text-red-500';
-                        const simbolo freccia = t.tipo_azione.toUpperCase() === 'INGRESSO' ? '▶' : '◀';
+                        const simbolo = t.tipo_azione.toUpperCase() === 'INGRESSO' ? '▶' : '◀';
                         return `<div class="text-[10px] ${coloreTesto} truncate">${simbolo} ${oreMinuti}</div>`;
                     }).join('');
 
-                    // Evidenzia il giorno di oggi se corrisponde
                     const isOggi = oggi.getDate() === giornoCorrente && oggi.getMonth() === baseMese.getMonth() && oggi.getFullYear() === baseMese.getFullYear();
                     const stileBordoGiorno = isOggi ? 'ring-2 ring-sky-500 bg-sky-50/40 border-sky-300' : 'bg-white border-slate-200';
 
@@ -629,7 +624,7 @@
             }
         }
 
-        async function deletesTimbratura(id) {
+        async function eliminaTimbratura(id) {
             if (!confirm("Eliminare definitivamente questo record di presenza?")) return;
             try {
                 const { error } = await supabaseClient.from('timbrature').delete().eq('id', id);
