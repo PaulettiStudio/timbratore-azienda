@@ -3,109 +3,395 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Console Amministratore - Gestione Presenze</title>
+    <title>Console Amministratore Pro - Gestione Presenze</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans p-6">
-    <div class="max-w-6xl mx-auto">
-        <header class="mb-8 border-b border-slate-200 pb-4">
-            <h1 class="text-3xl font-bold text-slate-900">Console Risorse Umane</h1>
-            <p class="text-slate-500">Monitoraggio orari di ingresso/uscita e approvazione ferie e permessi</p>
+<body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        
+        <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
+                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, pianificazione assenze e reportistica geofencing in tempo reale.</p>
+            </div>
+            <button onclick="inizializzaPannello()" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2 border border-slate-300 rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" /></svg>
+                Sincronizza Dati
+            </button>
         </header>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
-            <h2 class="text-xl font-bold mb-4 text-sky-700">Inserisci Assenza (Ferie, Permesso)</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
+                <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-sky-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                    Nuovo Dipendente
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nome</label>
+                        <input id="dip-nome" type="text" placeholder="Es. Mario" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Cognome</label>
+                        <input id="dip-cognome" type="text" placeholder="Es. Rossi" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email aziendale</label>
+                        <input id="dip-email" type="email" placeholder="mario.rossi@azienda.it" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ore Contratto</label>
+                            <input id="dip-ore" type="number" value="40" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ferie (Ore)</label>
+                            <input id="dip-ferie" type="number" value="160" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                        </div>
+                    </div>
+                    <button onclick="aggiungiDipendente()" class="w-full mt-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold p-2.5 rounded-lg text-sm shadow-sm transition">
+                        Salva in Anagrafica
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-slate-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        Organico Aziendale
+                    </h2>
+                    <div class="overflow-y-auto max-h-[260px] border border-slate-100 rounded-xl">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200 sticky top-0">
+                                    <th class="p-3">Nominativo</th>
+                                    <th class="p-3">Email</th>
+                                    <th class="p-3 text-center">Contratto</th>
+                                    <th class="p-3 text-center">Ferie Residue</th>
+                                    <th class="p-3 text-center">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabella-dipendenti" class="text-sm divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+            <h2 class="text-lg font-bold mb-4 text-emerald-700 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                Registrazione Giustificativi (Ferie / Permessi / Riposo)
+            </h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">ID UUID Dipendente</label>
-                    <input id="form-dipendente-id" type="text" placeholder="Incolla UUID dipendente" class="border p-2 rounded w-full text-sm">
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Seleziona Dipendente</label>
+                    <select id="form-assenza-dipendente" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600"></select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tipologia</label>
-                    <select id="form-tipo" class="border p-2 rounded w-full text-sm">
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Causale Assenza</label>
+                    <select id="form-assenza-tipo" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600">
                         <option value="ferie">Ferie</option>
                         <option value="permesso">Permesso Orario</option>
                         <option value="riposo">Riposo Compensativo</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data Inizio</label>
-                    <input id="form-inizio" type="date" class="border p-2 rounded w-full text-sm">
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data Giorno Assenza</label>
+                    <input id="form-assenza-inizio" type="date" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Totale Ore da Scalare</label>
-                    <input id="form-ore" type="number" step="0.5" placeholder="Esempio: 8" class="border p-2 rounded w-full text-sm">
+                    <input id="form-assenza-ore" type="number" step="0.5" placeholder="Es. 8" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600">
                 </div>
             </div>
-            <button onclick="creaRichiesta()" class="mt-4 bg-sky-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-sky-700 font-semibold transition">Registra e Approva</button>
+            <button onclick="creaRichiestaAssenza()" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+                Approva e Salva a Registro
+            </button>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-slate-900">Registro Storico Timbrature Geofencing</h2>
-                <button onclick="caricaTimbrature()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1 rounded font-medium">Aggiorna Registro</button>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Report Storico Singolo Dipendente
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Filtra l'elenco cronologico delle timbrature geofencing per il dipendente selezionato.</p>
+                </div>
+                <div class="w-full md:w-72">
+                    <select id="select-report-dipendente" onchange="caricaReportSpecifico()" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-semibold bg-slate-50 focus:outline-sky-600"></select>
+                </div>
             </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Contratto Base</span>
+                    <p id="stat-contratto" class="text-xl font-extrabold text-slate-700 mt-1">-</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Saldo Ferie Attuale</span>
+                    <p id="stat-ferie" class="text-xl font-extrabold text-slate-700 mt-1">-</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Totale Timbrature GPS Rilevate</span>
+                    <p id="stat-tot-timbrature" class="text-xl font-extrabold text-sky-700 mt-1">-</p>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider border-b">
-                            <th class="p-3 font-semibold">ID Dipendente</th>
-                            <th class="p-3 font-semibold">Azione Rilevata</th>
-                            <th class="p-3 font-semibold">Data / Orario</th>
-                            <th class="p-3 font-semibold">Posizione GPS</th>
+                        <tr class="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                            <th class="p-3 font-semibold">Tipo Evento</th>
+                            <th class="p-3 font-semibold">Data Rilevazione</th>
+                            <th class="p-3 font-semibold">Orario Preciso</th>
                         </tr>
                     </thead>
-                    <tbody id="tabella-corpo" class="text-sm divide-y divide-slate-100"></tbody>
+                    <tbody id="tabella-report-corpo" class="text-sm divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="3" class="p-6 text-center text-slate-400 italic">Seleziona un dipendente dal menu in alto per visualizzare il report personalizzato.</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
+
     </div>
 
     <script>
-        // CONFIGURAZIONE SUPABASE
+        // CONFIGURAZIONE PARAMETRI SUPABASE
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function caricaTimbrature() {
-            const { data, error } = await supabaseClient.from('timbrature').select('*').order('orario', { ascending: false });
-            if (error) { console.error("Errore dati:", error); return; }
-            const corpo = document.getElementById('tabella-corpo');
-            corpo.innerHTML = '';
-            data.forEach(t => {
-                const isIngresso = t.tipo_azione.includes('ingresso');
-                const badgeColor = isIngresso ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-                corpo.innerHTML += `<tr class="hover:bg-slate-50 transition">
-                    <td class="p-3 font-mono text-xs text-slate-500">${t.dipendente_id}</td>
-                    <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${t.tipo_azione}</span></td>
-                    <td class="p-3 text-slate-600">${new Date(t.orario).toLocaleString('it-IT')}</td>
-                    <td class="p-3 font-mono text-xs text-slate-400">${t.latitudine.toFixed(5)}, ${t.longitudine.toFixed(5)}</td>
+        // Funzione di avvio globale
+        async function inizializzaPannello() {
+            await caricaListaDipendenti();
+            caricaReportSpecifico();
+        }
+
+        // 1. CARICA LA LISTA COMPLETA DEI DIPENDENTI NELLE TABELLE E NEI MENU A TENDINA
+        async function caricaListaDipendenti() {
+            const { data: dipendenti, error } = await supabaseClient
+                .from('dipendenti')
+                .select('*')
+                .order('cognome', { ascending: true });
+
+            if (error) {
+                console.error("Errore scaricamento anagrafica:", error);
+                return;
+            }
+
+            // Popolamento Tabella Organico Amministrativa
+            const tabella = document.getElementById('tabella-dipendenti');
+            tabella.innerHTML = '';
+            
+            // Popolamento Menu Tendina (Giustificativi e Report)
+            const selectAssenze = document.getElementById('form-assenza-dipendente');
+            const selectReport = document.getElementById('select-report-dipendente');
+            
+            const vecchioValoreReport = selectReport.value; // Conserva la selezione se esisteva
+
+            selectAssenze.innerHTML = '';
+            selectReport.innerHTML = '';
+
+            if(dipendenti.length === 0) {
+                tabella.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Nessun dipendente registrato in azienda.</td></tr>`;
+                return;
+            }
+
+            dipendenti.forEach(d => {
+                // Riga Tabella Organico
+                tabella.innerHTML += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-semibold text-slate-900">${d.cognome} ${d.nome}</td>
+                    <td class="p-3 font-mono text-xs text-slate-500">${d.email}</td>
+                    <td class="p-3 text-center text-slate-600">${d.ore_settimanali_contratto}h/sett</td>
+                    <td class="p-3 text-center font-bold text-slate-700">${d.saldo_ferie_ore} ore</td>
+                    <td class="p-3 text-center">
+                        <button onclick="eliminaDipendente('${d.id}', '${d.nome} ${d.cognome}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1 rounded-md border border-red-200 transition">
+                            Elimina
+                        </button>
+                    </td>
+                </tr>`;
+
+                // Opzioni Tendine
+                const opzioneHtml = `<option value="${d.id}">${d.cognome} ${d.nome}</option>`;
+                selectAssenze.innerHTML += opzioneHtml;
+                selectReport.innerHTML += opzioneHtml;
+            });
+
+            if (vecchioValoreReport) {
+                selectReport.value = vecchioValoreReport;
+            }
+        }
+
+        // 2. AGGIUNGI UN NUOVO DIPENDENTE
+        async function aggiungiDipendente() {
+            const nome = document.getElementById('dip-nome').value.trim();
+            const cognome = document.getElementById('dip-cognome').value.trim();
+            const email = document.getElementById('dip-email').value.trim();
+            const ore = parseInt(document.getElementById('dip-ore').value);
+            const ferie = parseFloat(document.getElementById('dip-ferie').value);
+
+            if (!nome || !cognome || !email) {
+                alert("Per favore, compila tutti i campi anagrafici essenziali (Nome, Cognome, Email).");
+                return;
+            }
+
+            const { error } = await supabaseClient.from('dipendenti').insert({
+                nome: nome,
+                cognome: cognome,
+                email: email,
+                ore_settimanali_contratto: ore,
+                saldo_ferie_ore: ferie
+            });
+
+            if (error) {
+                alert("Errore durante l'inserimento: " + error.message);
+            } else {
+                alert("Nuovo dipendente inserito correttamente con successo!");
+                // Resetta form
+                document.getElementById('dip-nome').value = '';
+                document.getElementById('dip-cognome').value = '';
+                document.getElementById('dip-email').value = '';
+                await caricaListaDipendenti();
+                caricaReportSpecifico();
+            }
+        }
+
+        // 3. ELIMINA UN DIPENDENTE DALL'ORGANICO (Cancellazione a cascata automatica)
+        async function物理 eliminaDipendente(id, nominativo) {
+            const conferma = confirm(`Sei sicuro di voler eliminare definitivamente ${nominativo} dall'azienda?\n\nATTENZIONE: Verranno rimosse istantaneamente anche tutte le sue timbrature storiche e le ferie associate dal database!`);
+            if (!conferma) return;
+
+            const { error } = await supabaseClient
+                .from('dipendenti')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert("Impossibile completare l'eliminazione: " + error.message);
+            } else {
+                alert("Dipendente rimosso dall'organico aziendale.");
+                await caricaListaDipendenti();
+                caricaReportSpecifico();
+            }
+        }
+
+        // 4. REGISTRA E APPROVA UN'ASSENZA SCALANDO LE ORE
+        async function creaRichiestaAssenza() {
+            const dipendenteId = document.getElementById('form-assenza-dipendente').value;
+            const tipo = document.getElementById('form-assenza-tipo').value;
+            const dataInizio = document.getElementById('form-assenza-inizio').value;
+            const oreDaScalare = parseFloat(document.getElementById('form-assenza-ore').value);
+
+            if (!dipendenteId || !dataInizio || !oreDaScalare) {
+                alert("Tutti i dati dell'assenza sono obbligatori per procedere alla registrazione.");
+                return;
+            }
+
+            // Recupera lo stato attuale del saldo ferie
+            const { data: dip } = await supabaseClient.from('dipendenti').select('saldo_ferie_ore').eq('id', dipendenteId).single();
+            const nuovoSaldo = dip.saldo_ferie_ore - oreDaScalare;
+
+            // Transazione manuale lato client: inserisce assenza ed aggiorna il saldo del dipendente
+            const { error: errAssenza } = await supabaseClient.from('richieste_assenza').insert({
+                dipendente_id: dipendenteId,
+                tipo: tipo,
+                data_inizio: dataInizio,
+                data_fine: dataInizio,
+                ore_totali: oreDaScalare,
+                stato: 'approvato'
+            });
+
+            if (errAssenza) {
+                alert("Errore inserimento assenza: " + errAssenza.message);
+                return;
+            }
+
+            // Aggiorna saldo ore
+            await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
+
+            alert("Giustificativo registrato ed ore scalate dal monte ferie con successo!");
+            document.getElementById('form-assenza-ore').value = '';
+            await initPannelloId();
+        }
+
+        // Helper per aggiornare i dati mantenendo le selezioni
+        async function initPannelloId() {
+            await caricaListaDipendenti();
+            caricaReportSpecifico();
+        }
+
+        // 5. GENERA IL REPORT IN TEMPO REALE FILTRATO PER IL DIPENDENTE SELEZIONATO
+        async function caricaReportSpecifico() {
+            const dipendenteId = document.getElementById('select-report-dipendente').value;
+            const corpoTabella = document.getElementById('tabella-report-corpo');
+
+            if (!dipendenteId) {
+                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato nell'organico.</td></tr>`;
+                document.getElementById('stat-contratto').innerText = "-";
+                document.getElementById('stat-ferie').innerText = "-";
+                document.getElementById('stat-tot-timbrature').innerText = "-";
+                return;
+            }
+
+            // A: Recupera info anagrafica per le schede contatori superiori
+            const { data: infoDip } = await supabaseClient.from('dipendenti').select('*').eq('id', dipendenteId).single();
+            if(infoDip) {
+                document.getElementById('stat-contratto').innerText = `${infoDip.ore_settimanali_contratto} ore / settimana`;
+                document.getElementById('stat-ferie').innerText = `${infoDip.saldo_ferie_ore} ore rimanenti`;
+            }
+
+            // B: Recupera storico timbrature del dipendente specifico
+            const { data: timbrature, error } = await supabaseClient
+                .from('timbrature')
+                .select('*')
+                .eq('dipendente_id', dipendenteId)
+                .order('orario', { ascending: false });
+
+            if (error) {
+                console.error("Errore report:", error);
+                return;
+            }
+
+            document.getElementById('stat-tot-timbrature').innerText = `${timbrature.length} passaggi`;
+            corpoTabella.innerHTML = '';
+
+            if (timbrature.length === 0) {
+                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessun record di timbratura geofencing trovato in archivio per questo dipendente.</td></tr>`;
+                return;
+            }
+
+            timbrature.forEach(t => {
+                const isIngresso = t.tipo_azione === 'ingresso';
+                const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
+                
+                const dataOggetto = new Date(t.orario);
+                const giorno = dataOggetto.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const ora = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                corpoTabella.innerHTML += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wide ${badgeColor}">
+                            ${t.tipo_azione}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-700 capitalize font-medium">${giorno}</td>
+                    <td class="p-3 font-mono text-sm text-slate-600 font-bold">${ora}</td>
                 </tr>`;
             });
         }
 
-        async function creaRichiesta() {
-            const dipId = document.getElementById('form-dipendente-id').value;
-            const tipo = document.getElementById('form-tipo').value;
-            const dataInizio = document.getElementById('form-inizio').value;
-            const ore = document.getElementById('form-ore').value;
-
-            if(!dipId || !dataInizio || !ore) { alert("Compila tutti i campi!"); return; }
-
-            const { error } = await supabaseClient.from('richieste_assenza').insert({
-                dipendente_id: dipId,
-                tipo: tipo,
-                data_inizio: dataInizio,
-                data_fine: dataInizio,
-                ore_totali: parseFloat(ore),
-                stato: 'approvato'
-            });
-
-            if (error) { alert("Errore: " + error.message); } 
-            else { alert("Assenza registrata!"); document.getElementById('form-ore').value = ''; caricaTimbrature(); }
-        }
-        caricaTimbrature();
+        // Avvio automatico ed immediato del caricamento all'apertura del browser
+        inizializzaPannello();
     </script>
 </body>
 </html>
