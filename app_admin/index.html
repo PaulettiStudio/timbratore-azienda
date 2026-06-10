@@ -416,17 +416,36 @@
             caricaReportSpecifico();
         }
 
-        // --- FORZATURA MANUALE NUOVA TIMBRATURA (PULITA) ---
-        async function inserisciTimbraturaManuale() {
-            const dipendenteId = document.getElementById('form-manuale-dipendente').value;
-            const tipoAzione = document.getElementById('form-manuale-tipo').value;
-            const orarioLocale = document.getElementById('form-manuale-orario').value;
+       // --- FORZATURA MANUALE CON COORDINATE DI DEFAULT (RISOLVE IL VINCOLO NOT-NULL) ---
+async function inserisciTimbraturaManuale() {
+    const dipendenteId = document.getElementById('form-manuale-dipendente').value;
+    const tipoAzione = document.getElementById('form-manuale-tipo').value;
+    const orarioLocale = document.getElementById('form-manuale-orario').value;
 
-            if(!dipendenteId || !orarioLocale) {
-                alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
-                return;
-            }
+    if(!dipendenteId || !orarioLocale) {
+        alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
+        return;
+    }
 
+    const orarioISO = new Date(orarioLocale).toISOString();
+
+    // Inseriamo 0 e 0 per soddisfare l'obbligatorietà del database senza attivare blocchi geografici
+    const { error } = await supabaseClient.from('timbrature').insert({
+        dipendente_id: dipendenteId,
+        tipo_azione: tipoAzione,
+        orario: orarioISO,
+        latitudine: 0,
+        longitudine: 0
+    });
+
+    if (error) {
+        alert("Errore di inserimento: " + error.message);
+    } else {
+        alert("Timbratura forzata inserita a registro con successo!");
+        document.getElementById('form-manuale-orario').value = '';
+        await caricaReportSpecifico();
+    }
+}
             const orarioISO = new Date(orarioLocale).toISOString();
 
             // Inviamo SOLO i tre campi strutturali per evitare errori di schema cache
