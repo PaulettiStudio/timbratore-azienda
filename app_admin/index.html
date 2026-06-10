@@ -403,34 +403,38 @@
             caricaReportSpecifico();
         }
 
-        // --- FORZATURA MANUALE NUOVA TIMBRATURA ---
-        async function inserisciTimbraturaManuale() {
-            const dipendenteId = document.getElementById('form-manuale-dipendente').value;
-            const tipoAzione = document.getElementById('form-manuale-tipo').value;
-            const orarioLocale = document.getElementById('form-manuale-orario').value;
+       // --- FORZATURA MANUALE NUOVA TIMBRATURA CON BYPASS GEOFENCE ---
+async function inserisciTimbraturaManuale() {
+    const dipendenteId = document.getElementById('form-manuale-dipendente').value;
+    const tipoAzione = document.getElementById('form-manuale-tipo').value;
+    const orarioLocale = document.getElementById('form-manuale-orario').value;
 
-            if(!dipendenteId || !orarioLocale) {
-                alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
-                return;
-            }
+    if(!dipendenteId || !orarioLocale) {
+        alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
+        return;
+    }
 
-            // Converte l'input locale in ISO per interloquire con Postgres in UTC
-            const orarioISO = new Date(orarioLocale).toISOString();
+    const orarioISO = new Date(orarioLocale).toISOString();
 
-            const { error } = await supabaseClient.from('timbrature').insert({
-                dipendente_id: dipendenteId,
-                tipo_azione: tipoAzione,
-                orario: orarioISO
-            });
+    // Inviamo coordinate fittizie (0, 0) e una nota esplicita.
+    // Questo permette di superare i vincoli di colonne obbligatorie e segnala al DB di non controllare il geofence.
+    const { error } = await supabaseClient.from('timbrature').insert({
+        dipendente_id: dipendenteId,
+        tipo_azione: tipoAzione,
+        orario: orarioISO,
+        latitudine: 0,
+        longitudine: 0,
+        note: 'Inserimento manuale amministratore'
+    });
 
-            if (error) {
-                alert("Errore di inserimento: " + error.message);
-            } else {
-                alert("Timbratura forzata inserita a registro!");
-                document.getElementById('form-manuale-orario').value = '';
-                await caricaReportSpecifico();
-            }
-        }
+    if (error) {
+        alert("Errore di inserimento: " + error.message);
+    } else {
+        alert("Timbratura forzata inserita a registro con bypass geofence!");
+        document.getElementById('form-manuale-orario').value = '';
+        await caricaReportSpecifico();
+    }
+}
 
         // --- CORE ANALYSIS & CALCOLI PERIODICI E FILTRO TABELLARE ---
         async function caricaReportSpecifico() {
