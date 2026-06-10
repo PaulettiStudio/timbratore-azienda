@@ -85,36 +85,6 @@
     </footer>
 
     <script>
-        // Funzione per caricare le personalizzazioni dal file JSON
-async function caricaConfigurazioneIniziale() {
-    try {
-        const risposta = await fetch('config.json');
-        const config = await risposta.json();
-        
-        // Applica i nomi e i testi personalizzati dal JSON all'interfaccia dell'App Badge
-        const datiBadge = config.app_badge_dipendente;
-        
-        // Cambia i testi nella pagina
-        document.querySelector('span.uppercase').innerText = datiBadge.nome_app;
-        document.querySelector('footer p').innerText = datiBadge.sottotitolo;
-        document.querySelector("button[onclick*='INGRESSO'] span:not(.bg-white\\/10)").innerText = datiBadge.testo_pulsante_ingresso;
-        document.querySelector("button[onclick*='USCITA'] span:not(.bg-white\\/10)").innerText = datiBadge.testo_pulsante_uscita;
-        
-        // Cambia la favicon (l'icona dell'app che si vede nel browser)
-        let linkIcona = document.querySelector("link[rel*='icon']") || document.createElement('link');
-        linkIcona.type = 'image/x-icon';
-        linkIcona.rel = 'shortcut icon';
-        linkIcona.href = datiBadge.url_icona_navigatore;
-        document.getElementsByTagName('head')[0].appendChild(linkIcona);
-
-    } catch (errore) {
-        console.log("Impossibile caricare il file config.json, utilizzo dati standard:", errore);
-    }
-}
-
-// Avvia il caricamento del JSON all'apertura della pagina
-caricaConfigurazioneIniziale();
-        
         // --- 1. CONFIGURAZIONE CREDENZIALI SUPABASE ---
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
