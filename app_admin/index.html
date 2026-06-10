@@ -10,7 +10,6 @@
 <body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
         
-        <!-- HEADER -->
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
@@ -22,10 +21,8 @@
             </button>
         </header>
 
-        <!-- GRIGLIA SUPERIORE: INSERIMENTO E ANAGRAFICA -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             
-            <!-- FORM AGGIUNGI DIPENDENTE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
                 <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-sky-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
@@ -60,7 +57,6 @@
                 </div>
             </div>
 
-            <!-- TABELLA LISTA DIPENDENTI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-between">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-slate-800">
@@ -79,18 +75,15 @@
                                 </tr>
                             </thead>
                             <tbody id="tabella-dipendenti" class="text-sm divide-y divide-slate-100">
-                                <!-- JS -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SEZIONE GIUSTIFICATIVI E INSERIMENTO MANUALE TIMBRATURE -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             
-            <!-- REGISTRAZIONE GIUSTIFICATIVI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-emerald-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -123,7 +116,6 @@
                 </button>
             </div>
 
-            <!-- INSERIMENTO MANUALE TIMBRATURE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-indigo-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -156,7 +148,6 @@
             </div>
         </div>
 
-        <!-- SEZIONE REPORT, CALENDARIO E TABELLA TIMBRATURE -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
                 <div>
@@ -172,7 +163,6 @@
                 </div>
             </div>
 
-            <!-- SELEZIONE PERIODO PERSONALIZZATO E NAVIGAZIONE -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-end justify-between gap-4 text-xs">
                 <div class="flex flex-wrap items-end gap-4">
                     <div>
@@ -185,7 +175,6 @@
                     </div>
                 </div>
                 
-                <!-- SELETTORE VISTA: CALENDARIO O TABELLA -->
                 <div class="flex bg-slate-200 p-1 rounded-lg">
                     <button id="btn-vista-calendario" onclick="cambiaVista('calendario')" class="bg-white text-slate-900 font-bold px-4 py-1.5 rounded-md shadow-sm transition">
                         Vista Calendario 📅
@@ -196,7 +185,6 @@
                 </div>
             </div>
 
-            <!-- RISULTATI DEI RESOCONTI CALCOLATI -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center md:text-left">
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
                     <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Oggi</span>
@@ -216,7 +204,6 @@
                 </div>
             </div>
 
-            <!-- CONTENITORE VISTA 1: CALENDARIO MENSILE DINAMICO -->
             <div id="sezione-vista-calendario" class="block">
                 <div class="flex justify-between items-center bg-slate-800 text-white p-3 rounded-t-xl border-x border-t border-slate-700">
                     <button onclick="sfogliaMese(-1)" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">◀ Mese Prec.</button>
@@ -227,11 +214,9 @@
                     <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
                 </div>
                 <div id="griglia-giorni-calendario" class="grid grid-cols-7 gap-2 border-b border-x border-slate-200 p-3 rounded-b-xl bg-slate-50 min-h-[350px]">
-                    <!-- JS -->
-                </div>
+                    </div>
             </div>
 
-            <!-- CONTENITORE VISTA 2: TABELLA DETTAGLIATA (REGISTRO) -->
             <div id="sezione-vista-registro" class="hidden overflow-x-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -253,7 +238,6 @@
         </div>
     </div>
 
-    <!-- MODAL DI MODIFICA TIMBRATURA -->
     <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
@@ -508,7 +492,7 @@
                 });
                 if (errAssenza) throw errAssenza;
 
-                const { error: errUpdate } = await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
+                const { error: errUpdate } = await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuevoSaldo }).eq('id', dipendenteId);
                 if (errUpdate) throw errUpdate;
 
                 alert("Giustificativo approvato e ore scalate!");
@@ -726,7 +710,7 @@
             }
         }
 
-        // --- GESTIONE MODIFICA E RIMOZIONE RECORDI CON FORMATI PROPRIETARI ---
+        // --- GESTIONE MODIFICA E RIMOZIONE RECORD CON FORMATI PROPRIETARI ---
         function apriModificaModal(id, tipo, orario) {
             document.getElementById('edit-timbratura-id').value = id;
             document.getElementById('edit-tipo').value = tipo;
@@ -776,7 +760,7 @@
                 );
                 const orarioISO = dataOggetto.toISOString();
 
-                const { error } = await supabaseClient.from('timbrature').update({ tipo_azione: nuovoTipo, orario: orarioISO }).eq('id', id);
+                const { error } = await supabaseClient.from('timbrature').update({ tipo_azione: nuevoTipo, orario: orarioISO }).eq('id', id);
                 if (error) throw error;
 
                 alert("Record modificato con successo!");
@@ -785,11 +769,6 @@
             } catch (err) {
                 alert("Errore modifica: " + err.message);
             }
-        }
-
-        async function永久EliminaTimbratura(id) {
-            // alias mantenuto per retrocompatibilità
-            await eliminaTimbratura(id);
         }
 
         async function eliminaTimbratura(id) {
