@@ -1,0 +1,22 @@
+{
+  "app_badge_dipendente": {
+    "nome_app": "Badge Feltregas",
+    "sottotitolo": "Recinto GPS & Finestre Orarie Attivi",
+    "url_icona_navigatore": "https://cdn-icons-png.flaticon.com/128/8061/8061970.png",
+    "testo_pulsante_ingresso": "INIZIO LAVORO",
+    "testo_pulsante_uscita": "FINE LAVORO",
+    "etichetta_gps_ricerca": "Ricerca posizione GPS...",
+    "etichetta_gps_ok": "Posizione Idonea",
+    "etichetta_gps_errore": "Fuori zona aziendale",
+    "colore_sfondo_esadecimale": "#0f172a"
+  },
+  
+  "app_registro_amministratore": {
+    "nome_app": "Pannello Admin Feltregas",
+    "sottotitolo": "Registro di Controllo Timbrature",
+    "url_icona_navigatore": "https://cdn-icons-png.flaticon.com/128/10061/10061684.png",
+    "titolo_tabella": "Riepilogo Presenze Dipendenti",
+    "mostra_coordinate_gps": true,
+    "colore_sfondo_esadecimale": "#0f172a"
+  }
+}
