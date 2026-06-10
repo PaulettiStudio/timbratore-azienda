@@ -13,7 +13,7 @@
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
-                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, pianificazione assenze, modifiche real-time e reportistica avanzata.</p>
+                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, giustificativi, inserimenti manuali e reportistica periodica tabellare.</p>
             </div>
             <button onclick="inizializzaPannello()" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2 border border-slate-300 rounded-lg text-sm shadow-sm transition flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" /></svg>
@@ -82,71 +82,116 @@
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
-            <h2 class="text-lg font-bold mb-4 text-emerald-700 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                Registrazione Giustificativi (Ferie / Permessi / Riposo)
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Seleziona Dipendente</label>
-                    <select id="form-assenza-dipendente" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600"></select>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-md font-bold mb-4 text-emerald-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    Registrazione Giustificativi (Ferie / Permessi)
+                </h2>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Dipendente</label>
+                        <select id="form-assenza-dipendente" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600"></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Causale</label>
+                        <select id="form-assenza-tipo" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600">
+                            <option value="ferie">Ferie</option>
+                            <option value="permesso">Permesso Orario</option>
+                            <option value="riposo">Riposo Compensativo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data Giorno</label>
+                        <input id="form-assenza-inizio" type="date" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Ore da Scalare</label>
+                        <input id="form-assenza-ore" type="number" step="0.5" placeholder="Es. 8" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Causale Assenza</label>
-                    <select id="form-assenza-tipo" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600">
-                        <option value="ferie">Ferie</option>
-                        <option value="permesso">Permesso Orario</option>
-                        <option value="riposo">Riposo Compensativo</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data Giorno Assenza</label>
-                    <input id="form-assenza-inizio" type="date" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Totale Ore da Scalare</label>
-                    <input id="form-assenza-ore" type="number" step="0.5" placeholder="Es. 8" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-emerald-600">
-                </div>
+                <button onclick="creaRichiestaAssenza()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+                    Approva e Salva Giustificativo
+                </button>
             </div>
-            <button onclick="creaRichiestaAssenza()" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
-                Approva e Salva a Registro
-            </button>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-md font-bold mb-4 text-indigo-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Forza Inserimento Manuale Timbratura
+                </h2>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Dipendente</label>
+                        <select id="form-manuale-dipendente" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600"></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Tipo Azione</label>
+                        <select id="form-manuale-tipo" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600">
+                            <option value="ingresso">Ingresso</option>
+                            <option value="uscita">Uscita</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data e Ora Precisa</label>
+                        <input id="form-manuale-orario" type="datetime-local" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600">
+                    </div>
+                </div>
+                <button onclick="inserisciTimbraturaManuale()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+                    Inserisci Record a Registro
+                </button>
+            </div>
         </div>
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        Pannello Report & Modifica Presenze
+                        Pannello Report Analitico Periodico
                     </h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Analisi dei resoconti periodici e modifica manuale dei record di ingresso/uscita.</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Seleziona un dipendente e stabilisci le date del filtro per ricalcolarne i resoconti tabellari.</p>
                 </div>
-                <div class="w-full md:w-72">
+                <div class="w-full lg:w-72">
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Dipendente sotto esame</label>
                     <select id="select-report-dipendente" onchange="caricaReportSpecifico()" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-semibold bg-slate-50 focus:outline-sky-600"></select>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-end gap-4 text-xs">
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Data Inizio (Dal)</label>
+                    <input id="filtro-inizio" type="date" onchange="caricaReportSpecifico()" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Data Fine (Al)</label>
+                    <input id="filtro-fine" type="date" onchange="caricaReportSpecifico()" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
+                </div>
+                <button onclick="caricaReportSpecifico()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg transition h-[38px]">
+                    Aggiorna Filtro
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center md:text-left">
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
-                    <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Resoconto Giornaliero (Oggi)</span>
-                    <p id="ore-oggi" class="text-2xl font-black text-amber-900 mt-1">0.0 ore</p>
-                    <p class="text-[11px] text-amber-600 mt-0.5">Fasce orarie controllate</p>
+                    <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Oggi</span>
+                    <p id="ore-oggi" class="text-xl font-black text-amber-900 mt-1">0.0 ore</p>
                 </div>
                 <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
-                    <span class="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">Resoconto Settimanale (Corr.)</span>
-                    <p id="ore-settimana" class="text-2xl font-black text-indigo-900 mt-1">0.0 ore</p>
-                    <p class="text-[11px] text-indigo-600 mt-0.5">Lun - Dom della settimana attuale</p>
+                    <span class="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">Questa Settimana</span>
+                    <p id="ore-settimana" class="text-xl font-black text-indigo-900 mt-1">0.0 ore</p>
                 </div>
                 <div class="bg-sky-50 p-4 rounded-xl border border-sky-200">
-                    <span class="text-[10px] uppercase font-bold text-sky-600 tracking-wider">Resoconto Mensile (Mese Corr.)</span>
-                    <p id="ore-mese" class="text-2xl font-black text-sky-900 mt-1">0.0 ore</p>
-                    <p class="text-[11px] text-sky-600 mt-0.5">Primo giorno - fine mese corrente</p>
+                    <span class="text-[10px] uppercase font-bold text-sky-600 tracking-wider">Questo Mese</span>
+                    <p id="ore-mese" class="text-xl font-black text-sky-900 mt-1">0.0 ore</p>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-300 ring-2 ring-emerald-600/10">
+                    <span class="text-[10px] uppercase font-bold text-emerald-700 tracking-wider font-extrabold">Periodo Selezionato 🎯</span>
+                    <p id="ore-periodo" class="text-2xl font-black text-emerald-900 mt-1">0.0 ore</p>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
@@ -168,7 +213,7 @@
     </div>
 
     <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
             <p class="text-xs text-slate-400 mb-4">I cambiamenti sovrascriveranno istantaneamente i log estratti dal database.</p>
             
@@ -204,7 +249,19 @@
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        function impostaDateDefault() {
+            const oggi = new Date();
+            const fineMeseStr = oggi.toISOString().split('T')[0];
+            
+            const inizioMese = new Date(oggi.getFullYear(), oggi.getMonth(), 1);
+            const inizioMeseStr = inizioMese.toISOString().split('T')[0];
+            
+            document.getElementById('filtro-inizio').value = inizioMeseStr;
+            document.getElementById('filtro-fine').value = fineMeseStr;
+        }
+
         async function inizializzaPannello() {
+            impostaDateDefault();
             await caricaListaDipendenti();
             caricaReportSpecifico();
         }
@@ -224,11 +281,13 @@
             tabella.innerHTML = '';
             
             const selectAssenze = document.getElementById('form-assenza-dipendente');
+            const selectManuale = document.getElementById('form-manuale-dipendente');
             const selectReport = document.getElementById('select-report-dipendente');
             
             const vecchioValoreReport = selectReport.value;
 
             selectAssenze.innerHTML = '';
+            selectManuale.innerHTML = '';
             selectReport.innerHTML = '';
 
             if(!dipendenti || dipendenti.length === 0) {
@@ -252,6 +311,7 @@
 
                 const opzioneHtml = `<option value="${d.id}">${d.cognome} ${d.nome}</option>`;
                 selectAssenze.innerHTML += opzioneHtml;
+                selectManuale.innerHTML += opzioneHtml;
                 selectReport.innerHTML += opzioneHtml;
             });
 
@@ -335,7 +395,7 @@
                 return;
             }
 
-            await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuevoSaldo }).eq('id', dipendenteId);
+            await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
 
             alert("Giustificativo registrato e ore scalate!");
             document.getElementById('form-assenza-ore').value = '';
@@ -343,7 +403,36 @@
             caricaReportSpecifico();
         }
 
-        // --- CORE ANALYSIS & CALCOLI PERIODICI (GIORNO, SETTIMANA, MESE) ---
+        // --- FORZATURA MANUALE NUOVA TIMBRATURA ---
+        async function inserisciTimbraturaManuale() {
+            const dipendenteId = document.getElementById('form-manuale-dipendente').value;
+            const tipoAzione = document.getElementById('form-manuale-tipo').value;
+            const orarioLocale = document.getElementById('form-manuale-orario').value;
+
+            if(!dipendenteId || !orarioLocale) {
+                alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
+                return;
+            }
+
+            // Converte l'input locale in ISO per interloquire con Postgres in UTC
+            const orarioISO = new Date(orarioLocale).toISOString();
+
+            const { error } = await supabaseClient.from('timbrature').insert({
+                dipendente_id: dipendenteId,
+                tipo_azione: tipoAzione,
+                orario: orarioISO
+            });
+
+            if (error) {
+                alert("Errore di inserimento: " + error.message);
+            } else {
+                alert("Timbratura forzata inserita a registro!");
+                document.getElementById('form-manuale-orario').value = '';
+                await caricaReportSpecifico();
+            }
+        }
+
+        // --- CORE ANALYSIS & CALCOLI PERIODICI E FILTRO TABELLARE ---
         async function caricaReportSpecifico() {
             const dipendenteId = document.getElementById('select-report-dipendente').value;
             const corpoTabella = document.getElementById('tabella-report-corpo');
@@ -353,29 +442,36 @@
                 document.getElementById('ore-oggi').innerText = "0.0 ore";
                 document.getElementById('ore-settimana').innerText = "0.0 ore";
                 document.getElementById('ore-mese').innerText = "0.0 ore";
+                document.getElementById('ore-periodo').innerText = "0.0 ore";
                 return;
             }
 
-            // Scarica lo storico completo delle timbrature del dipendente specifico
+            // Lettura delle date scelte dall'amministratore per il filtro periodico
+            const filtroInizioRaw = document.getElementById('filtro-inizio').value;
+            const filtroFineRaw = document.getElementById('filtro-fine').value;
+
+            // Trasforma in oggetti data standardizzando gli estremi (inizio giornata e fine giornata)
+            const limiteInizio = filtroInizioRaw ? new Date(filtroInizioRaw + "T00:00:00") : null;
+            const limiteFine = filtroFineRaw ? new Date(filtroFineRaw + "T23:59:59") : null;
+
             const { data: timbrature, error } = await supabaseClient
                 .from('timbrature')
                 .select('*')
                 .eq('dipendente_id', dipendenteId)
-                .order('orario', { ascending: true }); // Ascending serve per l'algoritmo di accoppiamento ore
+                .order('orario', { ascending: true }); // Manteniamo cronologico per accoppiamento lineare
 
             if (error) {
                 console.error(error);
                 return;
             }
 
-            // Logica matematica di accoppiamento Ingressi/Uscite per calcolare le ore reali lavorate
             let oreOggi = 0;
             let oreSettimana = 0;
             let oreMese = 0;
+            let orePeriodoPersonalizzato = 0;
 
             const oggi = new Date();
             
-            // Trova il lunedì della settimana corrente
             const correnteLunedi = new Date(oggi);
             const numeroGiorno = correnteLunedi.getDay();
             const diffLunedi = correnteLunedi.getDate() - numeroGiorno + (numeroGiorno === 0 ? -6 : 1);
@@ -391,44 +487,53 @@
                     ultimoIngresso = dataT;
                 } else if (t.tipo_azione === 'uscita' && ultimoIngresso) {
                     const diffMs = dataT - ultimoIngresso;
-                    const diffOre = diffMs / (1000 * 60 * 60); // Trasforma i millisecondi in ore decimali
+                    const diffOre = diffMs / (1000 * 60 * 60);
 
-                    // Controlla se la timbratura appartiene a OGGI
+                    // 1. Resoconto statico Giornaliero
                     if (dataT.toDateString() === oggi.toDateString()) {
                         oreOggi += diffOre;
                     }
-                    // Controlla se appartiene a QUESTA SETTIMANA (da lunedì in poi)
+                    // 2. Resoconto statico Settimanale
                     if (dataT >= correnteLunedi) {
                         oreSettimana += diffOre;
                     }
-                    // Controlla se appartiene a QUESTO MESE
+                    // 3. Resoconto statico Mensile
                     if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) {
                         oreMese += diffOre;
                     }
+                    // 4. NUOVO: Resoconto del periodo personalizzato deciso dall'utente
+                    if ((!limiteInizio || dataT >= limiteInizio) && (!limiteFine || dataT <= limiteFine)) {
+                        orePeriodoPersonalizzato += diffOre;
+                    }
 
-                    ultimoIngresso = null; // Resetta la coppia
+                    ultimoIngresso = null;
                 }
             });
 
-            // Mostra i risultati formattati ad un solo decimale
+            // Scrittura dei KPI a schermo
             document.getElementById('ore-oggi').innerText = `${oreOggi.toFixed(1)} ore`;
             document.getElementById('ore-settimana').innerText = `${oreSettimana.toFixed(1)} ore`;
             document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
+            document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
 
-            // Rigenera la tabella visiva per l'admin (mostrata in ordine decrescente per comodità visiva)
+            // Rigenera la visualizzazione tabellare FILTRATA per il periodo
             const timbratureInvertite = [...timbrature].reverse();
             corpoTabella.innerHTML = '';
 
-            if (timbratureInvertite.length === 0) {
-                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessuna timbratura presente in archivio.</td></tr>`;
-                return;
-            }
+            let conteggioRecordVisibili = 0;
 
             timbratureInvertite.forEach(t => {
+                const dataOggetto = new Date(t.orario);
+
+                // Applica il filtro di esclusione della riga dalla tabella se fuori intervallo
+                if (limiteInizio && dataOggetto < limiteInizio) return;
+                if (limiteFine && dataOggetto > limiteFine) return;
+
+                conteggioRecordVisibili++;
+
                 const isIngresso = t.tipo_azione === 'ingresso';
                 const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
                 
-                const dataOggetto = new Date(t.orario);
                 const giorno = dataOggetto.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                 const ora = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -439,7 +544,7 @@
                             ${t.tipo_azione}
                         </span>
                     </td>
-                    <td class="p-3 text-slate-700 capitalize">${giorno}</td>
+                    <td class="p-3 text-slate-700 capitalize font-medium">${giorno}</td>
                     <td class="p-3 font-mono text-sm text-slate-600 font-bold">${ora}</td>
                     <td class="p-3 text-center space-x-3">
                         <button onclick="apriModificaModal('${t.id}', '${t.tipo_azione}', '${t.orario}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded border border-sky-200 transition">
@@ -451,14 +556,17 @@
                     </td>
                 </tr>`;
             });
+
+            if (conteggioRecordVisibili === 0) {
+                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record di presenza trovato per l'intervallo di date selezionato.</td></tr>`;
+            }
         }
 
-        // --- GESTIONE MODIFICA ED ELIMINAZIONE MANUALE TIMBRATURE ---
+        // --- GESTIONE MODIFICA ED ELIMINAZIONE MANUALE ---
         function apriModificaModal(id, tipo, orario) {
             document.getElementById('edit-timbratura-id').value = id;
             document.getElementById('edit-tipo').value = tipo;
             
-            // Converte l'orario ISO del database nel formato richiesto dall'input datetime-local (YYYY-MM-DDTHH:MM)
             const d = new Date(orario);
             const offset = d.getTimezoneOffset() * 60000;
             const formatoLocale = new Date(d.getTime() - offset).toISOString().slice(0, 16);
@@ -477,44 +585,37 @@
             const nuovoOrarioInput = document.getElementById('edit-orario').value;
 
             if(!nuovoOrarioInput) {
-                alert("Inserisci una data e un orario validi!");
+                alert("Inserisci un orario valido!");
                 return;
             }
 
-            // Trasforma l'orario locale dell'input in stringa ISO standard per Supabase
             const orarioISO = new Date(nuovoOrarioInput).toISOString();
 
             const { error } = await supabaseClient
                 .from('timbrature')
-                .update({ 
-                    tipo_azione: nuovoTipo, 
-                    orario: orarioISO 
-                })
+                .update({ tipo_azione: nuovoTipo, orario: orarioISO })
                 .eq('id', id);
 
             if (error) {
-                alert("Errore durante la modifica: " + error.message);
+                alert("Errore modifica: " + error.message);
             } else {
-                alert("Timbratura modificata con successo!");
+                alert("Timbratura aggiornata!");
                 chiudiModificaModal();
-                await caricaReportSpecifico(); // Ricarica e ricalcola i contatori in tempo reale
+                await caricaReportSpecifico();
             }
         }
 
         async function eliminaTimbratura(id) {
-            const conferma = confirm("Sei sicuro di voler eliminare definitivamente questo record di presenza?\nQuesta azione modificherà i calcoli dei resoconti orari.");
+            const conferma = confirm("Vuoi eliminare definitivamente questa timbratura?");
             if (!conferma) return;
 
-            const { error } = await supabaseClient
-                .from('timbrature')
-                .delete()
-                .eq('id', id);
+            const { error } = await supabaseClient.from('timbrature').delete().eq('id', id);
 
             if (error) {
-                alert("Errore durante l'eliminazione: " + error.message);
+                alert("Errore eliminazione: " + error.message);
             } else {
-                alert("Record eliminato dall'archivio.");
-                await caricaReportSpecifico(); // Ricarica e ricalcola i contatori in tempo reale
+                alert("Record eliminato.");
+                await caricaReportSpecifico();
             }
         }
 
