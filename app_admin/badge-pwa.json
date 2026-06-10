@@ -1,18 +1,15 @@
 {
-  "name": "Badge Digitale Aziendale",
-  "short_name": "Badge Feltregas",
-  "description": "Applicazione per la timbratura delle presenze.",
+  "name": "Badge Presenze",
+  "short_name": "Badge",
   "start_url": "badge.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/128/16999/16999629.png",
       "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
