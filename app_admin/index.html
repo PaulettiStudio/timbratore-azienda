@@ -13,7 +13,7 @@
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
-                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, giustificativi, inserimenti manuali e reportistica periodica con vista calendario.</p>
+                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, giustificativi, inserimenti manuali e reportistica periodica con vista calendario dinamica.</p>
             </div>
             <button onclick="inizializzaPannello()" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2 border border-slate-300 rounded-lg text-sm shadow-sm transition flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" /></svg>
@@ -151,7 +151,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                         Pannello Analitico Dipendente
                     </h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Filtra per dipendente ed esamina le sue ore lavorate complessive e giornaliere.</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Filtra ed esamina le ore lavorate complessive, giornaliere e mensili.</p>
                 </div>
                 <div class="w-full lg:w-72">
                     <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Dipendente sotto esame</label>
@@ -163,11 +163,11 @@
                 <div class="flex flex-wrap items-end gap-4">
                     <div>
                         <label class="block font-bold uppercase text-slate-500 mb-1">Data Inizio (Dal)</label>
-                        <input id="filtro-inizio" type="date" onchange="caricaReportSpecifico()" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
+                        <input id="filtro-inizio" type="date" onchange="sincronizzaMeseDaInput(); caricaReportSpecifico();" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
                     </div>
                     <div>
                         <label class="block font-bold uppercase text-slate-500 mb-1">Data Fine (Al)</label>
-                        <input id="filtro-fine" type="date" onchange="caricaReportSpecifico()" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
+                        <input id="filtro-fine" type="date" onchange="sincronizzaMeseDaInput(); caricaReportSpecifico();" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
                     </div>
                 </div>
                 
@@ -201,10 +201,15 @@
             </div>
 
             <div id="sezione-vista-calendario" class="block">
-                <div class="grid grid-cols-7 gap-2 bg-slate-100 p-3 rounded-t-xl border-t border-x border-slate-200 text-center font-bold text-xs uppercase text-slate-600 tracking-wider">
+                <div class="flex justify-between items-center bg-slate-800 text-white p-3 rounded-t-xl border-x border-t border-slate-700">
+                    <button onclick="sfogliaMese(-1)" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">◀ Mese Prec.</button>
+                    <h3 id="label-mese-anno-corrente" class="font-extrabold text-sm uppercase tracking-wider text-center">GENNAIO 2026</h3>
+                    <button onclick="sfogliaMese(1)" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">Mese Succ. ▶</button>
+                </div>
+                <div class="grid grid-cols-7 gap-2 bg-slate-100 p-3 border-x border-slate-200 text-center font-bold text-xs uppercase text-slate-600 tracking-wider">
                     <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
                 </div>
-                <div id="griglia-giorni-calendario" class="grid grid-cols-7 gap-2 border-b border-x border-slate-200 p-3 rounded-b-xl bg-slate-50 min-h-[300px]">
+                <div id="griglia-giorni-calendario" class="grid grid-cols-7 gap-2 border-b border-x border-slate-200 p-3 rounded-b-xl bg-slate-50 min-h-[350px]">
                     </div>
             </div>
 
@@ -263,20 +268,55 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let vistaAttiva = 'calendario';
+        let dataCalendarioPuntatore = new Date(); // Gestione scorrimento mesi richiesto
 
-        function impostaDateDefault() {
-            const oggi = new Date();
-            const fineMeseStr = oggi.toISOString().split('T')[0];
-            const inizioMese = new Date(oggi.getFullYear(), oggi.getMonth(), 1);
-            const inizioMeseStr = inizioMese.toISOString().split('T')[0];
-            
-            document.getElementById('filtro-inizio').value = inizioMeseStr;
-            document.getElementById('filtro-fine').value = fineMeseStr;
+        // FUNZIONI DI FORMATTAZIONE PROPRIETARIE (Forzano 24h e dd/mm/yyyy senza dipendere dal browser)
+        function formattaDataManuale(stringaISO) {
+            const d = new Date(stringaISO);
+            const giorno = String(d.getDate()).padStart(2, '0');
+            const mese = String(d.getMonth() + 1).padStart(2, '0');
+            const anno = d.getFullYear();
+            return `${giorno}/${mese}/${anno}`;
+        }
+
+        function formattaOraManuale24h(stringaISO, mostraSecondi = false) {
+            const d = new Date(stringaISO);
+            const ore = String(d.getHours()).padStart(2, '0');
+            const minuti = String(d.getMinutes()).padStart(2, '0');
+            if (mostraSecondi) {
+                const secondi = String(d.getSeconds()).padStart(2, '0');
+                return `${ore}:${minuti}:${secondi}`;
+            }
+            return `${ore}:${minuti}`;
+        }
+
+        function impostaDateFiltriDaPuntatore() {
+            const y = dataCalendarioPuntatore.getFullYear();
+            const m = dataCalendarioPuntatore.getMonth();
+            const primoGiorno = new Date(y, m, 1);
+            const ultimoGiorno = new Date(y, m + 1, 0);
+
+            document.getElementById('filtro-inizio').value = primoGiorno.toISOString().split('T')[0];
+            document.getElementById('filtro-fine').value = ultimoGiorno.toISOString().split('T')[0];
+        }
+
+        function sincronizzaMeseDaInput() {
+            const inputInizio = document.getElementById('filtro-inizio').value;
+            if (inputInizio) {
+                dataCalendarioPuntatore = new Date(inputInizio + "T00:00:00");
+            }
         }
 
         async function inizializzaPannello() {
-            impostaDateDefault();
+            dataCalendarioPuntatore = new Date();
+            impostaDateFiltriDaPuntatore();
             await caricaListaDipendenti();
+            caricaReportSpecifico();
+        }
+
+        function sfogliaMese(direzione) {
+            dataCalendarioPuntatore.setMonth(dataCalendarioPuntatore.getMonth() + direzione);
+            impostaDateFiltriDaPuntatore();
             caricaReportSpecifico();
         }
 
@@ -382,7 +422,7 @@
         }
 
         async function eliminaDipendente(id, nominativo) {
-            if (!confirm(`Vuoi eliminare ${nominativo}? Verranno cancellate tutte le sue timbrature associate.`)) return;
+            if (!confirm(`Vuoi eliminare ${nominativo}? Verranno cancellate tutte le suas timbrature associate.`)) return;
             try {
                 const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
                 if (error) throw error;
@@ -459,6 +499,11 @@
             const dipendenteId = document.getElementById('select-report-dipendente').value;
             const corpoTabella = document.getElementById('tabella-report-corpo');
             const grigliaCal = document.getElementById('griglia-giorni-calendario');
+            const labelMeseAnno = document.getElementById('label-mese-anno-corrente');
+
+            // Nomi mesi in italiano per la barra richiesta
+            const mesiNomi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+            labelMeseAnno.innerText = `${mesiNomi[dataCalendarioPuntatore.getMonth()]} ${dataCalendarioPuntatore.getFullYear()}`.toUpperCase();
 
             if (!dipendenteId) {
                 corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
@@ -480,7 +525,7 @@
 
                 if (error) throw error;
 
-                // 1. CALCOLO STATISTICHE ORARIE
+                // 1. CALCOLO STATISTICHE GENERALI
                 let oreOggi = 0, oreSettimana = 0, oreMese = 0, orePeriodoPersonalizzato = 0;
                 const oggi = new Date();
                 const correnteLunedi = new Date(oggi);
@@ -489,16 +534,16 @@
                 correnteLunedi.setDate(diffLunedi);
                 correnteLunedi.setHours(0,0,0,0);
 
-                let ultimoIngresso = null;
+                let ultimoIngressoGenerale = null;
 
                 timbrature.forEach(t => {
                     const dataT = new Date(t.orario);
                     const azioneFormattata = t.tipo_azione.toUpperCase(); 
 
                     if (azioneFormattata === 'INGRESSO') {
-                        ultimoIngresso = dataT;
-                    } else if (azioneFormattata === 'USCITA' && ultimoIngresso) {
-                        const diffMs = dataT - ultimoIngresso;
+                        ultimoIngressoGenerale = dataT;
+                    } else if (azioneFormattata === 'USCITA' && ultimoIngressoGenerale) {
+                        const diffMs = dataT - ultimoIngressoGenerale;
                         const diffOre = diffMs / (1000 * 60 * 60);
 
                         if (dataT.toDateString() === oggi.toDateString()) oreOggi += diffOre;
@@ -506,7 +551,7 @@
                         if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) oreMese += diffOre;
                         if ((!limiteInizio || dataT >= limiteInizio) && (!limiteFine || dataT <= limiteFine)) orePeriodoPersonalizzato += diffOre;
 
-                        ultimoIngresso = null; 
+                        ultimoIngressoGenerale = null; 
                     }
                 });
 
@@ -515,7 +560,7 @@
                 document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
                 document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
 
-                // 2. RENDER VISTA TABELLA (REGISTRO)
+                // 2. RENDER VISTA REGISTRO (CORREZIONE FORMATO FORZATO)
                 const timbratureInvertite = [...timbrature].reverse();
                 corpoTabella.innerHTML = '';
                 let recordVisibili = 0;
@@ -530,8 +575,9 @@
                     const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
                     const labelAzione = isIngresso ? 'INGRESSO' : 'USCITA';
 
-                    const dataFormattata = dataOggetto.toLocaleDateString('it-IT'); 
-                    const oraFormattata = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    // Forzatura stringhe manuali sicure al 100%
+                    const dataFormattata = formattaDataManuale(t.orario); 
+                    const oraFormattata = formattaOraManuale24h(t.orario, true);
 
                     corpoTabella.innerHTML += `
                     <tr class="hover:bg-slate-50 transition">
@@ -549,11 +595,10 @@
                     corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record per il periodo.</td></tr>`;
                 }
 
-                // 3. RENDER VISTA CALENDARIO MENSILE
+                // 3. RENDER VISTA CALENDARIO MENSILE CON FILTRO INTEGRATO E TOTALE ORE DIARIO
                 grigliaCal.innerHTML = '';
-                const baseMese = limiteInizio ? new Date(limiteInizio) : new Date();
-                const primoDelMese = new Date(baseMese.getFullYear(), baseMese.getMonth(), 1);
-                const ultimoDelMese = new Date(baseMese.getFullYear(), baseMese.getMonth() + 1, 0);
+                const primoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth(), 1);
+                const ultimoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth() + 1, 0);
 
                 let spaziVuotiIniziali = primoDelMese.getDay() === 0 ? 6 : primoDelMese.getDay() - 1;
                 for(let i = 0; i < spaziVuotiIniziali; i++) {
@@ -561,24 +606,50 @@
                 }
 
                 for(let giornoCorrente = 1; giornoCorrente <= ultimoDelMese.getDate(); giornoCorrente++) {
-                    const dataStringCercata = `${baseMese.getFullYear()}-${(baseMese.getMonth()+1).toString().padStart(2,'0')}-${giornoCorrente.toString().padStart(2,'0')}`;
-                    const timbratureDelGiorno = timbrature.filter(t => t.orario.startsWith(dataStringCercata));
+                    const dataStringCercata = `${dataCalendarioPuntatore.getFullYear()}-${(dataCalendarioPuntatore.getMonth()+1).toString().padStart(2,'0')}-${giornoCorrente.toString().padStart(2,'0')}`;
+                    
+                    // Isola e ordina cronologicamente le timbrature di questo preciso giorno
+                    const timbratureDelGiorno = timbrature
+                        .filter(t => t.orario.startsWith(dataStringCercata))
+                        .sort((a, b) => new Date(a.orario) - new Date(b.orario));
+
+                    // CALCOLO ORE TOTALI DEL GIORNO RICHIESTO
+                    let oreLavorateGiorno = 0;
+                    let marcatoreIngressoGiorno = null;
 
                     let stringaEventiGiorno = timbratureDelGiorno.map(t => {
-                        const dObj = new Date(t.orario);
-                        const oreMinuti = dObj.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-                        const coloreTesto = t.tipo_azione.toUpperCase() === 'INGRESSO' ? 'text-green-600 font-bold' : 'text-red-500';
-                        const simbolo = t.tipo_azione.toUpperCase() === 'INGRESSO' ? '▶' : '◀';
-                        return `<div class="text-[10px] ${coloreTesto} truncate">${simbolo} ${oreMinuti}</div>`;
+                        const oraMinuti24h = formattaOraManuale24h(t.orario, false);
+                        const isIng = t.tipo_azione.toUpperCase() === 'INGRESSO';
+                        
+                        // Calcolo matematico a coppie
+                        if (isIng) {
+                            marcatoreIngressoGiorno = new Date(t.orario);
+                        } else if (!isIng && marcatoreIngressoGiorno) {
+                            oreLavorateGiorno += (new Date(t.orario) - marcatoreIngressoGiorno) / (1000 * 60 * 60);
+                            marcatoreIngressoGiorno = null;
+                        }
+
+                        const coloreTesto = isIng ? 'text-green-600 font-bold' : 'text-red-500';
+                        const simbolo = isIng ? '▶' : '◀';
+                        return `<div class="text-[10px] ${coloreTesto} truncate">${simbolo} ${oraMinuti24h}</div>`;
                     }).join('');
 
-                    const isOggi = oggi.getDate() === giornoCorrente && oggi.getMonth() === baseMese.getMonth() && oggi.getFullYear() === baseMese.getFullYear();
+                    // Stringa totale ore di fine giornata se maggiore di zero
+                    const stringaTotaleGiornoHTML = oreLavorateGiorno > 0 
+                        ? `<div class="text-right text-[10px] font-extrabold text-slate-700 bg-slate-200/80 px-1 py-0.5 rounded border-t border-slate-300 mt-auto">Tot: ${oreLavorateGiorno.toFixed(1)}h</div>` 
+                        : '';
+
+                    const isOggi = oggi.getDate() === giornoCorrente && oggi.getMonth() === dataCalendarioPuntatore.getMonth() && oggi.getFullYear() === dataCalendarioPuntatore.getFullYear();
                     const stileBordoGiorno = isOggi ? 'ring-2 ring-sky-500 bg-sky-50/40 border-sky-300' : 'bg-white border-slate-200';
 
+                    // Intestazione cella forzata in formato corretto dd/mm/yyyy
+                    const intestazioneDataCella = `${giornoCorrente.toString().padStart(2,'0')}/${(dataCalendarioPuntatore.getMonth()+1).toString().padStart(2,'0')}/${dataCalendarioPuntatore.getFullYear()}`;
+
                     grigliaCal.innerHTML += `
-                    <div class="border p-2 min-h-[85px] rounded-xl flex flex-col justify-between shadow-sm transition hover:bg-slate-50 ${stileBordoGiorno}">
-                        <div class="text-right font-bold text-xs text-slate-400">${giornoCorrente}/${(baseMese.getMonth()+1)}</div>
-                        <div class="space-y-0.5 mt-1 overflow-y-auto max-h-[50px]">${stringaEventiGiorno}</div>
+                    <div class="border p-1.5 min-h-[95px] rounded-xl flex flex-col justify-between shadow-sm transition hover:bg-slate-50 ${stileBordoGiorno}">
+                        <div class="text-right font-bold text-[9px] text-slate-400 tracking-tighter">${intestazioneDataCella}</div>
+                        <div class="space-y-0.5 mt-0.5 overflow-y-auto max-h-[48px] flex-grow">${stringaEventiGiorno}</div>
+                        ${stringaTotaleGiornoHTML}
                     </div>`;
                 }
 
@@ -587,7 +658,7 @@
             }
         }
 
-        // --- MODIFICA E CANCELLAZIONE RECORDI ---
+        // --- MODIFICA E CANCELLAZIONE RECORD ---
         function apriModificaModal(id, tipo, orario) {
             document.getElementById('edit-timbratura-id').value = id;
             document.getElementById('edit-tipo').value = tipo;
