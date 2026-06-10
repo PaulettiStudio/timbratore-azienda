@@ -7,237 +7,271 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Impedisce lo zoom fastidioso su mobile durante i clic doppi */
         touch-action: manipulation;
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between p-4 selection:bg-sky-500/30">
 
-    <!-- SCHERMATA DI CARICAMENTO INIZIALE -->
     <div id="loading-screen" class="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-50 transition-opacity duration-300">
         <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-700 border-t-sky-500 mb-4"></div>
-        <p class="text-sm text-slate-400 font-medium tracking-wide animate-pulse">Verifica identità in corso...</p>
+        <p class="text-sm text-slate-400 font-medium tracking-wide animate-pulse">Verifica identità e posizione GPS...</p>
     </div>
 
-    <!-- STATO DI ERRORE (Se il link è sbagliato o manca l'ID) -->
     <div id="error-screen" class="hidden fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 text-center z-50">
         <div class="h-16 w-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mb-4 border border-rose-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
         </div>
-        <h2 class="text-xl font-bold text-white mb-2">Link di Accesso Non Valido</h2>
-        <p class="text-sm text-slate-400 max-w-xs mb-6">Questo indirizzo non contiene un codice dipendente valido o è incompleto. Richiedi un nuovo QR Code/Link al tuo responsabile.</p>
+        <h2 class="text-xl font-bold text-white mb-2" id="error-titolo">Accesso Negato</h2>
+        <p class="text-sm text-slate-400 max-w-xs mb-6" id="error-messaggio">Codice dipendente non valido.</p>
     </div>
 
-    <!-- NOTIFICA DI SUCCESSO TIMBRATURA -->
     <div id="success-toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-emerald-500 text-white p-4 rounded-2xl shadow-2xl border border-emerald-400 transform -translate-y-32 opacity-0 transition-all duration-500 z-50 flex items-center gap-3">
-        <div class="bg-white/20 p-2 rounded-xl">
+        <div id="toast-icon-box" class="bg-white/20 p-2 rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
         </div>
-        <div>
+        <div class="flex-1">
             <h4 class="font-bold text-sm" id="toast-titolo">Operazione Riuscita</h4>
             <p class="text-xs text-emerald-100 mt-0.5" id="toast-messaggio">Orario registrato correttamente.</p>
         </div>
     </div>
 
-    <!-- CONTENUTO PRINCIPALE -->
-    <main class="w-full max-w-md mx-auto flex-grow flex flex-col justify-center gap-8 py-6">
+    <main class="w-full max-w-md mx-auto flex-grow flex flex-col justify-center gap-6 py-4">
         
-        <!-- INTRODUZIONE DIPENDENTE -->
         <div class="text-center">
             <span class="text-xs font-bold uppercase tracking-widest text-sky-400 bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">Badge Aziendale</span>
-            <h1 class="text-3xl font-black text-white mt-3 tracking-tight" id="nome-dipendente">Caricamento...</h1>
-            <p class="text-sm text-slate-400 mt-1 flex items-center justify-center gap-1.5">
-                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-                Dispositivo Connesso
+            <h1 class="text-3xl font-black text-white mt-2 tracking-tight" id="nome-dipendente">Caricamento...</h1>
+            <p id="stato-gps" class="text-xs text-amber-400 mt-1 flex items-center justify-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                Ricerca posizione GPS...
             </p>
         </div>
 
-        <!-- OROLOGIO DIGITALE IN TEMPO REALE -->
         <div class="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-6 text-center backdrop-blur-md shadow-inner">
             <div id="orologio-ora" class="text-5xl font-mono font-black text-white tracking-normal select-none">00:00:00</div>
-            <div id="orologio-data" class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-2">Mercoledì, 1 Gennaio</div>
+            <div id="orologio-data" class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-2">...</div>
+            
+            <div class="mt-4 pt-3 border-t border-slate-700/40 text-left text-[11px] text-slate-400 space-y-1 font-mono">
+                <div class="flex justify-between"><span>Finestre INGRESSO oggi:</span> <span class="text-emerald-400" id="info-finestre-in">--</span></div>
+                <div class="flex justify-between"><span>Finestre USCITA oggi:</span> <span class="text-rose-400" id="info-finestre-out">--</span></div>
+            </div>
         </div>
 
-        <!-- PULSANTI DI TIMBRATURA (TASTONI GIGANTI) -->
         <div class="flex flex-col gap-4">
-            <!-- PULSANTE INGRESSO -->
-            <button onclick="timbra('INGRESSO')" class="group relative w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white p-6 rounded-2xl font-extrabold text-xl tracking-wide shadow-lg shadow-emerald-900/30 border border-emerald-500 transition-all flex items-center justify-between overflow-hidden">
+            <button onclick="timbra('INGRESSO')" class="group relative w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white p-5 rounded-2xl font-extrabold text-xl tracking-wide shadow-lg shadow-emerald-900/30 border border-emerald-500 transition-all flex items-center justify-between overflow-hidden">
                 <div class="flex items-center gap-4 z-10">
-                    <span class="bg-white/10 p-3 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                    <span class="bg-white/10 p-2.5 rounded-xl border border-white/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14" /></svg>
                     </span>
                     <span>INIZIO LAVORO</span>
                 </div>
-                <span class="text-xs font-bold uppercase tracking-wider bg-emerald-700/60 border border-emerald-400/30 px-3 py-1 rounded-lg text-emerald-100 z-10">INGRESSO</span>
-                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                <span class="text-xs font-bold bg-emerald-700/60 border border-emerald-400/30 px-3 py-1 rounded-lg z-10">IN</span>
             </button>
 
-            <!-- PULSANTE USCITA -->
-            <button onclick="timbra('USCITA')" class="group relative w-full bg-rose-600 hover:bg-rose-500 active:scale-[0.98] text-white p-6 rounded-2xl font-extrabold text-xl tracking-wide shadow-lg shadow-rose-900/30 border border-rose-500 transition-all flex items-center justify-between overflow-hidden">
+            <button onclick="timbra('USCITA')" class="group relative w-full bg-rose-600 hover:bg-rose-500 active:scale-[0.98] text-white p-5 rounded-2xl font-extrabold text-xl tracking-wide shadow-lg shadow-rose-900/30 border border-rose-500 transition-all flex items-center justify-between overflow-hidden">
                 <div class="flex items-center gap-4 z-10">
-                    <span class="bg-white/10 p-3 rounded-xl border border-white/10 group-hover:scale-110 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    <span class="bg-white/10 p-2.5 rounded-xl border border-white/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7" /></svg>
                     </span>
                     <span>FINE LAVORO</span>
                 </div>
-                <span class="text-xs font-bold uppercase tracking-wider bg-rose-700/60 border border-rose-400/30 px-3 py-1 rounded-lg text-rose-100 z-10">USCITA</span>
-                <div class="absolute inset-0 bg-gradient-to-r from-rose-500 to-orange-500 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                <span class="text-xs font-bold bg-rose-700/60 border border-rose-400/30 px-3 py-1 rounded-lg z-10">OUT</span>
             </button>
         </div>
-
     </main>
 
-    <!-- FOOTER CON SUGGERIMENTO APP CORRETTO PER SAFARI/CHROME -->
     <footer class="w-full max-w-sm mx-auto text-center border-t border-slate-800/60 pt-4 pb-2">
-        <p class="text-xs text-slate-500 font-medium">
-            💡 Condividi o clicca su <span class="text-slate-400 font-bold">"Aggiungi a Home"</span> per trasformare questa pagina in un'app sul telefono.
-        </p>
+        <p class="text-xs text-slate-500">Recinto GPS & Finestre Orarie Attivi</p>
     </footer>
 
     <script>
-        // --- CONFIGURAZIONE PARAMETRI SUPABASE ---
+        // --- 1. CONFIGURAZIONE CREDENZIALI SUPABASE ---
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dipendenteId = null;
-        let gpsLatitudine = 0;
-        let gpsLongitudine = 0;
+        // --- 2. CONFIGURAZIONE REGINTO GPS AGGIORNATO ---
+        const AZIENDA_LAT = 46.011914; 
+        const AZIENDA_LON = 11.925732; 
+        const RAGGIO_MASSIMO_METRI = 20; // Raggio di tolleranza attorno al punto fiscale
 
-        // 1. OROLOGIO IN TEMPO REALE CON FORMATTAZIONE ITALIANA
+        // --- 3. FINESTRE ORARIE DI TOLLERANZA ADATTATE ---
+        const FINESTRE_ORARIE = {
+            IN_MATTINA:    { inizio: "06:30", fine: "09:00" },  // Per l'orario 07:30
+            OUT_MATTINA:   { inizio: "12:00", fine: "14:00" },  // Per l'orario 12:30
+            IN_POMERIGGIO: { inizio: "13:45", fine: "16:00" },  // Per l'orario 14:30
+            OUT_POMERIGGIO: { inizio: "18:30", fine: "20:30" }   // Per l'orario 19:00
+        };
+
+        let dipendenteId = null;
+        let gpsLatitudine = null;
+        let gpsLongitudine = null;
+        let gpsPronto = false;
+
         function aggiornaOrologio() {
             const adesso = new Date();
-            
-            const ore = String(adesso.getHours()).padStart(2, '0');
-            const minuti = String(adesso.getMinutes()).padStart(2, '0');
-            const secondi = String(adesso.getSeconds()).padStart(2, '0');
-            document.getElementById('orologio-ora').innerText = `${ore}:${minuti}:${secondi}`;
-
-            const opzioniData = { weekday: 'long', day: 'numeric', month: 'long' };
-            const dataFormattata = adesso.toLocaleDateString('it-IT', opzioniData);
-            document.getElementById('orologio-data').innerText = dataFormattata;
+            document.getElementById('orologio-ora').innerText = adesso.toLocaleTimeString('it-IT');
+            document.getElementById('orologio-data').innerText = adesso.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
         }
         setInterval(aggiornaOrologio, 1000);
         aggiornaOrologio();
 
-        // 2. RECUPERA COCOORDINATE GPS IN BACKGROUND (Mentre la pagina carica)
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
+        // Stampa a schermo le finestre valide per il giorno corrente
+        function stampaFinestreNellaUI() {
+            const g = new Date().getDay();
+            if (g === 0) {
+                document.getElementById('info-finestre-in').innerText = "Chiuso (Domenica)";
+                document.getElementById('info-finestre-out').innerText = "Chiuso (Domenica)";
+            } else if (g === 6) {
+                document.getElementById('info-finestre-in').innerText = `${FINESTRE_ORARIE.IN_MATTINA.inizio}-${FINESTRE_ORARIE.IN_MATTINA.fine}`;
+                document.getElementById('info-finestre-out').innerText = `${FINESTRE_ORARIE.OUT_MATTINA.inizio}-${FINESTRE_ORARIE.OUT_MATTINA.fine}`;
+            } else {
+                document.getElementById('info-finestre-in').innerText = `${FINESTRE_ORARIE.IN_MATTINA.inizio}-${FINESTRE_ORARIE.IN_MATTINA.fine} / ${FINESTRE_ORARIE.IN_POMERIGGIO.inizio}-${FINESTRE_ORARIE.IN_POMERIGGIO.fine}`;
+                document.getElementById('info-finestre-out').innerText = `${FINESTRE_ORARIE.OUT_MATTINA.inizio}-${FINESTRE_ORARIE.OUT_MATTINA.fine} / ${FINESTRE_ORARIE.OUT_POMERIGGIO.inizio}-${FINESTRE_ORARIE.OUT_POMERIGGIO.fine}`;
+            }
+        }
+        stampaFinestreNellaUI();
+
+        function calcolaDistanzaMetri(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; 
+            const p1 = lat1 * Math.PI / 180;
+            const p2 = lat2 * Math.PI / 180;
+            const deltaP = (lat2 - lat1) * Math.PI / 180;
+            const deltaL = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(deltaP/2) * Math.sin(deltaP/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(deltaL/2) * Math.sin(deltaL/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); 
+        }
+
+        function avviaMonitoraggioGPS() {
+            if (!navigator.geolocation) {
+                document.getElementById('stato-gps').innerHTML = "❌ GPS non supportato dal telefono.";
+                return;
+            }
+            navigator.geolocation.watchPosition(
                 (position) => {
                     gpsLatitudine = position.coords.latitude;
                     gpsLongitudine = position.coords.longitude;
+                    gpsPronto = true;
+                    const dist = calcolaDistanzaMetri(gpsLatitudine, gpsLongitudine, AZIENDA_LAT, AZIENDA_LON);
+                    if(dist <= RAGGIO_MASSIMO_METRI) {
+                        document.getElementById('stato-gps').innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span> Posizione Idonea (${Math.round(dist)}m)`;
+                        document.getElementById('stato-gps').className = "text-xs text-emerald-400 mt-1 flex items-center justify-center gap-1.5";
+                    } else {
+                        document.getElementById('stato-gps').innerHTML = `❌ Fuori zona aziendale (${Math.round(dist)}m)`;
+                        document.getElementById('stato-gps').className = "text-xs text-rose-400 font-bold mt-1 flex items-center justify-center gap-1.5";
+                    }
                 },
-                (error) => {
-                    console.warn("Rilevamento GPS rifiutato o non disponibile.");
+                () => {
+                    gpsPronto = false;
+                    document.getElementById('stato-gps').innerHTML = "❌ Attiva il GPS e dai i permessi.";
+                    document.getElementById('stato-gps').className = "text-xs text-rose-500 font-bold mt-1 flex items-center justify-center gap-1.5";
                 },
-                { enableHighAccuracy: true, timeout: 5000 }
+                { enableHighAccuracy: true, timeout: 10000 }
             );
         }
 
-        // 3. MOSTRA UN MESSAGGIO DI CONFERMA A SCOMPARSA (Toast)
-        function mostraNotificaSuccesso(tipo, oraFormattata) {
+        function mostraNotificaPopUp(tipo, titoloStr, messaggioStr) {
             const toast = document.getElementById('success-toast');
-            const titolo = document.getElementById('toast-titolo');
-            const messaggio = document.getElementById('toast-messaggio');
+            document.getElementById('toast-titolo').innerText = titoloStr;
+            document.getElementById('toast-messaggio').innerText = messaggioStr;
 
-            if(tipo === 'INGRESSO') {
-                toast.className = toast.className.replace('bg-rose-500', 'bg-emerald-500').replace('border-rose-400', 'border-emerald-400');
-                titolo.innerText = "Buon Lavoro! ▶";
-                messaggio.innerText = `Ingresso registrato alle ore ${oraFormattata}.`;
-            } else {
-                toast.className = toast.className.replace('bg-emerald-500', 'bg-rose-500').replace('border-emerald-400', 'border-rose-400');
-                titolo.innerText = "Fine Turno ◀";
-                messaggio.innerText = `Uscita registrata alle ore ${oraFormattata}. Buona serata!`;
-            }
+            if(tipo === 'SUCCESS_IN') toast.className = "fixed top-4 inset-x-4 max-w-sm mx-auto bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl border border-emerald-500 transition-all duration-500 z-50 flex items-center gap-3";
+            else if(tipo === 'SUCCESS_OUT') toast.className = "fixed top-4 inset-x-4 max-w-sm mx-auto bg-rose-600 text-white p-4 rounded-2xl shadow-2xl border border-rose-500 transition-all duration-500 z-50 flex items-center gap-3";
+            else toast.className = "fixed top-4 inset-x-4 max-w-sm mx-auto bg-amber-600 text-white p-4 rounded-2xl shadow-2xl border border-amber-500 transition-all duration-500 z-50 flex items-center gap-3";
 
-            // Animazione di comparsa
             toast.classList.remove('-translate-y-32', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-
-            // Scompare dopo 4 secondi
-            setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('-translate-y-32', 'opacity-0');
-            }, 4000);
+            setTimeout(() => { toast.classList.add('-translate-y-32', 'opacity-0'); }, 4500);
         }
 
-        // 4. AUTENTICAZIONE TRAMITE LINK MAGICO (URL PARAM)
         async function verificaAccessoEIdentita() {
             const parametriUrl = new URLSearchParams(window.location.search);
             dipendenteId = parametriUrl.get('id');
-
-            if (!dipendenteId) {
-                mostraSchermataErrore();
-                return;
-            }
-
+            if (!dipendenteId) { mostraErroreCritico("Link Errato", "Codice identificativo mancante."); return; }
             try {
-                // Interroga Supabase per verificare se l'ID esiste davvero
-                const { data: dipendente, error } = await supabaseClient
-                    .from('dipendenti')
-                    .select('nome, cognome')
-                    .eq('id', dipendenteId)
-                    .single();
-
-                if (error || !dipendente) {
-                    throw new Error("Dipendente inesistente");
-                }
-
-                // Aggiorna il nome a schermo
+                const { data: dipendente, error } = await supabaseClient.from('dipendenti').select('nome, cognome').eq('id', dipendenteId).single();
+                if (error || !dipendente) throw new Error();
                 document.getElementById('nome-dipendente').innerText = `${dipendente.nome} ${dipendente.cognome}`;
-                
-                // Rimuove la schermata di caricamento con un effetto fluido
-                const loadingScreen = document.getElementById('loading-screen');
-                loadingScreen.classList.add('opacity-0');
-                setTimeout(() => loadingScreen.classList.add('hidden'), 300);
-
-            } catch (err) {
-                console.error(err);
-                mostraSchermataErrore();
-            }
+                document.getElementById('loading-screen').classList.add('opacity-0');
+                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); avviaMonitoraggioGPS(); }, 300);
+            } catch (err) { mostraErroreCritico("Errore", "Badge non riconosciuto."); }
         }
 
-        function mostraSchermataErrore() {
+        function mostraErroreCritico(titolo, messaggio) {
             document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('error-titolo').innerText = titolo;
+            document.getElementById('error-messaggio').innerText = messaggio;
             document.getElementById('error-screen').classList.remove('hidden');
         }
 
-        // 5. FUNZIONE DI TIMBRATURA EFFETTIVA
+        function stringaInMinuti(orarioStr) {
+            const parti = orarioStr.split(':');
+            return parseInt(parti[0], 10) * 60 + parseInt(parti[1], 10);
+        }
+
+        function verificaInFinestra(minutiAttuali, finestra) {
+            return minutiAttuali >= stringaInMinuti(finestra.inizio) && minutiAttuali <= stringaInMinuti(finestra.fine);
+        }
+
         async function timbra(tipoAzione) {
             if (!dipendenteId) return;
 
-            // Disabilita temporaneamente l'interazione per evitare timbrature doppie involontarie
+            // CONTROLLO GPS
+            if (!gpsPronto || gpsLatitudine === null) {
+                mostraNotificaPopUp('ERRORE', "Errore GPS ❌", "Posizione non rilevata.");
+                return;
+            }
+            if (calcolaDistanzaMetri(gpsLatitudine, gpsLongitudine, AZIENDA_LAT, AZIENDA_LON) > RAGGIO_MASSIMO_METRI) {
+                mostraNotificaPopUp('ERRORE', "Fuori Zona ❌", "Avvicinati alla sede per timbrare.");
+                return;
+            }
+
+            // CONTROLLO GIORNI E FINESTRE ORARIE
+            const adesso = new Date();
+            const giornoSettimana = adesso.getDay(); // 0=Domenica, 1=Lun... 6=Sab
+            const minutiAttuali = adesso.getHours() * 60 + adesso.getMinutes();
+            const oraFormattata = adesso.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+            if (giornoSettimana === 0) {
+                mostraNotificaPopUp('ERRORE', "Azienda Chiusa ⛔", "Domenica non è consentito timbrare.");
+                return;
+            }
+
+            let orarioValido = false;
+
+            if (tipoAzione === 'INGRESSO') {
+                const inMattina = verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.IN_MATTINA);
+                const inPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.IN_POMERIGGIO);
+                if (inMattina || inPomeriggio) orarioValido = true;
+            }
+
+            if (tipoAzione === 'USCITA') {
+                const outMattina = verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.OUT_MATTINA);
+                const outPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.OUT_POMERIGGIO);
+                if (outMattina || outPomeriggio) orarioValido = true;
+            }
+
+            if (!orarioValido) {
+                mostraNotificaPopUp('ERRORE', "Blocco Orario ⛔", `Nessun turno attivo alle ore ${oraFormattata} per questo giorno.`);
+                return;
+            }
+
             document.body.style.pointerEvents = 'none';
-
             try {
-                const dataOraCorrenteISO = new Date().toISOString();
-                const oraLocaleStr = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-
-                // Inserisce il record direttamente nel database
-                const { error } = await supabaseClient
-                    .from('timbrature')
-                    .insert({
-                        dipendente_id: dipendenteId,
-                        tipo_azione: tipoAzione,
-                        orario: dataOraCorrenteISO,
-                        latitudine: gpsLatitudine,
-                        longitudine: gpsLongitudine
-                    });
-
+                const { error } = await supabaseClient.from('timbrature').insert({
+                    dipendente_id: dipendenteId,
+                    tipo_azione: tipoAzione,
+                    orario: adesso.toISOString(),
+                    latitudine: gpsLatitudine,
+                    longitudine: gpsLongitudine
+                });
                 if (error) throw error;
-
-                // Mostra il feedback visivo al dipendente
-                mostraNotificaSuccesso(tipoAzione, oraLocaleStr);
-
+                mostraNotificaPopUp(tipoAzione === 'INGRESSO' ? 'SUCCESS_IN' : 'SUCCESS_OUT', tipoAzione === 'INGRESSO' ? "Buon Lavoro!" : "Fine Turno", `Registrato alle ${oraFormattata}.`);
             } catch (err) {
-                alert("Errore di rete o di sincronizzazione. Riprova tra qualche istante: " + err.message);
+                alert("Errore: " + err.message);
             } finally {
-                // Riabilita i pulsanti
                 document.body.style.pointerEvents = 'auto';
             }
         }
 
-        // Avvia il controllo identità all'apertura del file
         verificaAccessoEIdentita();
     </script>
 </body>
