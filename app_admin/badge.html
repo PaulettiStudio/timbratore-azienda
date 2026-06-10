@@ -12,11 +12,13 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between p-4 selection:bg-sky-500/30">
 
+    <!-- SCHERMATA DI CARICAMENTO INIZIALE -->
     <div id="loading-screen" class="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-50 transition-opacity duration-300">
         <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-700 border-t-sky-500 mb-4"></div>
         <p class="text-sm text-slate-400 font-medium tracking-wide animate-pulse">Verifica identità e posizione GPS...</p>
     </div>
 
+    <!-- STATO DI ERRORE -->
     <div id="error-screen" class="hidden fixed inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 text-center z-50">
         <div class="h-16 w-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mb-4 border border-rose-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -25,6 +27,7 @@
         <p class="text-sm text-slate-400 max-w-xs mb-6" id="error-messaggio">Codice dipendente non valido.</p>
     </div>
 
+    <!-- TOAST NOTIFICA FLOTTANTE -->
     <div id="success-toast" class="fixed top-4 inset-x-4 max-w-sm mx-auto bg-emerald-500 text-white p-4 rounded-2xl shadow-2xl border border-emerald-400 transform -translate-y-32 opacity-0 transition-all duration-500 z-50 flex items-center gap-3">
         <div id="toast-icon-box" class="bg-white/20 p-2 rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
@@ -35,6 +38,7 @@
         </div>
     </div>
 
+    <!-- CONTENUTO PRINCIPALE -->
     <main class="w-full max-w-md mx-auto flex-grow flex flex-col justify-center gap-6 py-4">
         
         <div class="text-center">
@@ -46,16 +50,13 @@
             </p>
         </div>
 
+        <!-- OROLOGIO (PARTE DELLE FINESTRE VISIVE RIMOSSA) -->
         <div class="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-6 text-center backdrop-blur-md shadow-inner">
             <div id="orologio-ora" class="text-5xl font-mono font-black text-white tracking-normal select-none">00:00:00</div>
             <div id="orologio-data" class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-2">...</div>
-            
-            <div class="mt-4 pt-3 border-t border-slate-700/40 text-left text-[11px] text-slate-400 space-y-1 font-mono">
-                <div class="flex justify-between"><span>Finestre INGRESSO oggi:</span> <span class="text-emerald-400" id="info-finestre-in">--</span></div>
-                <div class="flex justify-between"><span>Finestre USCITA oggi:</span> <span class="text-rose-400" id="info-finestre-out">--</span></div>
-            </div>
         </div>
 
+        <!-- PULSANTI DI TIMBRATURA -->
         <div class="flex flex-col gap-4">
             <button onclick="timbra('INGRESSO')" class="group relative w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white p-5 rounded-2xl font-extrabold text-xl tracking-wide shadow-lg shadow-emerald-900/30 border border-emerald-500 transition-all flex items-center justify-between overflow-hidden">
                 <div class="flex items-center gap-4 z-10">
@@ -89,17 +90,17 @@
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. CONFIGURAZIONE REGINTO GPS AGGIORNATO ---
+        // --- 2. CONFIGURAZIONE REGINTO GPS (TUE COORDINATE) ---
         const AZIENDA_LAT = 46.011914; 
         const AZIENDA_LON = 11.925732; 
-        const RAGGIO_MASSIMO_METRI = 20; // Raggio di tolleranza attorno al punto fiscale
+        const RAGGIO_MASSIMO_METRI = 50; 
 
-        // --- 3. FINESTRE ORARIE DI TOLLERANZA ADATTATE ---
+        // --- 3. FINESTRE ORARIE DI TOLLERANZA (INVISIBILI MA ATTIVE) ---
         const FINESTRE_ORARIE = {
-            IN_MATTINA:    { inizio: "06:30", fine: "09:00" },  // Per l'orario 07:30
-            OUT_MATTINA:   { inizio: "12:00", fine: "14:00" },  // Per l'orario 12:30
-            IN_POMERIGGIO: { inizio: "13:45", fine: "16:00" },  // Per l'orario 14:30
-            OUT_POMERIGGIO: { inizio: "18:30", fine: "20:30" }   // Per l'orario 19:00
+            IN_MATTINA:    { inizio: "06:30", fine: "09:00" },  // Per turno 07:30
+            OUT_MATTINA:   { inizio: "12:00", fine: "14:00" },  // Per turno 12:30
+            IN_POMERIGGIO: { inizio: "13:45", fine: "16:00" },  // Per turno 14:30
+            OUT_POMERIGGIO: { inizio: "18:30", fine: "20:30" }   // Per turno 19:00
         };
 
         let dipendenteId = null;
@@ -114,22 +115,6 @@
         }
         setInterval(aggiornaOrologio, 1000);
         aggiornaOrologio();
-
-        // Stampa a schermo le finestre valide per il giorno corrente
-        function stampaFinestreNellaUI() {
-            const g = new Date().getDay();
-            if (g === 0) {
-                document.getElementById('info-finestre-in').innerText = "Chiuso (Domenica)";
-                document.getElementById('info-finestre-out').innerText = "Chiuso (Domenica)";
-            } else if (g === 6) {
-                document.getElementById('info-finestre-in').innerText = `${FINESTRE_ORARIE.IN_MATTINA.inizio}-${FINESTRE_ORARIE.IN_MATTINA.fine}`;
-                document.getElementById('info-finestre-out').innerText = `${FINESTRE_ORARIE.OUT_MATTINA.inizio}-${FINESTRE_ORARIE.OUT_MATTINA.fine}`;
-            } else {
-                document.getElementById('info-finestre-in').innerText = `${FINESTRE_ORARIE.IN_MATTINA.inizio}-${FINESTRE_ORARIE.IN_MATTINA.fine} / ${FINESTRE_ORARIE.IN_POMERIGGIO.inizio}-${FINESTRE_ORARIE.IN_POMERIGGIO.fine}`;
-                document.getElementById('info-finestre-out').innerText = `${FINESTRE_ORARIE.OUT_MATTINA.inizio}-${FINESTRE_ORARIE.OUT_MATTINA.fine} / ${FINESTRE_ORARIE.OUT_POMERIGGIO.inizio}-${FINESTRE_ORARIE.OUT_POMERIGGIO.fine}`;
-            }
-        }
-        stampaFinestreNellaUI();
 
         function calcolaDistanzaMetri(lat1, lon1, lat2, lon2) {
             const R = 6371e3; 
@@ -227,7 +212,7 @@
             // CONTROLLO GIORNI E FINESTRE ORARIE
             const adesso = new Date();
             const giornoSettimana = adesso.getDay(); // 0=Domenica, 1=Lun... 6=Sab
-            const minutiAttuali = adesso.getHours() * 60 + adesso.getMinutes();
+            const minutes = adesso.getHours() * 60 + adesso.getMinutes();
             const oraFormattata = adesso.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 
             if (giornoSettimana === 0) {
@@ -238,14 +223,14 @@
             let orarioValido = false;
 
             if (tipoAzione === 'INGRESSO') {
-                const inMattina = verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.IN_MATTINA);
-                const inPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.IN_POMERIGGIO);
+                const inMattina = verificaInFinestra(minutes, FINESTRE_ORARIE.IN_MATTINA);
+                const inPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutes, FINESTRE_ORARIE.IN_POMERIGGIO);
                 if (inMattina || inPomeriggio) orarioValido = true;
             }
 
             if (tipoAzione === 'USCITA') {
-                const outMattina = verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.OUT_MATTINA);
-                const outPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutiAttuali, FINESTRE_ORARIE.OUT_POMERIGGIO);
+                const outMattina = verificaInFinestra(minutes, FINESTRE_ORARIE.OUT_MATTINA);
+                const outPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutes, FINESTRE_ORARIE.OUT_POMERIGGIO);
                 if (outMattina || outPomeriggio) orarioValido = true;
             }
 
