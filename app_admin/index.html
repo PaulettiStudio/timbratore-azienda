@@ -10,7 +10,6 @@
 <body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
         
-        <!-- HEADER -->
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
@@ -22,10 +21,8 @@
             </button>
         </header>
 
-        <!-- GRIGLIA SUPERIORE: INSERIMENTO E ANAGRAFICA -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             
-            <!-- FORM AGGIUNGI DIPENDENTE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
                 <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-sky-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
@@ -60,7 +57,6 @@
                 </div>
             </div>
 
-            <!-- TABELLA LISTA DIPENDENTI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-between">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-slate-800">
@@ -79,18 +75,15 @@
                                 </tr>
                             </thead>
                             <tbody id="tabella-dipendenti" class="text-sm divide-y divide-slate-100">
-                                <!-- JS -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SEZIONE GIUSTIFICATIVI E INSERIMENTO MANUALE TIMBRATURE -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             
-            <!-- REGISTRAZIONE GIUSTIFICATIVI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-emerald-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -123,7 +116,6 @@
                 </button>
             </div>
 
-            <!-- INSERIMENTO MANUALE TIMBRATURE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-indigo-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -156,7 +148,6 @@
             </div>
         </div>
 
-        <!-- SEZIONE REPORT, CALENDARIO E TABELLA TIMBRATURE -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
                 <div>
@@ -172,7 +163,6 @@
                 </div>
             </div>
 
-            <!-- SELEZIONE PERIODO PERSONALIZZATO E NAVIGAZIONE -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-end justify-between gap-4 text-xs">
                 <div class="flex flex-wrap items-end gap-4">
                     <div>
@@ -185,7 +175,6 @@
                     </div>
                 </div>
                 
-                <!-- SELETTORE VISTA: CALENDARIO O TABELLA -->
                 <div class="flex bg-slate-200 p-1 rounded-lg">
                     <button id="btn-vista-calendario" onclick="cambiaVista('calendario')" class="bg-white text-slate-900 font-bold px-4 py-1.5 rounded-md shadow-sm transition">
                         Vista Calendario 📅
@@ -196,7 +185,6 @@
                 </div>
             </div>
 
-            <!-- RISULTATI DEI RESOCONTI CALCOLATI -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center md:text-left">
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
                     <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Oggi</span>
@@ -216,7 +204,6 @@
                 </div>
             </div>
 
-            <!-- CONTENITORE VISTA 1: CALENDARIO MENSILE DINAMICO -->
             <div id="sezione-vista-calendario" class="block">
                 <div class="flex justify-between items-center bg-slate-800 text-white p-3 rounded-t-xl border-x border-t border-slate-700">
                     <button onclick="sfogliaMese(-1)" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">◀ Mese Prec.</button>
@@ -227,11 +214,9 @@
                     <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
                 </div>
                 <div id="griglia-giorni-calendario" class="grid grid-cols-7 gap-2 border-b border-x border-slate-200 p-3 rounded-b-xl bg-slate-50 min-h-[350px]">
-                    <!-- JS -->
-                </div>
+                    </div>
             </div>
 
-            <!-- CONTENITORE VISTA 2: TABELLA DETTAGLIATA (REGISTRO) -->
             <div id="sezione-vista-registro" class="hidden overflow-x-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -253,7 +238,6 @@
         </div>
     </div>
 
-    <!-- MODAL GENERAZIONE DI ACCESSO (LINK MAGICO & QR CODE) -->
     <div id="modal-link-accesso" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 text-center">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-violet-100 text-violet-600 mb-3">
@@ -262,12 +246,10 @@
             <h3 class="text-lg font-bold text-slate-900" id="link-titolo-nominativo">Link di Accesso Rapido</h3>
             <p class="text-xs text-slate-400 mt-1 mb-4">Invia questo indirizzo al dipendente oppure fagli inquadrare il QR Code. Non serviranno password.</p>
             
-            <!-- QR Code container -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-center mb-4">
                 <img id="qrcode-immagine" src="" alt="Generazione QR Code..." class="w-40 h-40 object-contain">
             </div>
 
-            <!-- Input link -->
             <div class="flex gap-2 mb-4">
                 <input id="input-link-generato" type="text" readonly class="w-full border border-slate-200 p-2 rounded-lg text-xs bg-slate-50 text-slate-500 font-mono focus:outline-none">
                 <button onclick="copiaLinkAccesso()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-2 rounded-lg text-xs tracking-tight transition shrink-0">Copia</button>
@@ -277,11 +259,10 @@
         </div>
     </div>
 
-    <!-- MODAL DI MODIFICA DIPENDENTE -->
     <div id="modal-modifica-dipendente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Anagrafica Dipendente</h3>
-            <p class="text-xs text-slate-400 mb-4">I cambiamenti aggiorneranno l'organico e i menu di selezione.</p>
+            <p class="text-xs text-slate-400 mb-4">I cambiamenti aggiorneranno l'organico e i menu di selectione.</p>
             
             <input type="hidden" id="edit-dip-id">
             <div class="space-y-3">
@@ -316,7 +297,6 @@
         </div>
     </div>
 
-    <!-- MODAL DI MODIFICA TIMBRATURA -->
     <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
@@ -356,7 +336,7 @@
 
         let vistaAttiva = 'calendario';
         let dataCalendarioPuntatore = new Date();
-        let elencoDipendenti = []; // Cache globale per proteggere stringhe complesse
+        let elencoDipendenti = []; 
 
         // FUNZIONI DI FORMATTAZIONE PROPRIETARIE
         function formattaDataManuale(stringaISO) {
@@ -537,13 +517,11 @@
 
             document.getElementById('link-titolo-nominativo').innerText = `${dipendente.nome} ${dipendente.cognome}`;
             
-            // Trova la cartella corrente in cui risiede index.html e calcola il percorso relativo di badge.html
             const percorsoAttuale = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
             const urlAccessoCompleto = `${percorsoAttuale}/badge.html?id=${id}`;
 
             document.getElementById('input-link-generato').value = urlAccessoCompleto;
             
-            // Genera al volo il QR Code tramite API pubblica e sicura (QRServer)
             const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlAccessoCompleto)}`;
             document.getElementById('qrcode-immagine').src = qrApiUrl;
 
@@ -557,7 +535,7 @@
         function copiaLinkAccesso() {
             const inputLink = document.getElementById('input-link-generato');
             inputLink.select();
-            inputLink.setSelectionRange(0, 99999); // Per dispositivi mobili
+            inputLink.setSelectionRange(0, 99999); 
             navigator.clipboard.writeText(inputLink.value);
             alert("Link di accesso copiato negli appunti! Ora puoi inviarlo su WhatsApp.");
         }
@@ -610,7 +588,7 @@
             }
         }
 
-        async functionGrid eliminaDipendente(id, nominativo) {
+        async function eliminaDipendente(id, nominativo) {
             if (!confirm(`Vuoi eliminare ${nominativo}? Verranno cancellate tutte le sue timbrature associate.`)) return;
             try {
                 const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
@@ -811,7 +789,7 @@
                     corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record per il periodo.</td></tr>`;
                 }
 
-                // 3. CALENDARIO MENSILE
+                // CALENDARIO MENSILE
                 grigliaCal.innerHTML = '';
                 const primoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth(), 1);
                 const ultimoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth() + 1, 0);
