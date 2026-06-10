@@ -177,37 +177,41 @@
     const parametriUrl = new URLSearchParams(window.location.search);
     let idUrl = parametriUrl.get('id');
     
-    // 1. Recupero ID: priorità all'URL, altrimenti cerco in memoria
-    dipendenteId = idUrl || localStorage.getItem('badge_dipendente_id');
-
-    // 2. Se ho trovato l'ID, lo salvo FORZATAMENTE nella memoria del telefono
-    if (dipendenteId) {
-        localStorage.setItem('badge_dipendente_id', dipendenteId);
+    // FORZATURA: Se c'è un ID nell'URL, lo usiamo e sovrascriviamo quello vecchio
+    if (idUrl) {
+        localStorage.setItem('badge_dipendente_id', idUrl);
+        dipendenteId = idUrl;
     } else {
-        // Se non c'è né in URL né in memoria, errore
-        mostraErroreCritico("Link Errato", "Codice identificativo mancante.");
+        // Altrimenti, proviamo a leggere dalla memoria
+        dipendenteId = localStorage.getItem('badge_dipendente_id');
+    }
+
+    // DEBUG: Se continua a non andare, vediamo cosa succede
+    if (!dipendenteId) {
+        console.error("ID non trovato!");
+        mostraErroreCritico("Link Errato", "Codice mancante. Riapri il link originale.");
         return;
     }
 
     try {
+        // Supabase query
         const { data: dipendente, error } = await supabaseClient.from('dipendenti').select('nome, cognome').eq('id', dipendenteId).single();
-        if (error || !dipendente) throw new Error();
+        
+        // Se c'è un errore o non trova l'ID, puliamo tutto per ripartire da zero
+        if (error || !dipendente) {
+            localStorage.removeItem('badge_dipendente_id'); 
+            throw new Error("ID non valido nel database");
+        }
         
         document.getElementById('nome-dipendente').innerText = `${dipendente.nome} ${dipendente.cognome}`;
         
-        // --- TRUCCO AGGIUNTIVO: Se siamo nella PWA "pulita" (senza ID nell'URL), 
-        // forziamo l'aggiornamento dell'URL per evitare che il browser si confonda
-        if (!idUrl && window.history.replaceState) {
-            window.history.replaceState(null, '', `badge.html?id=${dipendenteId}`);
-        }
-
+        // ... resto della funzione (loading e GPS)
         document.getElementById('loading-screen').classList.add('opacity-0');
         setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); avviaMonitoraggioGPS(); }, 300);
-    } catch (err) { 
-        mostraErroreCritico("Errore", "Badge non riconosciuto."); 
+    } catch (err) {
+        mostraErroreCritico("Errore", "Badge non riconosciuto o ID scaduto.");
     }
 }
-
         function mostraErroreCritico(titolo, messaggio) {
             document.getElementById('loading-screen').classList.add('hidden');
             document.getElementById('error-titolo').innerText = titolo;
