@@ -129,8 +129,8 @@
                     <div>
                         <label class="block font-bold uppercase text-slate-500 mb-1">Tipo Azione</label>
                         <select id="form-manuale-tipo" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600">
-                            <option value="ingresso">Ingresso</option>
-                            <option value="uscita">Uscita</option>
+                            <option value="INGRESSO">Ingresso</option>
+                            <option value="USCITA">Uscita</option>
                         </select>
                     </div>
                     <div class="col-span-2">
@@ -223,8 +223,8 @@
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tipo Azione</label>
                     <select id="edit-tipo" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
-                        <option value="ingresso">Ingresso</option>
-                        <option value="uscita">Uscita</option>
+                        <option value="INGRESSO">Ingresso</option>
+                        <option value="USCITA">Uscita</option>
                     </select>
                 </div>
                 <div>
@@ -492,9 +492,9 @@
                 timbrature.forEach(t => {
                     const dataT = new Date(t.orario);
                     
-                    if (t.tipo_azione === 'ingresso') {
+                    if (t.tipo_azione === 'INGRESSO') {
                         ultimoIngresso = dataT;
-                    } else if (t.tipo_azione === 'uscita' && ultimoIngresso) {
+                    } else if (t.tipo_azione === 'USCITA' && ultimoIngresso) {
                         const diffMs = dataT - ultimoIngresso;
                         const diffOre = diffMs / (1000 * 60 * 60);
 
@@ -526,7 +526,7 @@
                     if (limiteFine && dataOggetto > limiteFine) return;
                     conteggioRecordVisibili++;
 
-                    const isIngresso = t.tipo_azione === 'ingresso';
+                    const isIngresso = t.tipo_azione === 'INGRESSO';
                     const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
                     const giorno = dataOggetto.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     const ora = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
