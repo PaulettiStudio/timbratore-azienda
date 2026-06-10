@@ -10,7 +10,6 @@
 <body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
         
-        <!-- HEADER -->
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
@@ -22,10 +21,8 @@
             </button>
         </header>
 
-        <!-- GRIGLIA SUPERIORE: INSERIMENTO E ANAGRAFICA -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             
-            <!-- FORM AGGIUNGI DIPENDENTE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
                 <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-sky-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
@@ -60,7 +57,6 @@
                 </div>
             </div>
 
-            <!-- TABELLA LISTA DIPENDENTI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-between">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-slate-800">
@@ -79,17 +75,15 @@
                                 </tr>
                             </thead>
                             <tbody id="tabella-dipendenti" class="text-sm divide-y divide-slate-100">
-                                <!-- Righe popolate da JS -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SEZIONE GIUSTIFICATIVI E INSERIMENTO MANUALE TIMBRATURE -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- REGISTRAZIONE GIUSTIFICATIVI -->
+            
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-emerald-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -122,7 +116,6 @@
                 </button>
             </div>
 
-            <!-- INSERIMENTO MANUALE TIMBRATURE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-indigo-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -151,7 +144,6 @@
             </div>
         </div>
 
-        <!-- SEZIONE REPORT INTERNO ED EDITING DELLE TIMBRATURE -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
                 <div>
@@ -167,7 +159,6 @@
                 </div>
             </div>
 
-            <!-- SELEZIONE PERIODO PERSONALIZZATO -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-end gap-4 text-xs">
                 <div>
                     <label class="block font-bold uppercase text-slate-500 mb-1">Data Inizio (Dal)</label>
@@ -182,7 +173,6 @@
                 </button>
             </div>
 
-            <!-- RISULTATI DEI RESOCONTI CALCOLATI -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center md:text-left">
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
                     <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Oggi</span>
@@ -202,7 +192,6 @@
                 </div>
             </div>
 
-            <!-- TABELLA DETTAGLIATA DEL PERIODO -->
             <div class="overflow-x-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -224,7 +213,6 @@
 
     </div>
 
-    <!-- MODAL DI MODIFICA TIMBRATURA -->
     <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
@@ -257,15 +245,15 @@
     </div>
 
     <script>
-        // CONFIGURAZIONE PARAMETRI SUPABASE
+        // --- CONFIGURAZIONE PARAMETRI SUPABASE ---
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // --- AVVIO E GESTIONE DATE ---
         function impostaDateDefault() {
             const oggi = new Date();
             const fineMeseStr = oggi.toISOString().split('T')[0];
-            
             const inizioMese = new Date(oggi.getFullYear(), oggi.getMonth(), 1);
             const inizioMeseStr = inizioMese.toISOString().split('T')[0];
             
@@ -279,370 +267,32 @@
             caricaReportSpecifico();
         }
 
+        // --- GESTIONE ANAGRAFICA E SELECT ---
         async function caricaListaDipendenti() {
-            const { data: dipendenti, error } = await supabaseClient
-                .from('dipendenti')
-                .select('*')
-                .order('cognome', { ascending: true });
+            try {
+                const { data: dipendenti, error } = await supabaseClient
+                    .from('dipendenti')
+                    .select('*')
+                    .order('cognome', { ascending: true });
 
-            if (error) {
-                console.error("Errore scaricamento anagrafica:", error);
-                return;
-            }
+                if (error) throw error;
 
-            const tabella = document.getElementById('tabella-dipendenti');
-            tabella.innerHTML = '';
-            
-            const selectAssenze = document.getElementById('form-assenza-dipendente');
-            const selectManuale = document.getElementById('form-manuale-dipendente');
-            const selectReport = document.getElementById('select-report-dipendente');
-            
-            const vecchioValoreReport = selectReport.value;
-
-            selectAssenze.innerHTML = '';
-            selectManuale.innerHTML = '';
-            selectReport.innerHTML = '';
-
-            if(!dipendenti || dipendenti.length === 0) {
-                tabella.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Nessun dipendente registrato in azienda.</td></tr>`;
-                return;
-            }
-
-            dipendenti.forEach(d => {
-                tabella.innerHTML += `
-                <tr class="hover:bg-slate-50 transition">
-                    <td class="p-3 font-semibold text-slate-900">${d.cognome} ${d.nome}</td>
-                    <td class="p-3 font-mono text-xs text-slate-500">${d.email}</td>
-                    <td class="p-3 text-center text-slate-600">${d.ore_settimanali_contratto}h/sett</td>
-                    <td class="p-3 text-center font-bold text-slate-700">${d.saldo_ferie_ore} ore</td>
-                    <td class="p-3 text-center">
-                        <button onclick="eliminaDipendente('${d.id}', '${d.nome} ${d.cognome}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1 rounded-md border border-red-200 transition">
-                            Elimina
-                        </button>
-                    </td>
-                </tr>`;
-
-                const opzioneHtml = `<option value="${d.id}">${d.cognome} ${d.nome}</option>`;
-                selectAssenze.innerHTML += opzioneHtml;
-                selectManuale.innerHTML += opzioneHtml;
-                selectReport.innerHTML += opzioneHtml;
-            });
-
-            if (vecchioValoreReport) {
-                selectReport.value = vecchioValoreReport;
-            }
-        }
-
-        async function aggiungiDipendente() {
-            const nome = document.getElementById('dip-nome').value.trim();
-            const cognome = document.getElementById('dip-cognome').value.trim();
-            const email = document.getElementById('dip-email').value.trim();
-            const ore = parseInt(document.getElementById('dip-ore').value);
-            const ferie = parseFloat(document.getElementById('dip-ferie').value);
-
-            if (!nome || !cognome || !email) {
-                alert("Compila tutti i campi!");
-                return;
-            }
-
-            const { error } = await supabaseClient.from('dipendenti').insert({
-                nome: nome,
-                cognome: cognome,
-                email: email,
-                ore_settimanali_contratto: ore,
-                saldo_ferie_ore: ferie
-            });
-
-            if (error) {
-                alert("Errore inserimento: " + error.message);
-            } else {
-                alert("Dipendente salvato!");
-                document.getElementById('dip-nome').value = '';
-                document.getElementById('dip-cognome').value = '';
-                document.getElementById('dip-email').value = '';
-                await caricaListaDipendenti();
-                caricaReportSpecifico();
-            }
-        }
-
-        async function eliminaDipendente(id, nominativo) {
-            const conferma = confirm(`Eliminare definitivamente ${nominativo}?`);
-            if (!conferma) return;
-
-            const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
-
-            if (error) {
-                alert("Errore: " + error.message);
-            } else {
-                alert("Dipendente rimosso.");
-                await caricaListaDipendenti();
-                caricaReportSpecifico();
-            }
-        }
-
-        async function creaRichiestaAssenza() {
-            const dipendenteId = document.getElementById('form-assenza-dipendente').value;
-            const tipo = document.getElementById('form-assenza-tipo').value;
-            const dataInizio = document.getElementById('form-assenza-inizio').value;
-            const oreDaScalare = parseFloat(document.getElementById('form-assenza-ore').value);
-
-            if (!dipendenteId || !dataInizio || !oreDaScalare) {
-                alert("Tutti i dati sono obbligatori!");
-                return;
-            }
-
-            const { data: dip } = await supabaseClient.from('dipendenti').select('saldo_ferie_ore').eq('id', dipendenteId).single();
-            const nuovoSaldo = dip.saldo_ferie_ore - oreDaScalare;
-
-            const { error: errAssenza } = await supabaseClient.from('richieste_assenza').insert({
-                dipendente_id: dipendenteId,
-                tipo: tipo,
-                data_inizio: dataInizio,
-                data_fine: dataInizio,
-                ore_totali: oreDaScalare,
-                stato: 'approvato'
-            });
-
-            if (errAssenza) {
-                alert("Errore: " + errAssenza.message);
-                return;
-            }
-
-            await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
-
-            alert("Giustificativo registrato e ore scalate!");
-            document.getElementById('form-assenza-ore').value = '';
-            await caricaListaDipendenti();
-            caricaReportSpecifico();
-        }
-
-       // --- FORZATURA MANUALE CON COORDINATE DI DEFAULT (RISOLVE IL VINCOLO NOT-NULL) ---
-async function inserisciTimbraturaManuale() {
-    const dipendenteId = document.getElementById('form-manuale-dipendente').value;
-    const tipoAzione = document.getElementById('form-manuale-tipo').value;
-    const orarioLocale = document.getElementById('form-manuale-orario').value;
-
-    if(!dipendenteId || !orarioLocale) {
-        alert("Seleziona il dipendente e imposta data e ora esatte della timbratura!");
-        return;
-    }
-
-    const orarioISO = new Date(orarioLocale).toISOString();
-
-    // Inseriamo 0 e 0 per soddisfare l'obbligatorietà del database senza attivare blocchi geografici
-    const { error } = await supabaseClient.from('timbrature').insert({
-        dipendente_id: dipendenteId,
-        tipo_azione: tipoAzione,
-        orario: orarioISO,
-        latitudine: 0,
-        longitudine: 0
-    });
-
-    if (error) {
-        alert("Errore di inserimento: " + error.message);
-    } else {
-        alert("Timbratura forzata inserita a registro con successo!");
-        document.getElementById('form-manuale-orario').value = '';
-        await caricaReportSpecifico();
-    }
-}
-            const orarioISO = new Date(orarioLocale).toISOString();
-
-            // Inviamo SOLO i tre campi strutturali per evitare errori di schema cache
-            const { error } = await supabaseClient.from('timbrature').insert({
-                dipendente_id: dipendenteId,
-                tipo_azione: tipoAzione,
-                orario: orarioISO
-            });
-
-            if (error) {
-                alert("Errore di inserimento: " + error.message);
-            } else {
-                alert("Timbratura forzata inserita a registro con successo!");
-                document.getElementById('form-manuale-orario').value = '';
-                await caricaReportSpecifico();
-            }
-        }
-
-        // --- CORE ANALYSIS & CALCOLI PERIODICI E FILTRO TABELLARE ---
-        async function caricaReportSpecifico() {
-            const dipendenteId = document.getElementById('select-report-dipendente').value;
-            const corpoTabella = document.getElementById('tabella-report-corpo');
-
-            if (!dipendenteId) {
-                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
-                document.getElementById('ore-oggi').innerText = "0.0 ore";
-                document.getElementById('ore-settimana').innerText = "0.0 ore";
-                document.getElementById('ore-mese').innerText = "0.0 ore";
-                document.getElementById('ore-periodo').innerText = "0.0 ore";
-                return;
-            }
-
-            const filtroInizioRaw = document.getElementById('filtro-inizio').value;
-            const filtroFineRaw = document.getElementById('filtro-fine').value;
-
-            const limiteInizio = filtroInizioRaw ? new Date(filtroInizioRaw + "T00:00:00") : null;
-            const limiteFine = filtroFineRaw ? new Date(filtroFineRaw + "T23:59:59") : null;
-
-            const { data: timbrature, error } = await supabaseClient
-                .from('timbrature')
-                .select('*')
-                .eq('dipendente_id', dipendenteId)
-                .order('orario', { ascending: true });
-
-            if (error) {
-                console.error(error);
-                return;
-            }
-
-            let oreOggi = 0;
-            let oreSettimana = 0;
-            let oreMese = 0;
-            let orePeriodoPersonalizzato = 0;
-
-            const oggi = new Date();
-            
-            const correnteLunedi = new Date(oggi);
-            const numeroGiorno = correnteLunedi.getDay();
-            const diffLunedi = correnteLunedi.getDate() - numeroGiorno + (numeroGiorno === 0 ? -6 : 1);
-            correnteLunedi.setDate(diffLunedi);
-            correnteLunedi.setHours(0,0,0,0);
-
-            let ultimoIngresso = null;
-
-            timbrature.forEach(t => {
-                const dataT = new Date(t.orario);
+                const tabella = document.getElementById('tabella-dipendenti');
+                const selectAssenze = document.getElementById('form-assenza-dipendente');
+                const selectManuale = document.getElementById('form-manuale-dipendente');
+                const selectReport = document.getElementById('select-report-dipendente');
                 
-                if (t.tipo_azione === 'ingresso') {
-                    ultimoIngresso = dataT;
-                } else if (t.tipo_azione === 'uscita' && ultimoIngresso) {
-                    const diffMs = dataT - ultimoIngresso;
-                    const diffOre = diffMs / (1000 * 60 * 60);
+                const vecchioValoreReport = selectReport.value;
 
-                    if (dataT.toDateString() === oggi.toDateString()) {
-                        oreOggi += diffOre;
-                    }
-                    if (dataT >= correnteLunedi) {
-                        oreSettimana += diffOre;
-                    }
-                    if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) {
-                        oreMese += diffOre;
-                    }
-                    if ((!limiteInizio || dataT >= limiteInizio) && (!limiteFine || dataT <= limiteFine)) {
-                        orePeriodoPersonalizzato += diffOre;
-                    }
+                tabella.innerHTML = '';
+                selectAssenze.innerHTML = '';
+                selectManuale.innerHTML = '';
+                selectReport.innerHTML = '';
 
-                    ultimoIngresso = null;
+                if(!dipendenti || dipendenti.length === 0) {
+                    tabella.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Nessun dipendente registrato in azienda.</td></tr>`;
+                    return;
                 }
-            });
 
-            document.getElementById('ore-oggi').innerText = `${oreOggi.toFixed(1)} ore`;
-            document.getElementById('ore-settimana').innerText = `${oreSettimana.toFixed(1)} ore`;
-            document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
-            document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
-
-            const timbratureInvertite = [...timbrature].reverse();
-            corpoTabella.innerHTML = '';
-
-            let conteggioRecordVisibili = 0;
-
-            timbratureInvertite.forEach(t => {
-                const dataOggetto = new Date(t.orario);
-
-                if (limiteInizio && dataOggetto < limiteInizio) return;
-                if (limiteFine && dataOggetto > limiteFine) return;
-
-                conteggioRecordVisibili++;
-
-                const isIngresso = t.tipo_azione === 'ingresso';
-                const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
-                
-                const giorno = dataOggetto.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                const ora = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-                corpoTabella.innerHTML += `
-                <tr class="hover:bg-slate-50 transition">
-                    <td class="p-3">
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wide ${badgeColor}">
-                            ${t.tipo_azione}
-                        </span>
-                    </td>
-                    <td class="p-3 text-slate-700 capitalize font-medium">${giorno}</td>
-                    <td class="p-3 font-mono text-sm text-slate-600 font-bold">${ora}</td>
-                    <td class="p-3 text-center space-x-3">
-                        <button onclick="apriModificaModal('${t.id}', '${t.tipo_azione}', '${t.orario}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded border border-sky-200 transition">
-                            Modifica
-                        </button>
-                        <button onclick="eliminaTimbratura('${t.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2 py-1 rounded border border-rose-200 transition">
-                            Elimina
-                        </button>
-                    </td>
-                </tr>`;
-            });
-
-            if (conteggioRecordVisibili === 0) {
-                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record di presenza trovato per l'intervallo di date selezionato.</td></tr>`;
-            }
-        }
-
-        // --- GESTIONE MODIFICA ED ELIMINAZIONE MANUALE ---
-        function apriModificaModal(id, tipo, orario) {
-            document.getElementById('edit-timbratura-id').value = id;
-            document.getElementById('edit-tipo').value = tipo;
-            
-            const d = new Date(orario);
-            const offset = d.getTimezoneOffset() * 60000;
-            const formatoLocale = new Date(d.getTime() - offset).toISOString().slice(0, 16);
-            
-            document.getElementById('edit-orario').value = formatoLocale;
-            document.getElementById('modal-modifica').classList.remove('hidden');
-        }
-
-        function chiudiModificaModal() {
-            document.getElementById('modal-modifica').classList.add('hidden');
-        }
-
-        async function salvaModificaTimbratura() {
-            const id = document.getElementById('edit-timbratura-id').value;
-            const nuovoTipo = document.getElementById('edit-tipo').value;
-            const nuovoOrarioInput = document.getElementById('edit-orario').value;
-
-            if(!nuovoOrarioInput) {
-                alert("Inserisci un orario valido!");
-                return;
-            }
-
-            const orarioISO = new Date(nuovoOrarioInput).toISOString();
-
-            const { error } = await supabaseClient
-                .from('timbrature')
-                .update({ tipo_azione: nuovoTipo, orario: orarioISO })
-                .eq('id', id);
-
-            if (error) {
-                alert("Errore modifica: " + error.message);
-            } else {
-                alert("Timbratura aggiornata!");
-                chiudiModificaModal();
-                await caricaReportSpecifico();
-            }
-        }
-
-        async function eliminarTimbratura(id) {
-            const conferma = confirm("Vuoi eliminare definitivamente questa timbratura?");
-            if (!conferma) return;
-
-            const { error } = await supabaseClient.from('timbrature').delete().eq('id', id);
-
-            if (error) {
-                alert("Errore eliminazione: " + error.message);
-            } else {
-                alert("Record eliminato.");
-                await caricaReportSpecifico();
-            }
-        }
-
-        inizializzaPannello();
-    </script>
-</body>
-</html>
+                dipendenti.forEach(d => {
+                    //
