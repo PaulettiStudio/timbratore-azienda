@@ -1,8 +1,8 @@
 {
-  "name": "Badge Feltregas",
+  "name": "Badge Digitale Aziendale",
   "short_name": "Badge Feltregas",
   "description": "Applicazione per la timbratura delle presenze.",
-  "start_url": ".",
+  "start_url": "badge.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
