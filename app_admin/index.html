@@ -13,7 +13,7 @@
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
-                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, pianificazione assenze e reportistica geofencing in tempo reale.</p>
+                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, pianificazione assenze, modifiche real-time e reportistica avanzata.</p>
             </div>
             <button onclick="inizializzaPannello()" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2 border border-slate-300 rounded-lg text-sm shadow-sm transition flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" /></svg>
@@ -84,7 +84,7 @@
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <h2 class="text-lg font-bold mb-4 text-emerald-700 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 Registrazione Giustificativi (Ferie / Permessi / Riposo)
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -114,14 +114,14 @@
             </button>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        Report Storico Singolo Dipendente
+                        Pannello Report & Modifica Presenze
                     </h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Filtra l'elenco cronologico delle timbrature geofencing per il dipendente selezionato.</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Analisi dei resoconti periodici e modifica manuale dei record di ingresso/uscita.</p>
                 </div>
                 <div class="w-full md:w-72">
                     <select id="select-report-dipendente" onchange="caricaReportSpecifico()" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-semibold bg-slate-50 focus:outline-sky-600"></select>
@@ -129,17 +129,20 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Contratto Base</span>
-                    <p id="stat-contratto" class="text-xl font-extrabold text-slate-700 mt-1">-</p>
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Resoconto Giornaliero (Oggi)</span>
+                    <p id="ore-oggi" class="text-2xl font-black text-amber-900 mt-1">0.0 ore</p>
+                    <p class="text-[11px] text-amber-600 mt-0.5">Fasce orarie controllate</p>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Saldo Ferie Attuale</span>
-                    <p id="stat-ferie" class="text-xl font-extrabold text-slate-700 mt-1">-</p>
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+                    <span class="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">Resoconto Settimanale (Corr.)</span>
+                    <p id="ore-settimana" class="text-2xl font-black text-indigo-900 mt-1">0.0 ore</p>
+                    <p class="text-[11px] text-indigo-600 mt-0.5">Lun - Dom della settimana attuale</p>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Totale Timbrature GPS Rilevate</span>
-                    <p id="stat-tot-timbrature" class="text-xl font-extrabold text-sky-700 mt-1">-</p>
+                <div class="bg-sky-50 p-4 rounded-xl border border-sky-200">
+                    <span class="text-[10px] uppercase font-bold text-sky-600 tracking-wider">Resoconto Mensile (Mese Corr.)</span>
+                    <p id="ore-mese" class="text-2xl font-black text-sky-900 mt-1">0.0 ore</p>
+                    <p class="text-[11px] text-sky-600 mt-0.5">Primo giorno - fine mese corrente</p>
                 </div>
             </div>
 
@@ -150,17 +153,49 @@
                             <th class="p-3 font-semibold">Tipo Evento</th>
                             <th class="p-3 font-semibold">Data Rilevazione</th>
                             <th class="p-3 font-semibold">Orario Preciso</th>
+                            <th class="p-3 font-semibold text-center">Azioni Amministratore</th>
                         </tr>
                     </thead>
                     <tbody id="tabella-report-corpo" class="text-sm divide-y divide-slate-100">
                         <tr>
-                            <td colspan="3" class="p-6 text-center text-slate-400 italic">Seleziona un dipendente dal menu in alto per visualizzare il report personalizzato.</td>
+                            <td colspan="4" class="p-6 text-center text-slate-400 italic">Seleziona un dipendente dal menu in alto per visualizzare il report personalizzato.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
+    </div>
+
+    <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
+            <p class="text-xs text-slate-400 mb-4">I cambiamenti sovrascriveranno istantaneamente i log estratti dal database.</p>
+            
+            <input type="hidden" id="edit-timbratura-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tipo Azione</label>
+                    <select id="edit-tipo" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                        <option value="ingresso">Ingresso</option>
+                        <option value="uscita">Uscita</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data e Ora Esatta</label>
+                    <input id="edit-orario" type="datetime-local" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="chiudiModificaModal()" class="px-4 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 rounded-lg transition">
+                    Annulla
+                </button>
+                <button onclick="salvaModificaTimbratura()" class="px-4 py-2 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">
+                    Salva Modifiche
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -308,44 +343,88 @@
             caricaReportSpecifico();
         }
 
+        // --- CORE ANALYSIS & CALCOLI PERIODICI (GIORNO, SETTIMANA, MESE) ---
         async function caricaReportSpecifico() {
             const dipendenteId = document.getElementById('select-report-dipendente').value;
             const corpoTabella = document.getElementById('tabella-report-corpo');
 
             if (!dipendenteId) {
-                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
-                document.getElementById('stat-contratto').innerText = "-";
-                document.getElementById('stat-ferie').innerText = "-";
-                document.getElementById('stat-tot-timbrature').innerText = "-";
+                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
+                document.getElementById('ore-oggi').innerText = "0.0 ore";
+                document.getElementById('ore-settimana').innerText = "0.0 ore";
+                document.getElementById('ore-mese').innerText = "0.0 ore";
                 return;
             }
 
-            const { data: infoDip } = await supabaseClient.from('dipendenti').select('*').eq('id', dipendenteId).single();
-            if(infoDip) {
-                document.getElementById('stat-contratto').innerText = `${infoDip.ore_settimanali_contratto} ore / sett`;
-                document.getElementById('stat-ferie').innerText = `${infoDip.saldo_ferie_ore} ore`;
-            }
-
+            // Scarica lo storico completo delle timbrature del dipendente specifico
             const { data: timbrature, error } = await supabaseClient
                 .from('timbrature')
                 .select('*')
                 .eq('dipendente_id', dipendenteId)
-                .order('orario', { ascending: false });
+                .order('orario', { ascending: true }); // Ascending serve per l'algoritmo di accoppiamento ore
 
             if (error) {
                 console.error(error);
                 return;
             }
 
-            document.getElementById('stat-tot-timbrature').innerText = `${timbrature.length} passaggi`;
+            // Logica matematica di accoppiamento Ingressi/Uscite per calcolare le ore reali lavorate
+            let oreOggi = 0;
+            let oreSettimana = 0;
+            let oreMese = 0;
+
+            const oggi = new Date();
+            
+            // Trova il lunedì della settimana corrente
+            const correnteLunedi = new Date(oggi);
+            const numeroGiorno = correnteLunedi.getDay();
+            const diffLunedi = correnteLunedi.getDate() - numeroGiorno + (numeroGiorno === 0 ? -6 : 1);
+            correnteLunedi.setDate(diffLunedi);
+            correnteLunedi.setHours(0,0,0,0);
+
+            let ultimoIngresso = null;
+
+            timbrature.forEach(t => {
+                const dataT = new Date(t.orario);
+                
+                if (t.tipo_azione === 'ingresso') {
+                    ultimoIngresso = dataT;
+                } else if (t.tipo_azione === 'uscita' && ultimoIngresso) {
+                    const diffMs = dataT - ultimoIngresso;
+                    const diffOre = diffMs / (1000 * 60 * 60); // Trasforma i millisecondi in ore decimali
+
+                    // Controlla se la timbratura appartiene a OGGI
+                    if (dataT.toDateString() === oggi.toDateString()) {
+                        oreOggi += diffOre;
+                    }
+                    // Controlla se appartiene a QUESTA SETTIMANA (da lunedì in poi)
+                    if (dataT >= correnteLunedi) {
+                        oreSettimana += diffOre;
+                    }
+                    // Controlla se appartiene a QUESTO MESE
+                    if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) {
+                        oreMese += diffOre;
+                    }
+
+                    ultimoIngresso = null; // Resetta la coppia
+                }
+            });
+
+            // Mostra i risultati formattati ad un solo decimale
+            document.getElementById('ore-oggi').innerText = `${oreOggi.toFixed(1)} ore`;
+            document.getElementById('ore-settimana').innerText = `${oreSettimana.toFixed(1)} ore`;
+            document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
+
+            // Rigenera la tabella visiva per l'admin (mostrata in ordine decrescente per comodità visiva)
+            const timbratureInvertite = [...timbrature].reverse();
             corpoTabella.innerHTML = '';
 
-            if (timbrature.length === 0) {
-                corpoTabella.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400 italic">Nessuna timbratura presente.</td></tr>`;
+            if (timbratureInvertite.length === 0) {
+                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessuna timbratura presente in archivio.</td></tr>`;
                 return;
             }
 
-            timbrature.forEach(t => {
+            timbratureInvertite.forEach(t => {
                 const isIngresso = t.tipo_azione === 'ingresso';
                 const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
                 
@@ -362,8 +441,81 @@
                     </td>
                     <td class="p-3 text-slate-700 capitalize">${giorno}</td>
                     <td class="p-3 font-mono text-sm text-slate-600 font-bold">${ora}</td>
+                    <td class="p-3 text-center space-x-3">
+                        <button onclick="apriModificaModal('${t.id}', '${t.tipo_azione}', '${t.orario}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded border border-sky-200 transition">
+                            Modifica
+                        </button>
+                        <button onclick="eliminaTimbratura('${t.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2 py-1 rounded border border-rose-200 transition">
+                            Elimina
+                        </button>
+                    </td>
                 </tr>`;
             });
+        }
+
+        // --- GESTIONE MODIFICA ED ELIMINAZIONE MANUALE TIMBRATURE ---
+        function apriModificaModal(id, tipo, orario) {
+            document.getElementById('edit-timbratura-id').value = id;
+            document.getElementById('edit-tipo').value = tipo;
+            
+            // Converte l'orario ISO del database nel formato richiesto dall'input datetime-local (YYYY-MM-DDTHH:MM)
+            const d = new Date(orario);
+            const offset = d.getTimezoneOffset() * 60000;
+            const formatoLocale = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+            
+            document.getElementById('edit-orario').value = formatoLocale;
+            document.getElementById('modal-modifica').classList.remove('hidden');
+        }
+
+        function chiudiModificaModal() {
+            document.getElementById('modal-modifica').classList.add('hidden');
+        }
+
+        async function salvaModificaTimbratura() {
+            const id = document.getElementById('edit-timbratura-id').value;
+            const nuovoTipo = document.getElementById('edit-tipo').value;
+            const nuovoOrarioInput = document.getElementById('edit-orario').value;
+
+            if(!nuovoOrarioInput) {
+                alert("Inserisci una data e un orario validi!");
+                return;
+            }
+
+            // Trasforma l'orario locale dell'input in stringa ISO standard per Supabase
+            const orarioISO = new Date(nuovoOrarioInput).toISOString();
+
+            const { error } = await supabaseClient
+                .from('timbrature')
+                .update({ 
+                    tipo_azione: nuovoTipo, 
+                    orario: orarioISO 
+                })
+                .eq('id', id);
+
+            if (error) {
+                alert("Errore durante la modifica: " + error.message);
+            } else {
+                alert("Timbratura modificata con successo!");
+                chiudiModificaModal();
+                await caricaReportSpecifico(); // Ricarica e ricalcola i contatori in tempo reale
+            }
+        }
+
+        async function eliminaTimbratura(id) {
+            const conferma = confirm("Sei sicuro di voler eliminare definitivamente questo record di presenza?\nQuesta azione modificherà i calcoli dei resoconti orari.");
+            if (!conferma) return;
+
+            const { error } = await supabaseClient
+                .from('timbrature')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert("Errore durante l'eliminazione: " + error.message);
+            } else {
+                alert("Record eliminato dall'archivio.");
+                await caricaReportSpecifico(); // Ricarica e ricalcola i contatori in tempo reale
+            }
         }
 
         inizializzaPannello();
