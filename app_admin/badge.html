@@ -173,29 +173,34 @@
             setTimeout(() => { toast.classList.add('-translate-y-32', 'opacity-0'); }, 4500);
         }
 
-        async function verificaAccessoEIdentita() {
+       async function verificaAccessoEIdentita() {
     const parametriUrl = new URLSearchParams(window.location.search);
     let idUrl = parametriUrl.get('id');
     
-    // Se l'ID è presente nell'URL, lo salviamo nella memoria del telefono
-    if (idUrl) {
-        localStorage.setItem('badge_dipendente_id', idUrl);
-        dipendenteId = idUrl;
-    } else {
-        // Se l'ID non è nell'URL (perché la PWA si è aperta pulita), lo recuperiamo dalla memoria
-        dipendenteId = localStorage.getItem('badge_dipendente_id');
-    }
+    // 1. Recupero ID: priorità all'URL, altrimenti cerco in memoria
+    dipendenteId = idUrl || localStorage.getItem('badge_dipendente_id');
 
-    // Se non troviamo l'ID né nell'URL né in memoria, allora diamo l'errore
-    if (!dipendenteId) { 
-        mostraErroreCritico("Link Errato", "Codice identificativo mancante."); 
-        return; 
+    // 2. Se ho trovato l'ID, lo salvo FORZATAMENTE nella memoria del telefono
+    if (dipendenteId) {
+        localStorage.setItem('badge_dipendente_id', dipendenteId);
+    } else {
+        // Se non c'è né in URL né in memoria, errore
+        mostraErroreCritico("Link Errato", "Codice identificativo mancante.");
+        return;
     }
 
     try {
         const { data: dipendente, error } = await supabaseClient.from('dipendenti').select('nome, cognome').eq('id', dipendenteId).single();
         if (error || !dipendente) throw new Error();
+        
         document.getElementById('nome-dipendente').innerText = `${dipendente.nome} ${dipendente.cognome}`;
+        
+        // --- TRUCCO AGGIUNTIVO: Se siamo nella PWA "pulita" (senza ID nell'URL), 
+        // forziamo l'aggiornamento dell'URL per evitare che il browser si confonda
+        if (!idUrl && window.history.replaceState) {
+            window.history.replaceState(null, '', `badge.html?id=${dipendenteId}`);
+        }
+
         document.getElementById('loading-screen').classList.add('opacity-0');
         setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); avviaMonitoraggioGPS(); }, 300);
     } catch (err) { 
