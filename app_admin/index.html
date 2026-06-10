@@ -245,7 +245,7 @@
     </div>
 
     <script>
-        // --- CONFIGURAZIONE PARAMETRI SUPABASE ---
+        // --- ⚠️⚠️⚠️ INSERISCI QUI LE TUE CHIAVI SUPABASE ⚠️⚠️⚠️ ---
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -295,7 +295,6 @@
                 }
 
                 dipendenti.forEach(d => {
-                    // Costruzione tabella
                     tabella.innerHTML += `
                     <tr class="hover:bg-slate-50 transition">
                         <td class="p-3 font-semibold text-slate-900">${d.cognome} ${d.nome}</td>
@@ -309,7 +308,6 @@
                         </td>
                     </tr>`;
 
-                    // Costruzione select
                     const opzioneHtml = `<option value="${d.id}">${d.cognome} ${d.nome}</option>`;
                     selectAssenze.innerHTML += opzioneHtml;
                     selectManuale.innerHTML += opzioneHtml;
@@ -386,13 +384,11 @@
             }
 
             try {
-                // Recupero saldo attuale
                 const { data: dip, error: errFetch } = await supabaseClient.from('dipendenti').select('saldo_ferie_ore').eq('id', dipendenteId).single();
                 if (errFetch) throw errFetch;
                 
                 const nuovoSaldo = dip.saldo_ferie_ore - oreDaScalare;
 
-                // Inserimento assenza
                 const { error: errAssenza } = await supabaseClient.from('richieste_assenza').insert({
                     dipendente_id: dipendenteId,
                     tipo: tipo,
@@ -403,7 +399,6 @@
                 });
                 if (errAssenza) throw errAssenza;
 
-                // Aggiornamento monte ore dipendente
                 const { error: errUpdate } = await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
                 if (errUpdate) throw errUpdate;
 
@@ -429,7 +424,7 @@
             try {
                 const orarioISO = new Date(orarioLocale).toISOString();
 
-                // Coordinate 0,0 per bypassare i vincoli NOT NULL del database
+                // CORREZIONE NOT NULL DATABASE: Inseriamo coordinate a 0 per non far bloccare l'inserimento
                 const { error } = await supabaseClient.from('timbrature').insert({
                     dipendente_id: dipendenteId,
                     tipo_azione: tipoAzione,
@@ -453,7 +448,6 @@
             const dipendenteId = document.getElementById('select-report-dipendente').value;
             const corpoTabella = document.getElementById('tabella-report-corpo');
 
-            // Reset UI
             if (!dipendenteId) {
                 corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
                 document.getElementById('ore-oggi').innerText = "0.0 ore";
@@ -464,7 +458,6 @@
             }
 
             try {
-                // Lettura dei filtri data (limiteInizio a inizio giornata, limiteFine a fine giornata)
                 const filtroInizioRaw = document.getElementById('filtro-inizio').value;
                 const filtroFineRaw = document.getElementById('filtro-fine').value;
                 const limiteInizio = filtroInizioRaw ? new Date(filtroInizioRaw + "T00:00:00") : null;
@@ -474,7 +467,7 @@
                     .from('timbrature')
                     .select('*')
                     .eq('dipendente_id', dipendenteId)
-                    .order('orario', { ascending: true }); // Ascending è fondamentale per accoppiare In e Out
+                    .order('orario', { ascending: true });
 
                 if (error) throw error;
 
@@ -492,9 +485,12 @@
                 timbrature.forEach(t => {
                     const dataT = new Date(t.orario);
                     
-                    if (t.tipo_azione === 'INGRESSO') {
+                    // CORREZIONE MAIUSCOLO: Trasforma la stringa in maiuscolo per evitare errori di calcolo
+                    const azioneFormattata = t.tipo_azione.toUpperCase(); 
+
+                    if (azioneFormattata === 'INGRESSO') {
                         ultimoIngresso = dataT;
-                    } else if (t.tipo_azione === 'USCITA' && ultimoIngresso) {
+                    } else if (azioneFormattata === 'USCITA' && ultimoIngresso) {
                         const diffMs = dataT - ultimoIngresso;
                         const diffOre = diffMs / (1000 * 60 * 60);
 
@@ -503,17 +499,15 @@
                         if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) oreMese += diffOre;
                         if ((!limiteInizio || dataT >= limiteInizio) && (!limiteFine || dataT <= limiteFine)) orePeriodoPersonalizzato += diffOre;
 
-                        ultimoIngresso = null; // Resetta la coppia per i prossimi calcoli
+                        ultimoIngresso = null; 
                     }
                 });
 
-                // Aggiornamento KPI
                 document.getElementById('ore-oggi').innerText = `${oreOggi.toFixed(1)} ore`;
                 document.getElementById('ore-settimana').innerText = `${oreSettimana.toFixed(1)} ore`;
                 document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
                 document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
 
-                // Renderizzazione righe in tabella filtrata (in ordine inverso per comodità di lettura)
                 const timbratureInvertite = [...timbrature].reverse();
                 corpoTabella.innerHTML = '';
                 let conteggioRecordVisibili = 0;
@@ -521,13 +515,15 @@
                 timbratureInvertite.forEach(t => {
                     const dataOggetto = new Date(t.orario);
 
-                    // Applica i filtri data alla tabella
                     if (limiteInizio && dataOggetto < limiteInizio) return;
                     if (limiteFine && dataOggetto > limiteFine) return;
                     conteggioRecordVisibili++;
 
-                    const isIngresso = t.tipo_azione === 'INGRESSO';
+                    // Assicura che i colori e le scritte siano corretti anche se salvati in database misti
+                    const isIngresso = t.tipo_azione.toUpperCase() === 'INGRESSO';
                     const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
+                    const labelAzione = isIngresso ? 'INGRESSO' : 'USCITA';
+
                     const giorno = dataOggetto.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     const ora = dataOggetto.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -535,13 +531,13 @@
                     <tr class="hover:bg-slate-50 transition">
                         <td class="p-3">
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wide ${badgeColor}">
-                                ${t.tipo_azione}
+                                ${labelAzione}
                             </span>
                         </td>
                         <td class="p-3 text-slate-700 capitalize font-medium">${giorno}</td>
                         <td class="p-3 font-mono text-sm text-slate-600 font-bold">${ora}</td>
                         <td class="p-3 text-center space-x-3">
-                            <button onclick="apriModificaModal('${t.id}', '${t.tipo_azione}', '${t.orario}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded border border-sky-200 transition">
+                            <button onclick="apriModificaModal('${t.id}', '${labelAzione}', '${t.orario}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded border border-sky-200 transition">
                                 Modifica
                             </button>
                             <button onclick="eliminaTimbratura('${t.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2 py-1 rounded border border-rose-200 transition">
@@ -562,9 +558,8 @@
         // --- GESTIONE MODIFICA E CANCELLAZIONE SINGOLE TIMBRATURE ---
         function apriModificaModal(id, tipo, orario) {
             document.getElementById('edit-timbratura-id').value = id;
-            document.getElementById('edit-tipo').value = tipo;
+            document.getElementById('edit-tipo').value = tipo; // Imposterà INGRESSO o USCITA in automatico
             
-            // Format datetime per input locale
             const d = new Date(orario);
             const offset = d.getTimezoneOffset() * 60000;
             const formatoLocale = new Date(d.getTime() - offset).toISOString().slice(0, 16);
@@ -579,7 +574,7 @@
 
         async function salvaModificaTimbratura() {
             const id = document.getElementById('edit-timbratura-id').value;
-            const nuovoTipo = document.getElementById('edit-tipo').value;
+            const nuovoTipo = document.getElementById('edit-tipo').value; // Leggerà INGRESSO o USCITA in maiuscolo
             const nuovoOrarioInput = document.getElementById('edit-orario').value;
 
             if(!nuovoOrarioInput) {
