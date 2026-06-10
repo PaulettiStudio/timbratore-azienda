@@ -10,6 +10,7 @@
 <body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
         
+        <!-- HEADER -->
         <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
@@ -21,8 +22,10 @@
             </button>
         </header>
 
+        <!-- GRIGLIA SUPERIORE: INSERIMENTO E ANAGRAFICA -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             
+            <!-- FORM AGGIUNGI DIPENDENTE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
                 <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-sky-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
@@ -57,6 +60,7 @@
                 </div>
             </div>
 
+            <!-- TABELLA LISTA DIPENDENTI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-between">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-slate-800">
@@ -75,15 +79,18 @@
                                 </tr>
                             </thead>
                             <tbody id="tabella-dipendenti" class="text-sm divide-y divide-slate-100">
-                                </tbody>
+                                <!-- JS -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- SEZIONE GIUSTIFICATIVI E INSERIMENTO MANUALE TIMBRATURE -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             
+            <!-- REGISTRAZIONE GIUSTIFICATIVI -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-emerald-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -103,8 +110,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block font-bold uppercase text-slate-500 mb-1">Data Giorno</label>
-                        <input id="form-assenza-inizio" type="date" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600">
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data Giorno (gg/mm/aaaa)</label>
+                        <input id="form-assenza-inizio" type="text" placeholder="Es. 15/04/2026" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600 font-mono text-sm">
                     </div>
                     <div>
                         <label class="block font-bold uppercase text-slate-500 mb-1">Ore da Scalare</label>
@@ -116,6 +123,7 @@
                 </button>
             </div>
 
+            <!-- INSERIMENTO MANUALE TIMBRATURE -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-md font-bold mb-4 text-indigo-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -133,9 +141,13 @@
                             <option value="USCITA">Uscita</option>
                         </select>
                     </div>
-                    <div class="col-span-2">
-                        <label class="block font-bold uppercase text-slate-500 mb-1">Data e Ora Precisa</label>
-                        <input id="form-manuale-orario" type="datetime-local" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data (gg/mm/aaaa)</label>
+                        <input id="form-manuale-data" type="text" placeholder="Es. 15/04/2026" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600 font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Ora Esatta (24h - HH:mm)</label>
+                        <input id="form-manuale-ora" type="text" placeholder="Es. 14:30" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600 font-mono text-sm">
                     </div>
                 </div>
                 <button onclick="inserisciTimbraturaManuale()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-semibold shadow-sm transition">
@@ -144,6 +156,7 @@
             </div>
         </div>
 
+        <!-- SEZIONE REPORT, CALENDARIO E TABELLA TIMBRATURE -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
                 <div>
@@ -159,6 +172,7 @@
                 </div>
             </div>
 
+            <!-- SELEZIONE PERIODO PERSONALIZZATO E NAVIGAZIONE -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-end justify-between gap-4 text-xs">
                 <div class="flex flex-wrap items-end gap-4">
                     <div>
@@ -171,6 +185,7 @@
                     </div>
                 </div>
                 
+                <!-- SELETTORE VISTA: CALENDARIO O TABELLA -->
                 <div class="flex bg-slate-200 p-1 rounded-lg">
                     <button id="btn-vista-calendario" onclick="cambiaVista('calendario')" class="bg-white text-slate-900 font-bold px-4 py-1.5 rounded-md shadow-sm transition">
                         Vista Calendario 📅
@@ -181,6 +196,7 @@
                 </div>
             </div>
 
+            <!-- RISULTATI DEI RESOCONTI CALCOLATI -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center md:text-left">
                 <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
                     <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Oggi</span>
@@ -200,6 +216,7 @@
                 </div>
             </div>
 
+            <!-- CONTENITORE VISTA 1: CALENDARIO MENSILE DINAMICO -->
             <div id="sezione-vista-calendario" class="block">
                 <div class="flex justify-between items-center bg-slate-800 text-white p-3 rounded-t-xl border-x border-t border-slate-700">
                     <button onclick="sfogliaMese(-1)" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">◀ Mese Prec.</button>
@@ -210,9 +227,11 @@
                     <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
                 </div>
                 <div id="griglia-giorni-calendario" class="grid grid-cols-7 gap-2 border-b border-x border-slate-200 p-3 rounded-b-xl bg-slate-50 min-h-[350px]">
-                    </div>
+                    <!-- JS -->
+                </div>
             </div>
 
+            <!-- CONTENITORE VISTA 2: TABELLA DETTAGLIATA (REGISTRO) -->
             <div id="sezione-vista-registro" class="hidden overflow-x-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -234,6 +253,7 @@
         </div>
     </div>
 
+    <!-- MODAL DI MODIFICA TIMBRATURA -->
     <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
             <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
@@ -249,8 +269,12 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data e Ora Esatta</label>
-                    <input id="edit-orario" type="datetime-local" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data (gg/mm/aaaa)</label>
+                    <input id="edit-data" type="text" placeholder="gg/mm/aaaa" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ora (24h - HH:mm)</label>
+                    <input id="edit-ora" type="text" placeholder="HH:mm" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600 font-mono">
                 </div>
             </div>
             
@@ -268,9 +292,9 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let vistaAttiva = 'calendario';
-        let dataCalendarioPuntatore = new Date(); // Gestione scorrimento mesi richiesto
+        let dataCalendarioPuntatore = new Date();
 
-        // FUNZIONI DI FORMATTAZIONE PROPRIETARIE (Forzano 24h e dd/mm/yyyy senza dipendere dal browser)
+        // FUNZIONI DI FORMATTAZIONE PROPRIETARIE (Blindate)
         function formattaDataManuale(stringaISO) {
             const d = new Date(stringaISO);
             const giorno = String(d.getDate()).padStart(2, '0');
@@ -288,6 +312,23 @@
                 return `${ore}:${minuti}:${secondi}`;
             }
             return `${ore}:${minuti}`;
+        }
+
+        // Precompila i form con la data e l'ora del momento attuale (in formato italiano garantito)
+        function impostaCampiDataOraDefault() {
+            const ora = new Date();
+            const g = String(ora.getDate()).padStart(2, '0');
+            const m = String(ora.getMonth() + 1).padStart(2, '0');
+            const a = ora.getFullYear();
+            const hh = String(ora.getHours()).padStart(2, '0');
+            const mm = String(ora.getMinutes()).padStart(2, '0');
+            
+            const dataOggiStr = `${g}/${m}/${a}`;
+            const oraOggiStr = `${hh}:${mm}`;
+            
+            document.getElementById('form-assenza-inizio').value = dataOggiStr;
+            document.getElementById('form-manuale-data').value = dataOggiStr;
+            document.getElementById('form-manuale-ora').value = oraOggiStr;
         }
 
         function impostaDateFiltriDaPuntatore() {
@@ -310,6 +351,7 @@
         async function inizializzaPannello() {
             dataCalendarioPuntatore = new Date();
             impostaDateFiltriDaPuntatore();
+            impostaCampiDataOraDefault();
             await caricaListaDipendenti();
             caricaReportSpecifico();
         }
@@ -422,7 +464,7 @@
         }
 
         async function eliminaDipendente(id, nominativo) {
-            if (!confirm(`Vuoi eliminare ${nominativo}? Verranno cancellate tutte le suas timbrature associate.`)) return;
+            if (!confirm(`Vuoi eliminare ${nominativo}? Verranno cancellate tutte le sue timbrature associate.`)) return;
             try {
                 const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
                 if (error) throw error;
@@ -434,26 +476,35 @@
             }
         }
 
-        // --- GESTIONE GIUSTIFICATIVI ---
+        // --- GESTIONE GIUSTIFICATIVI CON VALIDAZIONE FORMATO ITALIANO ---
         async function creaRichiestaAssenza() {
             const dipendenteId = document.getElementById('form-assenza-dipendente').value;
             const tipo = document.getElementById('form-assenza-tipo').value;
-            const dataInizio = document.getElementById('form-assenza-inizio').value;
+            const dataInput = document.getElementById('form-assenza-inizio').value.trim();
             const oreDaScalare = parseFloat(document.getElementById('form-assenza-ore').value);
 
-            if (!dipendenteId || !dataInizio || isNaN(oreDaScalare)) {
+            const regexData = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (!regexData.test(dataInput)) {
+                alert("Formato data non valido! Usa il formato gg/mm/aaaa (Es. 15/04/2026)");
+                return;
+            }
+
+            if (!dipendenteId || isNaN(oreDaScalare)) {
                 alert("Tutti i dati dell'assenza sono obbligatori!");
                 return;
             }
 
             try {
+                const parti = dataInput.split('/');
+                const dataInizioISO = `${parti[2]}-${parti[1]}-${parti[0]}`; // Convertito in YYYY-MM-DD per Supabase
+
                 const { data: dip, error: errFetch } = await supabaseClient.from('dipendenti').select('saldo_ferie_ore').eq('id', dipendenteId).single();
                 if (errFetch) throw errFetch;
                 
                 const nuovoSaldo = dip.saldo_ferie_ore - oreDaScalare;
 
                 const { error: errAssenza } = await supabaseClient.from('richieste_assenza').insert({
-                    dipendente_id: dipendenteId, tipo: tipo, data_inizio: dataInizio, data_fine: dataInizio, ore_totali: oreDaScalare, stato: 'approvato'
+                    dipendente_id: dipendenteId, tipo: tipo, data_inizio: dataInizioISO, data_fine: dataInizioISO, ore_totali: oreDaScalare, stato: 'approvato'
                 });
                 if (errAssenza) throw errAssenza;
 
@@ -462,32 +513,56 @@
 
                 alert("Giustificativo approvato e ore scalate!");
                 document.getElementById('form-assenza-ore').value = '';
+                impostaCampiDataOraDefault();
                 await caricaListaDipendenti();
             } catch (err) {
                 alert("Errore: " + err.message);
             }
         }
 
-        // --- INSERIMENTO MANUALE TIMBRATURA ---
+        // --- INSERIMENTO MANUALE TIMBRATURA CON VALIDAZIONE FORMATO ITALIANO E 24H ---
         async function inserisciTimbraturaManuale() {
             const dipendenteId = document.getElementById('form-manuale-dipendente').value;
             const tipoAzione = document.getElementById('form-manuale-tipo').value;
-            const orarioLocale = document.getElementById('form-manuale-orario').value;
+            const dataInput = document.getElementById('form-manuale-data').value.trim();
+            const oraInput = document.getElementById('form-manuale-ora').value.trim();
 
-            if(!dipendenteId || !orarioLocale) {
-                alert("Imposta dipendente, data e ora!");
+            const regexData = /^\d{2}\/\d{2}\/\d{4}$/;
+            const regexOra = /^\d{2}:\d{2}$/;
+
+            if (!regexData.test(dataInput) || !regexOra.test(oraInput)) {
+                alert("Formato Data o Ora non valido!\nData: gg/mm/aaaa (Es. 15/04/2026)\nOra: HH:mm formato 24 ore (Es. 14:30)");
+                return;
+            }
+
+            if(!dipendenteId) {
+                alert("Seleziona un dipendente!");
                 return;
             }
 
             try {
-                const orarioISO = new Date(orarioLocale).toISOString();
+                const partiData = dataInput.split('/');
+                const partiOra = oraInput.split(':');
+                
+                // Creazione data locale sicura
+                const dataOggetto = new Date(
+                    parseInt(partiData[2], 10),
+                    parseInt(partiData[1], 10) - 1,
+                    parseInt(partiData[0], 10),
+                    parseInt(partiOra[0], 10),
+                    parseInt(partiOra[1], 10),
+                    0
+                );
+                
+                const orarioISO = dataOggetto.toISOString();
+
                 const { error } = await supabaseClient.from('timbrature').insert({
                     dipendente_id: dipendenteId, tipo_azione: tipoAzione, orario: orarioISO, latitudine: 0, longitudine: 0
                 });
                 if (error) throw error;
 
                 alert("Timbratura manuale salvata!");
-                document.getElementById('form-manuale-orario').value = '';
+                impostaCampiDataOraDefault();
                 caricaReportSpecifico();
             } catch (err) {
                 alert("Errore inserimento: " + err.message);
@@ -501,7 +576,6 @@
             const grigliaCal = document.getElementById('griglia-giorni-calendario');
             const labelMeseAnno = document.getElementById('label-mese-anno-corrente');
 
-            // Nomi mesi in italiano per la barra richiesta
             const mesiNomi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
             labelMeseAnno.innerText = `${mesiNomi[dataCalendarioPuntatore.getMonth()]} ${dataCalendarioPuntatore.getFullYear()}`.toUpperCase();
 
@@ -560,7 +634,7 @@
                 document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
                 document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
 
-                // 2. RENDER VISTA REGISTRO (CORREZIONE FORMATO FORZATO)
+                // 2. RENDER VISTA REGISTRO (CON FORMATI SICURI)
                 const timbratureInvertite = [...timbrature].reverse();
                 corpoTabella.innerHTML = '';
                 let recordVisibili = 0;
@@ -575,7 +649,6 @@
                     const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
                     const labelAzione = isIngresso ? 'INGRESSO' : 'USCITA';
 
-                    // Forzatura stringhe manuali sicure al 100%
                     const dataFormattata = formattaDataManuale(t.orario); 
                     const oraFormattata = formattaOraManuale24h(t.orario, true);
 
@@ -595,7 +668,7 @@
                     corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record per il periodo.</td></tr>`;
                 }
 
-                // 3. RENDER VISTA CALENDARIO MENSILE CON FILTRO INTEGRATO E TOTALE ORE DIARIO
+                // 3. RENDER VISTA CALENDARIO MENSILE
                 grigliaCal.innerHTML = '';
                 const primoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth(), 1);
                 const ultimoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth() + 1, 0);
@@ -608,12 +681,10 @@
                 for(let giornoCorrente = 1; giornoCorrente <= ultimoDelMese.getDate(); giornoCorrente++) {
                     const dataStringCercata = `${dataCalendarioPuntatore.getFullYear()}-${(dataCalendarioPuntatore.getMonth()+1).toString().padStart(2,'0')}-${giornoCorrente.toString().padStart(2,'0')}`;
                     
-                    // Isola e ordina cronologicamente le timbrature di questo preciso giorno
                     const timbratureDelGiorno = timbrature
                         .filter(t => t.orario.startsWith(dataStringCercata))
                         .sort((a, b) => new Date(a.orario) - new Date(b.orario));
 
-                    // CALCOLO ORE TOTALI DEL GIORNO RICHIESTO
                     let oreLavorateGiorno = 0;
                     let marcatoreIngressoGiorno = null;
 
@@ -621,7 +692,6 @@
                         const oraMinuti24h = formattaOraManuale24h(t.orario, false);
                         const isIng = t.tipo_azione.toUpperCase() === 'INGRESSO';
                         
-                        // Calcolo matematico a coppie
                         if (isIng) {
                             marcatoreIngressoGiorno = new Date(t.orario);
                         } else if (!isIng && marcatoreIngressoGiorno) {
@@ -634,7 +704,6 @@
                         return `<div class="text-[10px] ${coloreTesto} truncate">${simbolo} ${oraMinuti24h}</div>`;
                     }).join('');
 
-                    // Stringa totale ore di fine giornata se maggiore di zero
                     const stringaTotaleGiornoHTML = oreLavorateGiorno > 0 
                         ? `<div class="text-right text-[10px] font-extrabold text-slate-700 bg-slate-200/80 px-1 py-0.5 rounded border-t border-slate-300 mt-auto">Tot: ${oreLavorateGiorno.toFixed(1)}h</div>` 
                         : '';
@@ -642,7 +711,6 @@
                     const isOggi = oggi.getDate() === giornoCorrente && oggi.getMonth() === dataCalendarioPuntatore.getMonth() && oggi.getFullYear() === dataCalendarioPuntatore.getFullYear();
                     const stileBordoGiorno = isOggi ? 'ring-2 ring-sky-500 bg-sky-50/40 border-sky-300' : 'bg-white border-slate-200';
 
-                    // Intestazione cella forzata in formato corretto dd/mm/yyyy
                     const intestazioneDataCella = `${giornoCorrente.toString().padStart(2,'0')}/${(dataCalendarioPuntatore.getMonth()+1).toString().padStart(2,'0')}/${dataCalendarioPuntatore.getFullYear()}`;
 
                     grigliaCal.innerHTML += `
@@ -658,16 +726,21 @@
             }
         }
 
-        // --- MODIFICA E CANCELLAZIONE RECORD ---
+        // --- GESTIONE MODIFICA E RIMOZIONE RECORDI CON FORMATI PROPRIETARI ---
         function apriModificaModal(id, tipo, orario) {
             document.getElementById('edit-timbratura-id').value = id;
             document.getElementById('edit-tipo').value = tipo;
             
             const d = new Date(orario);
-            const offset = d.getTimezoneOffset() * 60000;
-            const formatoLocaleISO = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+            const giorno = String(d.getDate()).padStart(2, '0');
+            const mese = String(d.getMonth() + 1).padStart(2, '0');
+            const anno = d.getFullYear();
+            const ore = String(d.getHours()).padStart(2, '0');
+            const minuti = String(d.getMinutes()).padStart(2, '0');
             
-            document.getElementById('edit-orario').value = formatoLocaleISO;
+            // Popoliamo i campi con la stringa esatta italiana
+            document.getElementById('edit-data').value = `${giorno}/${mese}/${anno}`;
+            document.getElementById('edit-ora').value = `${ore}:${minuti}`;
             document.getElementById('modal-modifica').classList.remove('hidden');
         }
 
@@ -678,12 +751,31 @@
         async function salvaModificaTimbratura() {
             const id = document.getElementById('edit-timbratura-id').value;
             const nuovoTipo = document.getElementById('edit-tipo').value;
-            const nuovoOrarioInput = document.getElementById('edit-orario').value;
+            const dataInput = document.getElementById('edit-data').value.trim();
+            const oraInput = document.getElementById('edit-ora').value.trim();
 
-            if(!nuovoOrarioInput) return;
+            const regexData = /^\d{2}\/\d{2}\/\d{4}$/;
+            const regexOra = /^\d{2}:\d{2}$/;
+            
+            if (!regexData.test(dataInput) || !regexOra.test(oraInput)) {
+                alert("Formato Data o Ora non valido nel modulo di modifica!");
+                return;
+            }
 
             try {
-                const orarioISO = new Date(nuovoOrarioInput).toISOString();
+                const partiData = dataInput.split('/');
+                const partiOra = oraInput.split(':');
+                
+                const dataOggetto = new Date(
+                    parseInt(partiData[2], 10),
+                    parseInt(partiData[1], 10) - 1,
+                    parseInt(partiData[0], 10),
+                    parseInt(partiOra[0], 10),
+                    parseInt(partiOra[1], 10),
+                    0
+                );
+                const orarioISO = dataOggetto.toISOString();
+
                 const { error } = await supabaseClient.from('timbrature').update({ tipo_azione: nuovoTipo, orario: orarioISO }).eq('id', id);
                 if (error) throw error;
 
@@ -693,6 +785,11 @@
             } catch (err) {
                 alert("Errore modifica: " + err.message);
             }
+        }
+
+        async function永久EliminaTimbratura(id) {
+            // alias mantenuto per retrocompatibilità
+            await eliminaTimbratura(id);
         }
 
         async function eliminaTimbratura(id) {
