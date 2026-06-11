@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Console Admin - Presenze PRO</title>
     
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librerie per export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
@@ -21,15 +24,16 @@
         .pill-inactive { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; }
         .pill-inactive:hover { background-color: #334155; color: white; }
 
-        /* Stile pop-up notifica */
         @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .toast-enter { animation: slideInUp 0.4s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col pb-12">
 
+    <!-- CONTENITORE NOTIFICHE REALTIME -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-2"></div>
 
+    <!-- MODALE EDIT TIMBRATURA -->
     <div id="modale-edit" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-4">
             <div class="flex justify-between items-center border-b border-slate-700 pb-2">
@@ -70,10 +74,11 @@
         </div>
     </div>
 
+    <!-- HEADER E NAV -->
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-4xl mx-auto">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v3.0 PRO</span></h1>
+                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v3.1 PRO</span></h1>
                 <input type="month" id="filtro-mese" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-sky-500 outline-none">
             </div>
             
@@ -87,8 +92,10 @@
 
     <main class="flex-grow w-full max-w-4xl mx-auto p-4">
         
+        <!-- LABEL 1: DATI PRESENZE -->
         <section id="label-timbrature" class="tab-content flex flex-col gap-4">
             
+            <!-- STATS -->
             <div class="grid grid-cols-3 gap-2 bg-slate-800/80 border border-slate-700 p-3 rounded-2xl shadow-sm text-center">
                 <div class="bg-slate-900/50 p-2 rounded-xl border border-slate-800 flex flex-col justify-center">
                     <span class="text-[9px] font-bold uppercase text-slate-400 block">Oggi</span>
@@ -104,14 +111,17 @@
                 </div>
             </div>
 
+            <!-- SELETTORE DIPENDENTI SINGOLO -->
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-sm">
                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Seleziona Risorsa:</div>
                 <div id="container-pills" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide items-center">
-                    </div>
+                    <!-- Popolato via JS -->
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 
+                <!-- CALENDARIO -->
                 <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-md w-full overflow-hidden">
                     <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
                         <div class="text-xs font-bold text-slate-300 uppercase tracking-widest" id="nome-mese-titolo">Mese</div>
@@ -123,13 +133,11 @@
                     <div id="griglia-calendario-fisico" class="grid-7"></div>
                 </div>
 
+                <!-- LISTA SCROLLABILE -->
                 <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-md flex flex-col h-[600px]">
                     <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center border-b border-slate-700 pb-3 mb-3 gap-2">
                         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registro e Dettagli</h3>
                         <div class="flex gap-2">
-                            <button onclick="chiudiTimbratureAperte()" title="Chiude gli IN passati senza OUT" class="bg-amber-600/20 text-amber-500 hover:bg-amber-600 hover:text-white px-2 py-1.5 rounded-lg text-[10px] font-bold border border-amber-500/30 transition">
-                                🛠️ Fix IN Aperti
-                            </button>
                             <button onclick="generaPDF()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md transition">
                                 🖨️ Esporta PDF
                             </button>
@@ -144,6 +152,7 @@
             </div>
         </section>
 
+        <!-- LABEL 2: INSERIMENTO MANUALE -->
         <section id="label-inserimento" class="tab-content hidden flex flex-col gap-4">
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col gap-5 shadow-md">
                 <div>
@@ -185,6 +194,7 @@
             </div>
         </section>
 
+        <!-- LABEL 3: ANAGRAFICA -->
         <section id="label-dipendenti" class="tab-content hidden flex flex-col gap-4">
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col gap-3">
                 <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Nuovo Dipendente</h3>
@@ -208,19 +218,18 @@
 
         let timbratureGlobali = []; 
         let dipendentiGlobali = [];
-        let idFiltroAttuale = null; // Partirà col primo dipendente utile
+        let idFiltroAttuale = null; 
         let idInModifica = null;
 
         const oggiIniziale = new Date();
         document.getElementById('filtro-mese').value = oggiIniziale.toISOString().substring(0, 7);
 
         function initRealtime() {
-            // Sottoscrizione eventi inserimento in tempo reale per le notifiche
             supabaseClient
               .channel('schema-db-changes')
               .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'timbrature' }, (payload) => {
                   mostraNotifica(payload.new);
-                  caricaDatiSilenzioso(); // ricarica in bg senza interrompere
+                  caricaDatiSilenzioso();
               })
               .subscribe();
         }
@@ -243,7 +252,7 @@
             `;
             
             toastContainer.appendChild(el);
-            setTimeout(() => el.remove(), 6000); // Rimuove dopo 6 sec
+            setTimeout(() => el.remove(), 6000);
         }
 
         function apriLabel(idLabel, bottone) {
@@ -299,6 +308,73 @@
             return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
+        // --- CHIUSURA IN AUTOMATICI IN BACKGROUND ---
+        async function gestisciChiusuraAutomaticaSospesi(timbrature) {
+            const oggiStr = new Date().toISOString().split('T')[0];
+            let operazioniInsert = [];
+
+            const raggruppati = timbrature.reduce((acc, t) => {
+                const d = t.orario.split('T')[0];
+                if(d === oggiStr) return acc; // Ignora rigorosamente la giornata in corso
+                
+                const dId = t.dipendente_id || (t.dipendenti?.id);
+                if(!dId) return acc;
+
+                if(!acc[d]) acc[d] = {};
+                if(!acc[d][dId]) acc[d][dId] = [];
+                acc[d][dId].push(t);
+                return acc;
+            }, {});
+
+            for (const data in raggruppati) {
+                for (const dId in raggruppati[data]) {
+                    let recs = raggruppati[data][dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    let ultimoIn = null;
+                    
+                    recs.forEach(r => {
+                        let info = analizzaTipoAzione(r.tipo_azione);
+                        if (info.tipo === 'INGRESSO') ultimoIn = r;
+                        else if (info.tipo === 'USCITA') ultimoIn = null;
+                    });
+                    
+                    if (ultimoIn) {
+                        let dataIn = new Date(ultimoIn.orario);
+                        let hourIn = dataIn.getHours();
+                        let minIn = dataIn.getMinutes();
+                        
+                        // Controllo orario di ingresso per decidere l'orario di chiusura
+                        let isMattina = (hourIn < 12) || (hourIn === 12 && minIn <= 30);
+                        let dataUscita = new Date(dataIn);
+                        
+                        if (isMattina) {
+                            dataUscita.setHours(12, 30, 0, 0);
+                        } else {
+                            dataUscita.setHours(19, 0, 0, 0);
+                        }
+                        
+                        operazioniInsert.push({
+                            dipendente_id: dId,
+                            orario: dataUscita.toISOString(),
+                            tipo_azione: 'USCITA',
+                            latitudine: 0,
+                            longitudine: 0
+                        });
+                    }
+                }
+            }
+
+            if(operazioniInsert.length > 0) {
+                try {
+                    await supabaseClient.from('timbrature').insert(operazioniInsert);
+                    return true; // Ritorna true se ha modificato il DB
+                } catch(e) {
+                    console.error("Errore auto-close background:", e);
+                    return false;
+                }
+            }
+            return false;
+        }
+
         async function caricaDati() {
             try {
                 const { data: dipendenti, error: dErr } = await supabaseClient.from('dipendenti').select('*').order('cognome');
@@ -315,7 +391,18 @@
                     .order('orario', { ascending: false });
                 if (tErr) throw tErr;
                 
-                timbratureGlobali = timbrature;
+                // --- Esegue Auto-Close Silenzioso in Background ---
+                const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbrature);
+                
+                if (necessitaRicarica) {
+                    const { data: nuoveTimbrature } = await supabaseClient
+                        .from('timbrature')
+                        .select('id, orario, tipo_azione, dipendente_id, dipendenti(id, nome, cognome)')
+                        .order('orario', { ascending: false });
+                    timbratureGlobali = nuoveTimbrature;
+                } else {
+                    timbratureGlobali = timbrature;
+                }
                 
                 aggiornaPillsMenu();
                 aggiornaAnagraficaEDropdown();
@@ -401,79 +488,15 @@
             if (!confirm(`ATTENZIONE:\nVuoi eliminare definitivamente ${nomeCompleto}?`)) return;
             try {
                 await supabaseClient.from('dipendenti').delete().eq('id', id);
-                if(idFiltroAttuale == id) idFiltroAttuale = null; // Resetta se era selezionato
+                if(idFiltroAttuale == id) idFiltroAttuale = null; 
                 await caricaDati();
             } catch (err) {
                 alert("Errore durante l'eliminazione.");
             }
         }
 
-        // --- CHIUSURA IN RIMASTI APERTI ---
-        async function chiudiTimbratureAperte() {
-            if (!confirm("Avviare la chiusura automatica degli INGRESSI passati rimasti senza USCITA?\nVerrà inserita un'USCITA fittizia alle ore 18:00 dello stesso giorno per i giorni precedenti a oggi.")) return;
-            
-            const oggiStr = new Date().toISOString().split('T')[0];
-            let operazioniInsert = [];
-
-            // Analizziamo tutto il DB globale (così sistema per tutti)
-            const raggruppati = timbratureGlobali.reduce((acc, t) => {
-                const d = t.orario.split('T')[0];
-                if(d === oggiStr) return acc; // Ignora oggi
-                
-                const dId = t.dipendente_id || (t.dipendenti?.id);
-                if(!dId) return acc;
-
-                if(!acc[d]) acc[d] = {};
-                if(!acc[d][dId]) acc[d][dId] = [];
-                acc[d][dId].push(t);
-                return acc;
-            }, {});
-
-            for (const data in raggruppati) {
-                for (const dId in raggruppati[data]) {
-                    let recs = raggruppati[data][dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                    let ultimoIn = null;
-                    
-                    recs.forEach(r => {
-                        let info = analizzaTipoAzione(r.tipo_azione);
-                        if (info.tipo === 'INGRESSO') ultimoIn = r;
-                        else if (info.tipo === 'USCITA') ultimoIn = null; // Chiuso correttamente
-                    });
-                    
-                    if (ultimoIn) {
-                        let dataUscita = new Date(ultimoIn.orario);
-                        dataUscita.setHours(18,0,0,0);
-                        // Correggo il fuso orario basico per non sbarellare (Javascript setHours è locale)
-                        let isoUscita = dataUscita.toISOString(); 
-                        operazioniInsert.push({
-                            dipendente_id: dId,
-                            orario: isoUscita,
-                            tipo_azione: 'USCITA',
-                            latitudine: 0,
-                            longitudine: 0
-                        });
-                    }
-                }
-            }
-
-            if(operazioniInsert.length === 0) {
-                alert("Nessun intervento necessario. Tutti gli IN dei giorni passati sono correttamente chiusi.");
-                return;
-            }
-
-            try {
-                const { error } = await supabaseClient.from('timbrature').insert(operazioniInsert);
-                if (error) throw error;
-                alert(`Completato! Sono state inserite ${operazioniInsert.length} USCITE automatiche.`);
-                caricaDati();
-            } catch(e) {
-                alert("Errore durante l'operazione automatica: " + e.message);
-            }
-        }
-
-
         function filtraERenderizza() {
-            if(!idFiltroAttuale) return; // Niente da mostrare
+            if(!idFiltroAttuale) return;
 
             const meseFiltro = document.getElementById('filtro-mese').value; 
             let filtrate = timbratureGlobali.filter(t => {
@@ -631,7 +654,9 @@
 
                 recordsData.forEach(t => {
                     const info = analizzaTipoAzione(t.tipo_azione);
-                    const oraArr = formattaOra(arrotondaAi15Minuti(t.orario));
+                    // ORA ESATTA REALE DELLA SCANSIONE
+                    const oraEsatta = formattaOra(new Date(t.orario));
+                    const dipNome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Sconosciuto';
                     
                     let colAzione = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
                     let stringaExtra = '';
@@ -641,12 +666,15 @@
 
                     htmlBlocco += `
                         <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg text-xs hover:bg-slate-800 transition border border-transparent hover:border-slate-700">
-                            <div class="flex-1">
-                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${colAzione}">${info.tipo} ${stringaExtra}</span>
+                            <div class="flex-1 flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${colAzione}">${info.tipo} ${stringaExtra}</span>
+                                    <span class="text-[10px] text-slate-300 font-semibold truncate">${dipNome}</span>
+                                </div>
                             </div>
                             <div class="flex items-center gap-3">
-                                <div class="text-right">
-                                    <span class="font-mono text-sky-300 font-bold text-sm">${oraArr}</span>
+                                <div class="text-right flex flex-col">
+                                    <span class="font-mono text-white font-bold text-sm">${oraEsatta}</span>
                                 </div>
                                 <button onclick="apriModaleEdit('${t.id}')" class="bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg text-[10px] transition">✏️</button>
                             </div>
@@ -855,13 +883,14 @@
 
                 ordinati.forEach(rec => {
                     let info = analizzaTipoAzione(rec.tipo_azione);
-                    let oraFormattata = formattaOra(arrotondaAi15Minuti(rec.orario));
+                    // ORA ESATTA REALE DELLA SCANSIONE
+                    let oraEsatta = formattaOra(new Date(rec.orario));
                     
                     if(info.tipo === 'INGRESSO') {
                         uIn = rec;
-                        arrayDettagli.push(`IN ${oraFormattata}`);
+                        arrayDettagli.push(`IN ${oraEsatta}`);
                     } else if(info.tipo === 'USCITA') {
-                        arrayDettagli.push(`OUT ${oraFormattata}`);
+                        arrayDettagli.push(`OUT ${oraEsatta}`);
                         if(uIn) {
                             let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
                             if(diff > 0) oreCalcolate += diff / (1000 * 60 * 60);
