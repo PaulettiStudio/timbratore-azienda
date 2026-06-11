@@ -674,16 +674,89 @@
                 return checkDip && checkMese;
             });
 
-            if (filtrate.length === 0) { alert("Nessun dato da esportare."); return; }
+            if (filtrate.length === 0) { alert("Nessun dato da esportare per questo mese."); return; }
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            doc.setFontSize(16); doc.text("PROSPETTO CONTEGGIO ORE PRESENZE", 14, 20);
+            // Intestazione
+            doc.setFontSize(16); 
+            doc.text("PROSPETTO PRESENZE E CALENDARIO", 14, 20);
             doc.setFontSize(10);
             const nomeFiltro = idFiltroAttuale === 'tutti' ? "TUTTI I DIPENDENTI" : document.getElementById('pill-'+idFiltroAttuale).innerText.toUpperCase();
             doc.text(`Filtro Risorsa: ${nomeFiltro}   |   Mese di Riferimento: ${meseFiltro}`, 14, 26);
 
+            // --- 1. SEZIONE CALENDARIO MENSILE VISIVO ---
+            const [anno, mese] = meseFiltro.split('-').map(Number);
+            const ggTotali = new Date(anno, mese, 0).getDate();
+            let ggStart = new Date(anno, mese - 1, 1).getDay();
+            ggStart = ggStart === 0 ? 6 : ggStart - 1; // Adatta a Lun=0, Dom=6
+
+            // Raggruppa ore totali per ogni giorno del mese per il calendario
+            let orePerGiorno = {};
+            filtrate.forEach(t => {
+                let gNum = new Date(t.orario).getDate();
+                if (!orePerGiorno[gNum]) orePerGiorno[gNum] = [];
+                orePerGiorno[gNum].push(t);
+            });
+
+            let calendarioData = [];
+            let rigaSettimana = new Array(7).fill('');
+            let indiceGiorno = ggStart;
+
+            for (let g = 1; g <= ggTotali; g++) {
+                let oreGiornoTotale = 0;
+                if (orePerGiorno[g]) {
+                    let mappaDip = {};
+                    orePerGiorno[g].forEach(r => {
+                        let dId = r.dipendente_id || 'unkn';
+                        if(!mappaDip[dId]) mappaDip[dId] = [];
+                        mappaDip[dId].push(r);
+                    });
+                    
+                    for(let dId in mappaDip) {
+                        let arr = mappaDip[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                        let uIn = null;
+                        arr.forEach(rec => {
+                            let info = analizzaTipoAzione(rec.tipo_azione);
+                            if(info.tipo === 'INGRESSO') uIn = rec;
+                            else if(info.tipo === 'USCITA' && uIn) {
+                                let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                                if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
+                                uIn = null;
+                            } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                                oreGiornoTotale += info.ore;
+                            }
+                        });
+                    }
+                }
+
+                let contenutoCella = `${g}`;
+                if (oreGiornoTotale > 0) {
+                    contenutoCella += `\n\n${oreGiornoTotale.toFixed(1)} h`;
+                }
+                
+                rigaSettimana[indiceGiorno] = contenutoCella;
+                indiceGiorno++;
+                if (indiceGiorno > 6) {
+                    calendarioData.push(rigaSettimana);
+                    rigaSettimana = new Array(7).fill('');
+                    indiceGiorno = 0;
+                }
+            }
+            if (indiceGiorno > 0) calendarioData.push(rigaSettimana);
+
+            // Stampa la griglia del calendario
+            doc.autoTable({
+                startY: 32,
+                head: [['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM']],
+                body: calendarioData,
+                theme: 'grid',
+                styles: { halign: 'center', valign: 'middle', fontSize: 10, cellPadding: 3, minCellHeight: 16 },
+                headStyles: { fillColor: [14, 165, 233], textColor: [255,255,255], fontStyle: 'bold' }
+            });
+
+            // --- 2. SEZIONE REGISTRO DETTAGLIATO (Come Prima) ---
             const strutturato = {};
             filtrate.forEach(t => {
                 const dataKey = t.orario.split('T')[0];
@@ -697,7 +770,6 @@
             });
 
             let righeTabella = [];
-
             Object.keys(strutturato).sort().forEach(dataKey => {
                 let [y, m, d] = dataKey.split('-');
                 let dataFormattata = `${d}/${m}/${y}`;
@@ -739,9 +811,15 @@
                 });
             });
 
+            // Scrive il titolo per la seconda tabella partendo da dove è finito il calendario
+            let finalYCalendario = doc.lastAutoTable.finalY || 32;
+            doc.setFontSize(12);
+            doc.text("REGISTRO DETTAGLIATO GIORNALIERO", 14, finalYCalendario + 12);
+
+            // Stampa la tabella dettagliata
             doc.autoTable({ 
-                startY: 32, 
-                head: [['Data', 'Dipendente', 'Ore Totali', 'Sequenza Movimenti Giornalieri']], 
+                startY: finalYCalendario + 16, 
+                head: [['Data', 'Dipendente', 'Ore Totali', 'Sequenza Movimenti']], 
                 body: righeTabella,
                 theme: 'striped',
                 styles: { cellPadding: 2.5, fontSize: 8.5, lineColor: [210,210,210], lineWidth: 0.1 },
