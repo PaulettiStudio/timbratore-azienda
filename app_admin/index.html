@@ -2,159 +2,766 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Console Admin Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Console Admin - Presenze e Calendario</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <style>
+
+    <style> 
+        body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        input[type="month"]::-webkit-calendar-picker-indicator,
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        .grid-7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .pill-active { background: #0284c7; color: white; border: 1px solid #075985; }
-        .pill-inactive { background: #0f172a; color: #64748b; border: 1px solid #1e293b; }
+        
+        /* Stili per i bottoni dipendenti (Pills) */
+        .pill-active { background-color: #0284c7; color: white; border: 1px solid #0369a1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .pill-inactive { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+        .pill-inactive:hover { background-color: #334155; color: white; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col pb-12">
 
-    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex justify-between items-center mb-4">
-            <h1 class="text-xl font-black text-white tracking-tight">ADMIN <span class="text-sky-500">CONTROL</span></h1>
-            <input type="month" id="filtro-mese" onchange="caricaDati()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-white outline-none">
+    <div id="modale-edit" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 class="text-lg font-black text-white">Modifica Record</h3>
+                <button onclick="eliminaRecord()" class="text-xs bg-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white px-3 py-1.5 rounded-lg transition font-bold">
+                    🗑️ Elimina
+                </button>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Assegnato a:</label>
+                    <select id="edit-dipendente" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500"></select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Tipo Registrazione:</label>
+                    <select id="edit-azione" onchange="toggleEditDurata()" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                        <option value="INGRESSO">INGRESSO</option>
+                        <option value="USCITA">USCITA</option>
+                        <option value="FERIE">FERIE</option>
+                        <option value="PERMESSO">PERMESSO</option>
+                    </select>
+                </div>
+                <div id="edit-container-durata" class="hidden">
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Ore Compute (es. 4.5):</label>
+                    <input type="number" id="edit-ore" step="0.5" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Data e Ora Scansione:</label>
+                    <input type="datetime-local" id="edit-nuovo-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                </div>
+            </div>
+            
+            <div class="flex gap-2 mt-2">
+                <button onclick="chiudiModaleEdit()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition">Annulla</button>
+                <button onclick="salvaModificaOrario()" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-xl transition shadow-lg">Salva Tutto</button>
+            </div>
         </div>
-        
-        <div id="container-pills" class="max-w-4xl mx-auto flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <button onclick="selezionaDipendente('tutti')" id="btn-tutti" class="pill-active flex-shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold transition">Tutti</button>
+    </div>
+
+    <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin</h1>
+                <input type="month" id="filtro-mese" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-sky-500 outline-none">
+            </div>
+            
+            <div class="flex bg-slate-900 rounded-xl p-1 gap-1">
+                <button onclick="apriLabel('label-timbrature', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg bg-sky-600 text-white transition">Dashboard Dati</button>
+                <button onclick="apriLabel('label-inserimento', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">+ Inserisci</button>
+                <button onclick="apriLabel('label-dipendenti', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Anagrafica</button>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto p-4 space-y-6">
-        <section>
-            <div class="flex justify-between items-end mb-4">
-                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registro Attività</h2>
-                <button onclick="esportaPDF()" class="text-[10px] bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg font-bold transition">🖨️ Scarica Report</button>
+    <main class="flex-grow w-full max-w-4xl mx-auto p-4">
+        
+        <section id="label-timbrature" class="tab-content flex flex-col gap-4">
+            
+            <div class="grid grid-cols-3 gap-2 bg-slate-800/80 border border-slate-700 p-3 rounded-2xl shadow-sm text-center">
+                <div class="bg-slate-900/50 p-2 rounded-xl border border-slate-800 flex flex-col justify-center">
+                    <span class="text-[9px] font-bold uppercase text-slate-400 block">Oggi</span>
+                    <span id="ore-oggi" class="text-base font-black text-emerald-400 font-mono">-</span>
+                </div>
+                <div class="bg-slate-900/50 p-2 rounded-xl border border-slate-800 flex flex-col justify-center">
+                    <span class="text-[9px] font-bold uppercase text-slate-400 block">Settimana</span>
+                    <span id="ore-settimana" class="text-base font-black text-sky-400 font-mono">-</span>
+                </div>
+                <div class="bg-slate-900/50 p-2 rounded-xl border border-slate-800 flex flex-col justify-center">
+                    <span class="text-[9px] font-bold uppercase text-slate-400 block">Mese Intero</span>
+                    <span id="ore-mese" class="text-base font-black text-amber-400 font-mono">-</span>
+                </div>
             </div>
-            <div id="lista-giornaliera" class="space-y-4"></div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-sm">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filtra Dipendente:</div>
+                <div id="container-pills" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide items-center">
+                    <button onclick="selezionaPill('tutti')" id="pill-tutti" class="pill-active flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">Tutti (Globale)</button>
+                    </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-md w-full overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-xs font-bold text-slate-300 uppercase tracking-widest" id="nome-mese-titolo">Mese</div>
+                        <div class="text-[9px] text-slate-500 flex gap-2">
+                            <span class="text-emerald-400">● IN</span>
+                            <span class="text-rose-400">● OUT</span>
+                        </div>
+                    </div>
+                    <div class="grid-7 text-center text-[10px] font-bold text-slate-500 mb-1">
+                        <div>LUN</div><div>MAR</div><div>MER</div><div>GIO</div><div>VEN</div><div>SAB</div><div>DOM</div>
+                    </div>
+                    <div id="griglia-calendario-fisico" class="grid-7">
+                        </div>
+                </div>
+
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-md flex flex-col gap-2 h-full max-h-[600px]">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lista Giornaliera</h3>
+                        <button onclick="generaPDF()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md transition">
+                            🖨️ Esporta PDF
+                        </button>
+                    </div>
+                    
+                    <div id="contenitore-lista-movimenti" class="flex flex-col gap-4 overflow-y-auto pr-1">
+                        </div>
+                </div>
+
+            </div>
         </section>
+
+        <section id="label-inserimento" class="tab-content hidden flex flex-col gap-4">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col gap-5 shadow-md">
+                
+                <div>
+                    <label class="text-xs font-bold text-slate-300 block mb-1">1. Dipendente</label>
+                    <select id="manual-dipendente" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500"></select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-slate-300 block mb-1">2. Data e Ora Evento</label>
+                    <input type="datetime-local" id="manual-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500">
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-slate-300 block mb-2">3. Tipo di Registrazione</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-emerald-500">
+                            <input type="radio" name="manual-azione" value="INGRESSO" checked onchange="toggleDurataExtra()" class="accent-emerald-500">
+                            <span class="text-xs font-bold text-emerald-400">INGRESSO</span>
+                        </label>
+                        <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-rose-500">
+                            <input type="radio" name="manual-azione" value="USCITA" onchange="toggleDurataExtra()" class="accent-rose-500">
+                            <span class="text-xs font-bold text-rose-400">USCITA</span>
+                        </label>
+                        <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-amber-500">
+                            <input type="radio" name="manual-azione" value="FERIE" onchange="toggleDurataExtra()" class="accent-amber-500">
+                            <span class="text-xs font-bold text-amber-400">🌴 FERIE</span>
+                        </label>
+                        <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-indigo-500">
+                            <input type="radio" name="manual-azione" value="PERMESSO" onchange="toggleDurataExtra()" class="accent-indigo-500">
+                            <span class="text-xs font-bold text-indigo-400">⏱️ PERMESSO</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="container-durata-extra" class="hidden bg-slate-900/50 p-3 rounded-xl border border-slate-700">
+                    <label class="text-[11px] font-bold text-slate-300 block mb-1">Durata in Ore (es. 4.5 o 8)</label>
+                    <input type="number" id="manual-ore" step="0.5" value="8" placeholder="Es. 8" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                </div>
+
+                <button onclick="aggiungiTimbraturaManuale()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-4 rounded-xl text-sm transition shadow-lg active:scale-95 mt-2">
+                    Registra nel Database
+                </button>
+            </div>
+        </section>
+
+        <section id="label-dipendenti" class="tab-content hidden flex flex-col gap-4">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col gap-3">
+                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Nuovo Dipendente</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="nuovo-nome" placeholder="Nome" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm w-full outline-none text-white">
+                    <input type="text" id="nuovo-cognome" placeholder="Cognome" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm w-full outline-none text-white">
+                </div>
+                <button onclick="aggiungiDipendente()" class="bg-emerald-600 font-bold p-3 rounded-xl text-sm text-white hover:bg-emerald-500 transition">Salva Anagrafica</button>
+            </div>
+            
+            <h2 class="text-sm font-bold text-slate-400 uppercase mt-4 tracking-wider">Link App Dipendenti (QR/Badge)</h2>
+            <div id="lista-dipendenti" class="flex flex-col gap-3"></div>
+        </section>
+
     </main>
 
     <script>
-        // Credenziali configurate
+        // CONFIGURAZIONE SUPABASE REALE
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let timbrature = [];
-        let dipendenti = [];
-        let filtroDip = 'tutti';
+        let timbratureGlobali = []; 
+        let dipendentiGlobali = [];
+        let idFiltroAttuale = 'tutti';
+        let idInModifica = null;
 
+        const oggiIniziale = new Date();
+        document.getElementById('filtro-mese').value = oggiIniziale.toISOString().substring(0, 7);
+
+        // GESTIONE TABS NAVIGAZIONE
+        function apriLabel(idLabel, bottone) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(idLabel).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-sky-600', 'text-white');
+                btn.classList.add('text-slate-400');
+            });
+            bottone.classList.remove('text-slate-400');
+            bottone.classList.add('bg-sky-600', 'text-white');
+        }
+
+        function toggleDurataExtra() {
+            const val = document.querySelector('input[name="manual-azione"]:checked').value;
+            const container = document.getElementById('container-durata-extra');
+            if(val === 'FERIE' || val === 'PERMESSO') container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        }
+
+        function toggleEditDurata() {
+            const val = document.getElementById('edit-azione').value;
+            const container = document.getElementById('edit-container-durata');
+            if(val === 'FERIE' || val === 'PERMESSO') container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        }
+
+        // DECODER DELLE ORE PERSONALIZZATE (es. FERIE:4.5)
+        function analizzaTipoAzione(tipoGrezzo) {
+            if (tipoGrezzo && tipoGrezzo.includes(':')) {
+                let parti = tipoGrezzo.split(':');
+                return { tipo: parti[0], ore: parseFloat(parti[1]) };
+            }
+            return { tipo: tipoGrezzo, ore: 8 };
+        }
+
+        // ARROTONDAMENTO COMMERCIALE (15 MINUTI CON SOGLIA 7 MINUTI)
+        function arrotondaAi15Minuti(dataIso) {
+            let d = new Date(dataIso);
+            let m = d.getMinutes();
+            let resto = m % 15;
+            let arrot = resto >= 7 ? m + (15 - resto) : m - resto;
+            
+            if (arrot === 60) { d.setHours(d.getHours() + 1); d.setMinutes(0); } 
+            else { d.setMinutes(arrot); }
+            d.setSeconds(0, 0);
+            return d;
+        }
+
+        function formattaOra(d) { return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
+        function getInizioSettimana(d) {
+            let date = new Date(d);
+            let day = date.getDay();
+            let diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff)).toISOString().split('T')[0];
+        }
+
+        // RECUPERO DATI DAL DATABASE
         async function caricaDati() {
-            const mese = document.getElementById('filtro-mese').value || new Date().toISOString().substring(0,7);
-            
-            const [tData, dData] = await Promise.all([
-                supabase.from('timbrature').select('*, dipendenti(nome, cognome)').order('orario', { ascending: false }),
-                supabase.from('dipendenti').select('*').order('nome')
-            ]);
+            try {
+                const { data: dipendenti, error: dErr } = await supabaseClient.from('dipendenti').select('*').order('cognome');
+                if (dErr) throw dErr;
+                dipendentiGlobali = dipendenti;
 
-            timbrature = tData.data || [];
-            dipendenti = dData.data || [];
-            
-            renderPills();
-            renderLista();
-        }
-
-        function renderPills() {
-            const container = document.getElementById('container-pills');
-            const btnTutti = document.getElementById('btn-tutti');
-            container.innerHTML = '';
-            container.appendChild(btnTutti);
-
-            dipendenti.forEach(d => {
-                const b = document.createElement('button');
-                b.className = 'pill-inactive flex-shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold transition';
-                b.innerText = `${d.nome} ${d.cognome}`;
-                b.onclick = () => selezionaDipendente(d.id);
-                b.id = `btn-${d.id}`;
-                container.appendChild(b);
-            });
-            selezionaDipendente(filtroDip);
-        }
-
-        function selezionaDipendente(id) {
-            filtroDip = id;
-            document.querySelectorAll('button').forEach(b => b.classList.replace('pill-active', 'pill-inactive'));
-            const target = id === 'tutti' ? 'btn-tutti' : `btn-${id}`;
-            document.getElementById(target)?.classList.replace('pill-inactive', 'pill-active');
-            renderLista();
-        }
-
-        function calcolaOreGiorno(entries) {
-            let totale = 0;
-            let ultimoIn = null;
-            entries.sort((a,b) => new Date(a.orario) - new Date(b.orario));
-            entries.forEach(e => {
-                if(e.tipo_azione === 'INGRESSO') ultimoIn = new Date(e.orario);
-                else if(e.tipo_azione === 'USCITA' && ultimoIn) {
-                    let diff = (new Date(e.orario) - ultimoIn) / (1000 * 60 * 60);
-                    totale += diff;
-                    ultimoIn = null;
-                }
-            });
-            return totale.toFixed(1);
-        }
-
-        function renderLista() {
-            const mese = document.getElementById('filtro-mese').value;
-            const filtrati = timbrature.filter(t => (filtroDip === 'tutti' || t.dipendente_id == filtroDip) && t.orario.startsWith(mese));
-            
-            const listContainer = document.getElementById('lista-giornaliera');
-            listContainer.innerHTML = '';
-            
-            const raggruppati = filtrati.reduce((acc, t) => {
-                const data = t.orario.substring(0,10);
-                if (!acc[data]) acc[data] = [];
-                acc[data].push(t);
-                return acc;
-            }, {});
-
-            Object.keys(raggruppati).sort().reverse().forEach(data => {
-                const entries = raggruppati[data].sort((a,b) => new Date(b.orario) - new Date(a.orario));
-                const oreGiorno = calcolaOreGiorno([...entries]);
+                const { data: timbrature, error: tErr } = await supabaseClient
+                    .from('timbrature')
+                    .select('id, orario, tipo_azione, dipendente_id, dipendenti(nome, cognome)')
+                    .order('orario', { ascending: false });
+                if (tErr) throw tErr;
                 
-                listContainer.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
-                        <div class="flex justify-between mb-3 border-b border-slate-800 pb-2">
-                            <span class="font-black text-white text-sm">${data}</span>
-                            <span class="text-emerald-400 font-bold text-xs">${oreGiorno} ore</span>
+                timbratureGlobali = timbrature;
+                
+                aggiornaPillsMenu();
+                aggiornaAnagraficaEDropdown();
+                filtraERenderizza();
+            } catch (err) {
+                console.error("Errore di rete o DB:", err);
+            }
+        }
+
+        // GESTIONE PILLS (BOTTONI DIPENDENTI)
+        function aggiornaPillsMenu() {
+            const container = document.getElementById('container-pills');
+            
+            // Ricrea i pulsanti eccetto 'tutti'
+            let html = `<button onclick="selezionaPill('tutti')" id="pill-tutti" class="pill-inactive flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">Tutti (Globale)</button>`;
+            
+            dipendentiGlobali.forEach(d => {
+                html += `<button onclick="selezionaPill('${d.id}')" id="pill-${d.id}" class="pill-inactive flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">${d.nome} ${d.cognome}</button>`;
+            });
+            
+            container.innerHTML = html;
+            evidenziaPillCorrente();
+        }
+
+        function selezionaPill(id) {
+            idFiltroAttuale = id;
+            evidenziaPillCorrente();
+            filtraERenderizza();
+        }
+
+        function evidenziaPillCorrente() {
+            document.querySelectorAll('#container-pills button').forEach(b => {
+                b.classList.remove('pill-active');
+                b.classList.add('pill-inactive');
+            });
+            
+            const targetId = idFiltroAttuale === 'tutti' ? 'pill-tutti' : `pill-${idFiltroAttuale}`;
+            const targetBtn = document.getElementById(targetId);
+            if(targetBtn) {
+                targetBtn.classList.remove('pill-inactive');
+                targetBtn.classList.add('pill-active');
+            }
+        }
+
+        // AGGIORNA ALTRE SELECT E ANAGRAFICA
+        function aggiornaAnagraficaEDropdown() {
+            const manualDip = document.getElementById('manual-dipendente');
+            const editDip = document.getElementById('edit-dipendente');
+            const containerLista = document.getElementById('lista-dipendenti');
+
+            manualDip.innerHTML = '<option value="">-- Scegli Dipendente --</option>';
+            editDip.innerHTML = '';
+            containerLista.innerHTML = '';
+
+            dipendentiGlobali.forEach(d => {
+                const optText = `${d.cognome} ${d.nome}`;
+                manualDip.innerHTML += `<option value="${d.id}">${optText}</option>`;
+                editDip.innerHTML += `<option value="${d.id}">${optText}</option>`;
+
+                const pb = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                const linkBadge = `${window.location.origin}${pb}badge.html?id=${d.id}`;
+
+                containerLista.innerHTML += `
+                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-sm text-slate-200">${optText}</div>
+                            <div class="text-[9px] text-slate-500 font-mono mt-0.5">${linkBadge.substring(0,40)}...</div>
                         </div>
-                        <div class="space-y-2">
-                            ${entries.map(e => `
-                                <div class="flex justify-between items-center text-[11px] bg-slate-950 p-2 rounded-lg border border-slate-800/50">
-                                    <span class="text-slate-400 font-bold">${e.dipendenti?.nome || 'N/A'} ${e.dipendenti?.cognome || ''}</span>
-                                    <span class="px-2 py-0.5 rounded-full font-bold ${e.tipo_azione === 'INGRESSO' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">${e.tipo_azione}</span>
-                                    <span class="font-mono text-slate-300">${e.orario.substring(11,16)}</span>
-                                </div>
-                            `).join('')}
-                        </div>
+                        <button onclick="navigator.clipboard.writeText('${linkBadge}'); alert('Link Copiato!');" class="bg-sky-600/20 text-sky-400 hover:bg-sky-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition border border-sky-500/30">Copia Link</button>
                     </div>
                 `;
             });
         }
 
-        function esportaPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Report Presenze Mensile", 14, 15);
-            doc.autoTable({
-                head: [['Data', 'Dipendente', 'Evento', 'Ora']],
-                body: timbrature.map(t => [t.orario.substring(0,10), t.dipendenti?.nome || 'N/A', t.tipo_azione, t.orario.substring(11,16)])
+        // LOGICA CENTRALE DI FILTRAGGIO E RENDER
+        function filtraERenderizza() {
+            const meseFiltro = document.getElementById('filtro-mese').value; 
+            
+            // Filtra per dipendente e mese
+            let filtrate = timbratureGlobali.filter(t => {
+                let checkDip = idFiltroAttuale === 'tutti' ? true : String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
+                let checkMese = meseFiltro ? t.orario.startsWith(meseFiltro) : true;
+                return checkDip && checkMese;
             });
-            doc.save("Presenze.pdf");
+
+            calcolaStatistiche(filtrate, meseFiltro);
+            renderizzaCalendarioINOUT(filtrate, meseFiltro);
+            renderizzaListaGruppiGiornalieri(filtrate);
         }
 
-        window.onload = () => {
-            document.getElementById('filtro-mese').value = new Date().toISOString().substring(0,7);
-            caricaDati();
-        };
+        // STATISTICHE
+        function calcolaStatistiche(filtrate, meseFiltro) {
+            if (idFiltroAttuale === 'tutti') {
+                document.getElementById('ore-oggi').innerText = '-';
+                document.getElementById('ore-settimana').innerText = '-';
+                document.getElementById('ore-mese').innerText = '-';
+                return;
+            }
+
+            let totOggi = 0; let totSettimana = 0; let totMese = 0;
+            const oggiStr = new Date().toISOString().split('T')[0];
+            const inizioSettimanaStr = getInizioSettimana(new Date());
+
+            let sorted = [...filtrate].sort((a, b) => new Date(a.orario) - new Date(b.orario));
+            let ultimoIn = null;
+
+            sorted.forEach(t => {
+                let dataObj = new Date(t.orario);
+                let dStr = dataObj.toISOString().split('T')[0];
+                let sStr = getInizioSettimana(dataObj);
+                let mStr = t.orario.substring(0, 7);
+
+                let info = analizzaTipoAzione(t.tipo_azione);
+                let oreAgg = 0;
+
+                if (info.tipo === 'INGRESSO') { ultimoIn = t; } 
+                else if (info.tipo === 'USCITA') {
+                    if (ultimoIn) {
+                        let diff = arrotondaAi15Minuti(t.orario) - arrotondaAi15Minuti(ultimoIn.orario);
+                        if (diff > 0) oreAgg = diff / (1000 * 60 * 60);
+                        ultimoIn = null;
+                    }
+                } 
+                else if (info.tipo === 'FERIE' || info.tipo === 'PERMESSO') { oreAgg = info.ore; }
+
+                if (oreAgg > 0) {
+                    if (dStr === oggiStr) totOggi += oreAgg;
+                    if (sStr === inizioSettimanaStr) totSettimana += oreAgg;
+                    if (mStr === meseFiltro) totMese += oreAgg;
+                }
+            });
+
+            document.getElementById('ore-oggi').innerText = totOggi.toFixed(1) + 'h';
+            document.getElementById('ore-settimana').innerText = totSettimana.toFixed(1) + 'h';
+            document.getElementById('ore-mese').innerText = totMese.toFixed(1) + 'h';
+        }
+
+        // CALENDARIO CON INDICATORI IN/OUT
+        function renderizzaCalendarioINOUT(filtrate, meseSceltoStr) {
+            const griglia = document.getElementById('griglia-calendario-fisico');
+            griglia.innerHTML = '';
+            if(!meseSceltoStr) return;
+
+            const [anno, mese] = meseSceltoStr.split('-').map(Number);
+            document.getElementById('nome-mese-titolo').innerText = new Date(anno, mese - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+
+            const ggTotali = new Date(anno, mese, 0).getDate();
+            let ggStart = new Date(anno, mese - 1, 1).getDay();
+            ggStart = ggStart === 0 ? 6 : ggStart - 1;
+
+            // Prepara i dati giornalieri
+            let datiGiornalieri = {};
+            filtrate.forEach(t => {
+                let gNum = new Date(t.orario).getDate();
+                if(!datiGiornalieri[gNum]) datiGiornalieri[gNum] = [];
+                datiGiornalieri[gNum].push(t);
+            });
+
+            // Offset inizio mese
+            for (let i = 0; i < ggStart; i++) {
+                griglia.innerHTML += `<div class="bg-transparent h-16"></div>`;
+            }
+
+            // Stampa giorni
+            for (let g = 1; g <= ggTotali; g++) {
+                let htmlGiorno = '';
+                
+                if (datiGiornalieri[g] && datiGiornalieri[g].length > 0) {
+                    // Ordino per tempo
+                    let recordsGiorno = datiGiornalieri[g].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    
+                    // Se siamo in "tutti", mostriamo solo un indicatore generico per non intasare
+                    if(idFiltroAttuale === 'tutti') {
+                        htmlGiorno = `<div class="mt-1 text-[8px] bg-slate-700/50 text-slate-300 rounded px-1 text-center truncate">${recordsGiorno.length} Eventi</div>`;
+                    } else {
+                        // Se c'è un dipendente, mostriamo gli orari IN e OUT
+                        recordsGiorno.forEach(rec => {
+                            let info = analizzaTipoAzione(rec.tipo_azione);
+                            let ora = formattaOra(arrotondaAi15Minuti(rec.orario));
+                            
+                            if(info.tipo === 'INGRESSO') htmlGiorno += `<div class="text-[9px] text-emerald-400 leading-tight">IN ${ora}</div>`;
+                            if(info.tipo === 'USCITA') htmlGiorno += `<div class="text-[9px] text-rose-400 leading-tight">OUT ${ora}</div>`;
+                            if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') htmlGiorno += `<div class="text-[9px] text-amber-400 leading-tight">${info.tipo.substring(0,3)} ${info.ore}h</div>`;
+                        });
+                    }
+                }
+
+                griglia.innerHTML += `
+                    <div class="bg-slate-900/60 border border-slate-700/60 h-16 rounded-xl p-1 flex flex-col shadow-inner overflow-hidden">
+                        <span class="text-[10px] font-bold text-slate-400">${g}</span>
+                        <div class="flex-1 flex flex-col gap-0.5 justify-end">
+                            ${htmlGiorno}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // REGISTRO RAGGRUPPATO PER DATA
+        function renderizzaListaGruppiGiornalieri(filtrate) {
+            const container = document.getElementById('contenitore-lista-movimenti');
+            container.innerHTML = '';
+
+            if (filtrate.length === 0) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-500 py-8 italic">Nessun dato presente nel periodo selezionato.</div>';
+                return;
+            }
+
+            // 1. Raggruppa per data YYYY-MM-DD
+            const gruppi = filtrate.reduce((acc, obj) => {
+                const d = obj.orario.split('T')[0];
+                if(!acc[d]) acc[d] = [];
+                acc[d].push(obj);
+                return acc;
+            }, {});
+
+            // 2. Itera sulle date (ordinate decrescenti)
+            Object.keys(gruppi).sort().reverse().forEach(dataKey => {
+                let recordsData = gruppi[dataKey];
+                
+                // Formatta la data per il titolo
+                let [y, m, d] = dataKey.split('-');
+                let strData = `${d}/${m}/${y}`;
+
+                // Calcolo ore del giorno per questa lista (Considera dipendenti multipli o singolo)
+                let oreGiornoTotale = 0;
+                let mappaDipGiorno = {};
+                recordsData.forEach(r => {
+                    let dId = r.dipendente_id || 'unkn';
+                    if(!mappaDipGiorno[dId]) mappaDipGiorno[dId] = [];
+                    mappaDipGiorno[dId].push(r);
+                });
+
+                for(let dId in mappaDipGiorno){
+                    let arr = mappaDipGiorno[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    let uIn = null;
+                    arr.forEach(rec => {
+                        let info = analizzaTipoAzione(rec.tipo_azione);
+                        if(info.tipo === 'INGRESSO') uIn = rec;
+                        else if(info.tipo === 'USCITA' && uIn) {
+                            let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                            if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
+                            uIn = null;
+                        } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                            oreGiornoTotale += info.ore;
+                        }
+                    });
+                }
+
+                // Costruisci blocco giornaliero
+                let htmlBlocco = `
+                    <div class="bg-slate-900 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm">
+                        
+                        <div class="bg-slate-800/80 px-4 py-2 border-b border-slate-700/80 flex justify-between items-center">
+                            <span class="font-bold text-sm text-sky-400">📅 ${strData}</span>
+                            <span class="text-[10px] font-bold bg-slate-900 text-slate-300 px-2 py-1 rounded border border-slate-700">Totale: ${oreGiornoTotale.toFixed(1)}h</span>
+                        </div>
+                        
+                        <div class="p-2 flex flex-col gap-1.5">
+                `;
+
+                // Ordina records per ora crescente
+                recordsData.sort((a,b) => new Date(a.orario) - new Date(b.orario)).forEach(t => {
+                    const info = analizzaTipoAzione(t.tipo_azione);
+                    const nome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Risorsa';
+                    const oraArr = formattaOra(arrotondaAi15Minuti(t.orario));
+                    
+                    let colAzione = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
+                    let stringaExtra = '';
+                    if(info.tipo === 'USCITA') colAzione = 'text-rose-400 bg-rose-400/10 border-rose-500/20';
+                    if(info.tipo === 'FERIE') { colAzione = 'text-amber-400 bg-amber-400/10 border-amber-500/20'; stringaExtra = `(${info.ore}h)`; }
+                    if(info.tipo === 'PERMESSO') { colAzione = 'text-indigo-400 bg-indigo-400/10 border-indigo-500/20'; stringaExtra = `(${info.ore}h)`; }
+
+                    htmlBlocco += `
+                        <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg text-xs hover:bg-slate-800 transition border border-transparent hover:border-slate-700">
+                            <div class="flex-1">
+                                <span class="font-bold text-slate-200 block sm:inline mr-2">${nome}</span>
+                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${colAzione}">${info.tipo} ${stringaExtra}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="text-right">
+                                    <span class="font-mono text-sky-300 font-bold text-sm">${oraArr}</span>
+                                    <span class="text-[9px] text-slate-500 block">reale: ${formattaOra(new Date(t.orario))}</span>
+                                </div>
+                                <button onclick="apriModaleEdit('${t.id}')" class="bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg text-[10px] transition">
+                                    ✏️
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                htmlBlocco += `</div></div>`;
+                container.innerHTML += htmlBlocco;
+            });
+        }
+
+        // ==========================================
+        // SISTEMA DI MODIFICA E CANCELLAZIONE
+        // ==========================================
+        function apriModaleEdit(id) {
+            idInModifica = id;
+            const t = timbratureGlobali.find(x => x.id === id);
+            
+            let recId = t.dipendente_id || (t.dipendenti ? t.dipendenti.id : null);
+            document.getElementById('edit-dipendente').value = recId;
+            
+            const info = analizzaTipoAzione(t.tipo_azione);
+            document.getElementById('edit-azione').value = info.tipo;
+            document.getElementById('edit-ore').value = info.ore;
+            toggleEditDurata();
+
+            let d = new Date(t.orario);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            document.getElementById('edit-nuovo-orario').value = d.toISOString().slice(0, 16);
+            
+            document.getElementById('modale-edit').classList.remove('hidden');
+        }
+
+        function chiudiModaleEdit() {
+            idInModifica = null;
+            document.getElementById('modale-edit').classList.add('hidden');
+        }
+
+        async function salvaModificaOrario() {
+            const nuovoDipId = document.getElementById('edit-dipendente').value;
+            const azioneBase = document.getElementById('edit-azione').value;
+            const oreCustom = document.getElementById('edit-ore').value || 8;
+            const dataGrezza = document.getElementById('edit-nuovo-orario').value;
+            
+            if(!dataGrezza || !nuovoDipId) return;
+
+            let azioneFinale = azioneBase;
+            if(azioneBase === 'FERIE' || azioneBase === 'PERMESSO') {
+                azioneFinale = `${azioneBase}:${oreCustom}`;
+            }
+
+            const nuovoOrarioISO = new Date(dataGrezza).toISOString();
+
+            try {
+                const { error } = await supabaseClient.from('timbrature').update({ 
+                    dipendente_id: nuovoDipId,
+                    orario: nuovoOrarioISO,
+                    tipo_azione: azioneFinale 
+                }).eq('id', idInModifica);
+                
+                if (error) throw error;
+                chiudiModaleEdit();
+                await caricaDati();
+            } catch (err) {
+                alert("Errore modifica.");
+            }
+        }
+
+        async function eliminaRecord() {
+            if (!confirm("Sicuro di voler eliminare definitivamente questo record?")) return;
+            try {
+                const { error } = await supabaseClient.from('timbrature').delete().eq('id', idInModifica);
+                if (error) throw error;
+                chiudiModaleEdit();
+                await caricaDati();
+            } catch (err) { alert("Errore eliminazione."); }
+        }
+
+        // ==========================================
+        // INSERIMENTI NUOVI 
+        // ==========================================
+        async function aggiungiTimbraturaManuale() {
+            const dipIdStr = document.getElementById('manual-dipendente').value;
+            const orarioStr = document.getElementById('manual-orario').value;
+            let azioneSel = document.querySelector('input[name="manual-azione"]:checked').value;
+
+            if (!dipIdStr || !orarioStr) { alert("Compila Dipendente e Orario."); return; }
+            
+            if (azioneSel === 'FERIE' || azioneSel === 'PERMESSO') {
+                const oreCustom = document.getElementById('manual-ore').value || 8;
+                azioneSel = `${azioneSel}:${oreCustom}`;
+            }
+
+            const orarioISO = new Date(orarioStr).toISOString();
+
+            try {
+                const { error } = await supabaseClient.from('timbrature').insert({
+                    dipendente_id: dipIdStr,
+                    orario: orarioISO,
+                    tipo_azione: azioneSel,
+                    latitudine: 0,
+                    longitudine: 0
+                });
+                if (error) throw error;
+
+                alert("Salvato con successo.");
+                document.getElementById('manual-orario').value = '';
+                await caricaDati();
+                apriLabel('label-timbrature', document.querySelectorAll('.tab-btn')[0]);
+            } catch (err) { alert("Errore inserimento."); }
+        }
+
+        async function aggiungiDipendente() {
+            const nome = document.getElementById('nuovo-nome').value.trim();
+            const cognome = document.getElementById('nuovo-cognome').value.trim();
+            if(!nome || !cognome) return;
+            const { error } = await supabaseClient.from('dipendenti').insert({ nome, cognome });
+            if (!error) { 
+                document.getElementById('nuovo-nome').value = ''; 
+                document.getElementById('nuovo-cognome').value = ''; 
+                caricaDati(); 
+                alert("Dipendente aggiunto!");
+            }
+        }
+
+        // ==========================================
+        // ESPORTAZIONE PDF A BLOCCHI GIORNALIERI
+        // ==========================================
+        function generaPDF() {
+            // Rifiltro i dati correnti
+            const meseFiltro = document.getElementById('filtro-mese').value; 
+            let filtrate = timbratureGlobali.filter(t => {
+                let checkDip = idFiltroAttuale === 'tutti' ? true : String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
+                let checkMese = meseFiltro ? t.orario.startsWith(meseFiltro) : true;
+                return checkDip && checkMese;
+            });
+
+            if (filtrate.length === 0) { alert("Nessun record da esportare."); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Intestazione
+            doc.setFontSize(16); doc.text("Registro Presenze Mensile", 14, 20);
+            doc.setFontSize(10);
+            const nomeFiltro = idFiltroAttuale === 'tutti' ? "Globale (Tutti)" : document.getElementById('pill-'+idFiltroAttuale).innerText;
+            doc.text(`Filtro: ${nomeFiltro}  |  Mese: ${meseFiltro}`, 14, 26);
+
+            // Raggruppo per data per costruire la tabella
+            const gruppi = filtrate.reduce((acc, obj) => {
+                const d = obj.orario.split('T')[0];
+                if(!acc[d]) acc[d] = [];
+                acc[d].push(obj);
+                return acc;
+            }, {});
+
+            let bodyTabella = [];
+
+            Object.keys(gruppi).sort().forEach(dataKey => {
+                // Riga Titolo Data
+                let [y, m, d] = dataKey.split('-');
+                bodyTabella.push([{ content: `Data: ${d}/${m}/${y}`, colSpan: 4, styles: { fillColor: [240, 240, 240], fontStyle: 'bold', textColor: [0,0,0] } }]);
+                
+                // Righe Dati
+                let records = gruppi[dataKey].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                records.forEach(t => {
+                    const info = analizzaTipoAzione(t.tipo_azione);
+                    const n = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : '-';
+                    let eventoTxt = info.tipo;
+                    if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') eventoTxt += ` (${info.ore}h)`;
+                    
+                    bodyTabella.push([
+                        '', // Cella vuota sotto la data per l'indentazione visiva
+                        n, 
+                        eventoTxt, 
+                        formattaOra(arrotondaAi15Minuti(t.orario))
+                    ]);
+                });
+            });
+
+            doc.autoTable({ 
+                startY: 32, 
+                head: [['', 'Dipendente', 'Evento', 'Ora Calcolata']], 
+                body: bodyTabella,
+                theme: 'plain', // Uso plain per gestire i colori personalizzati della riga Data
+                styles: { cellPadding: 2, fontSize: 9, lineColor: [200,200,200], lineWidth: 0.1 }
+            });
+
+            doc.save(`Presenze_${nomeFiltro.replace(' ','_')}_${meseFiltro}.pdf`);
+        }
+
+        window.onload = caricaDati;
     </script>
 </body>
 </html>
