@@ -368,7 +368,7 @@
                         ultimoIn = null;
                     }
                 } else if (info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
-                    oreAggiunte = info.ore; // Legge ore personalizzate (es. 4)
+                    oreAggiunte = info.ore; // Legge ore personalizzate (es. 4.5)
                 }
 
                 if (oreAggiunte > 0) {
@@ -534,7 +534,7 @@
             filtraERenderizza();
         }
 
-        // SALVATAGGIO INSERIMENTO (CON ORE CUSTOM E FIX LATITUDINE 0)
+        // SALVATAGGIO INSERIMENTO (CON ORE CUSTOM E FIX DIPENDENTE PURAMENTE STRINGA)
         async function aggiungiTimbraturaManuale() {
             const dipIdStr = document.getElementById('manual-dipendente').value;
             const orarioStr = document.getElementById('manual-orario').value;
@@ -542,19 +542,18 @@
 
             if (!dipIdStr || !orarioStr) { alert("Compila Dipendente e Orario."); return; }
             
-            // Aggiungo le ore personalizzate al formato (es. FERIE:4) in modo da non rompere le colonne DB
+            // Aggiungo le ore personalizzate al formato (es. FERIE:4.5)
             if (azioneSel === 'FERIE' || azioneSel === 'PERMESSO') {
                 const oreCustom = document.getElementById('manual-ore').value || 8;
                 azioneSel = `${azioneSel}:${oreCustom}`;
             }
 
-            const dipIdInt = parseInt(dipIdStr, 10);
             const orarioISO = new Date(orarioStr).toISOString();
 
             try {
-                // lat: 0 e lon: 0 risolvono il problema di vincoli di "latitudine mancante"
+                // Invio l'ID del dipendente PURAMENTE come stringa
                 const { error } = await supabaseClient.from('timbrature').insert({
-                    dipendente_id: dipIdInt,
+                    dipendente_id: dipIdStr,
                     orario: orarioISO,
                     tipo_azione: azioneSel,
                     latitudine: 0,
@@ -562,7 +561,7 @@
                 });
                 if (error) throw error;
 
-                alert("Inserimento salvato.");
+                alert("Inserimento salvato con successo.");
                 document.getElementById('manual-orario').value = '';
                 await caricaDati();
                 apriLabel('label-timbrature', document.querySelectorAll('.tab-btn')[0]);
