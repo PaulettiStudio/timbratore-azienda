@@ -77,7 +77,7 @@
     </main>
 
     <footer class="w-full max-w-sm mx-auto text-center border-t border-slate-800/60 pt-4 pb-2">
-        <p class="text-xs text-slate-500">Recinto GPS & Finestre Orarie Attivi</p>
+        <p class="text-xs text-slate-500">Recinto GPS & Limite 1 Timbratura per Turno</p>
     </footer>
 
     <script>
@@ -89,11 +89,20 @@
         const AZIENDA_LON = 11.925732; 
         const RAGGIO_MASSIMO_METRI = 50; 
 
+        // Definizione rigida delle finestre con orari iso di inizio e fine
         const FINESTRE_ORARIE = {
-            IN_MATTINA:    { inizio: "06:30", fine: "09:00" },
-            OUT_MATTINA:   { inizio: "12:00", fine: "14:00" },
-            IN_POMERIGGIO: { inizio: "13:45", fine: "16:00" },
-            OUT_POMERIGGIO: { inizio: "18:30", fine: "20:30" }
+            MATTINA: {
+                inizio: "06:30",
+                fine: "14:00",
+                in_inizio: "06:30", in_fine: "09:00",
+                out_inizio: "12:00", out_fine: "14:00"
+            },
+            POMERIGGIO: {
+                inizio: "13:45",
+                fine: "20:30",
+                in_inizio: "13:45", in_fine: "16:00",
+                out_inizio: "18:30", out_fine: "20:30"
+            }
         };
 
         let dipendenteId = null;
@@ -103,10 +112,9 @@
 
         function aggiornaOrologio() {
             const adesso = new Date();
-            document.getElementById('orologio-ora').innerText = fancyTime(adesso);
+            document.getElementById('orologio-ora').innerText = adesso.toLocaleTimeString('it-IT');
             document.getElementById('orologio-data').innerText = adesso.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
         }
-        function fancyTime(d) { return d.toLocaleTimeString('it-IT'); }
         setInterval(aggiornaOrologio, 1000);
         aggiornaOrologio();
 
@@ -214,11 +222,6 @@
             return parseInt(parti[0], 10) * 60 + parseInt(parti[1], 10);
         }
 
-        function verificaInFinestra(minutiAttuali, finestra) {
-            return minutesCheck(minutiAttuali, finestra);
-        }
-        function minutesCheck(m, f) { return m >= stringaInMinuti(f.inizio) && m <= stringaInMinuti(f.fine); }
-
         async function timbra(tipoAzione) {
             if (!dipendenteId) return;
 
@@ -233,7 +236,7 @@
 
             const adesso = new Date();
             const giornoSettimana = adesso.getDay(); 
-            const minutes = adesso.getHours() * 60 + adesso.getMinutes();
+            const minutiAttuali = adesso.getHours() * 60 + adesso.getMinutes();
             const oraFormattata = adesso.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 
             if (giornoSettimana === 0) {
@@ -241,26 +244,66 @@
                 return;
             }
 
+            // 1. Identificazione della fascia oraria corrente globale (Mattina o Pomeriggio)
+            let fasciaCorrente = null;
             let orarioValido = false;
-            if (tipoAzione === 'INGRESSO') {
-                const inMattina = verificaInFinestra(minutes, FINESTRE_ORARIE.IN_MATTINA);
-                const inPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutes, FINESTRE_ORARIE.IN_POMERIGGIO);
-                if (inMattina || inPomeriggio) orarioValido = true;
+
+            // Controllo Finestra Mattina
+            if (tipoAzione === 'INGRESSO' && minutiAttuali >= stringaInMinuti(FINESTRE_ORARIE.MATTINA.in_inizio) && minutiAttuali <= stringaInMinuti(FINESTRE_ORARIE.MATTINA.in_fine)) {
+                fasciaCorrente = 'MATTINA';
+                orarioValido = true;
+            } else if (tipoAzione === 'USCITA' && minutiAttuali >= stringaInMinuti(FINESTRE_ORARIE.MATTINA.out_inizio) && minutiAttuali <= stringaInMinuti(FINESTRE_ORARIE.MATTINA.out_fine)) {
+                fasciaCorrente = 'MATTINA';
+                orarioValido = true;
             }
 
-            if (tipoAzione === 'USCITA') {
-                const outMattina = verificaInFinestra(minutes, FINESTRE_ORARIE.OUT_MATTINA);
-                const outPomeriggio = (giornoSettimana >= 1 && giornoSettimana <= 5) && verificaInFinestra(minutes, FINESTRE_ORARIE.OUT_POMERIGGIO);
-                if (outMattina || outPomeriggio) orarioValido = true;
+            // Controllo Finestra Pomeriggio (valida da Lunedì a Venerdì)
+            if (!orarioValido && (giornoSettimana >= 1 && giornoSettimana <= 5)) {
+                if (tipoAzione === 'INGRESSO' && minutiAttuali >= stringaInMinuti(FINESTRE_ORARIE.POMERIGGIO.in_inizio) && minutiAttuali <= stringaInMinuti(FINESTRE_ORARIE.POMERIGGIO.in_fine)) {
+                    fasciaCorrente = 'POMERIGGIO';
+                    orarioValido = true;
+                } else if (tipoAzione === 'USCITA' && minutiAttuali >= stringaInMinuti(FINESTRE_ORARIE.POMERIGGIO.out_inizio) && minutiAttuali <= stringaInMinuti(FINESTRE_ORARIE.POMERIGGIO.out_fine)) {
+                    fasciaCorrente = 'POMERIGGIO';
+                    orarioValido = true;
+                }
             }
 
-            if (!orarioValido) {
+            if (!orarioValido || !fasciaCorrente) {
                 mostraNotificaPopUp('ERRORE', "Fuori Orario ⛔", `Nessun turno previsto per le ${oraFormattata}.`);
                 return;
             }
 
             document.body.style.pointerEvents = 'none';
+
             try {
+                // 2. CONTROLLO ANTI-DUPLICATO SU SUPABASE
+                // Definiamo i timestamp di inizio e fine della fascia oraria odierna
+                const inizioFascia = new Date(adesso);
+                const [oraInizio, minInizio] = FINESTRE_ORARIE[fasciaCorrente].inizio.split(':');
+                inizioFascia.setHours(parseInt(oraInizio), parseInt(minInizio), 0, 0);
+
+                const fineFascia = new Date(adesso);
+                const [oraFine, minFine] = FINESTRE_ORARIE[fasciaCorrente].fine.split(':');
+                fineFascia.setHours(parseInt(oraFine), parseInt(minFine), 59, 999);
+
+                // Interroghiamo la tabella per vedere se esiste già quel tipo_azione in questa fascia
+                const { data: timbratureEsistenti, error: errorCheck } = await supabaseClient
+                    .from('timbrature')
+                    .select('id')
+                    .eq('dipendente_id', dipendenteId)
+                    .eq('tipo_azione', tipoAzione)
+                    .gte('orario', inizioFascia.toISOString())
+                    .lte('orario', fineFascia.toISOString());
+
+                if (errorCheck) throw errorCheck;
+
+                if (timbratureEsistenti && timbratureEsistenti.length > 0) {
+                    mostraNotificaPopUp('ERRORE', "Già Registrato ⚠️", `Hai già effettuato un ${tipoAzione} per il turno di questa ${fasciaCorrente.toLowerCase()}.`);
+                    document.body.style.pointerEvents = 'auto';
+                    return;
+                }
+
+                // 3. ESECUZIONE DELLA TIMBRATURA (Se il controllo è superato)
                 const { error } = await supabaseClient.from('timbrature').insert({
                     dipendente_id: dipendenteId,
                     tipo_azione: tipoAzione,
@@ -274,7 +317,8 @@
                     tipoAzione === 'INGRESSO' ? "Buon Lavoro!" : "Fine Turno", 
                     `Registrato alle ${oraFormattata}.`);
             } catch (err) {
-                mostraNotificaPopUp('ERRORE', "Errore di Rete", "Impossibile salvare la timbratura.");
+                console.error(err);
+                mostraNotificaPopUp('ERRORE', "Errore di Rete", "Impossibile completare la verifica o il salvataggio.");
             } finally {
                 document.body.style.pointerEvents = 'auto';
             }
