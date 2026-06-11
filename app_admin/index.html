@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Console Admin - Presenze e Calendario Pro</title>
+    <title>Console Admin - Presenze PRO</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,9 +20,15 @@
         .pill-active { background-color: #0284c7; color: white; border: 1px solid #0369a1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .pill-inactive { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; }
         .pill-inactive:hover { background-color: #334155; color: white; }
+
+        /* Stile pop-up notifica */
+        @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .toast-enter { animation: slideInUp 0.4s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col pb-12">
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-2"></div>
 
     <div id="modale-edit" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-4">
@@ -67,7 +73,7 @@
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-4xl mx-auto">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v2.5 PRO</span></h1>
+                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v3.0 PRO</span></h1>
                 <input type="month" id="filtro-mese" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-sky-500 outline-none">
             </div>
             
@@ -101,8 +107,7 @@
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-sm">
                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Seleziona Risorsa:</div>
                 <div id="container-pills" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide items-center">
-                    <button onclick="selezionaPill('tutti')" id="pill-tutti" class="pill-active flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">Tutti (Globale)</button>
-                </div>
+                    </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -118,15 +123,22 @@
                     <div id="griglia-calendario-fisico" class="grid-7"></div>
                 </div>
 
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-md flex flex-col gap-2 h-full max-h-[600px]">
-                    <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registro Ore e Dettagli</h3>
-                        <button onclick="generaPDF()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md transition">
-                            🖨️ Esporta PDF Pro
-                        </button>
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-md flex flex-col h-[600px]">
+                    <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center border-b border-slate-700 pb-3 mb-3 gap-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registro e Dettagli</h3>
+                        <div class="flex gap-2">
+                            <button onclick="chiudiTimbratureAperte()" title="Chiude gli IN passati senza OUT" class="bg-amber-600/20 text-amber-500 hover:bg-amber-600 hover:text-white px-2 py-1.5 rounded-lg text-[10px] font-bold border border-amber-500/30 transition">
+                                🛠️ Fix IN Aperti
+                            </button>
+                            <button onclick="generaPDF()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md transition">
+                                🖨️ Esporta PDF
+                            </button>
+                        </div>
                     </div>
                     
-                    <div id="contenitore-lista-movimenti" class="flex flex-col gap-4 overflow-y-auto pr-1"></div>
+                    <div class="flex-1 min-h-0 overflow-y-auto pr-2">
+                        <div id="contenitore-lista-movimenti" class="flex flex-col gap-4"></div>
+                    </div>
                 </div>
 
             </div>
@@ -196,11 +208,43 @@
 
         let timbratureGlobali = []; 
         let dipendentiGlobali = [];
-        let idFiltroAttuale = 'tutti';
+        let idFiltroAttuale = null; // Partirà col primo dipendente utile
         let idInModifica = null;
 
         const oggiIniziale = new Date();
         document.getElementById('filtro-mese').value = oggiIniziale.toISOString().substring(0, 7);
+
+        function initRealtime() {
+            // Sottoscrizione eventi inserimento in tempo reale per le notifiche
+            supabaseClient
+              .channel('schema-db-changes')
+              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'timbrature' }, (payload) => {
+                  mostraNotifica(payload.new);
+                  caricaDatiSilenzioso(); // ricarica in bg senza interrompere
+              })
+              .subscribe();
+        }
+
+        function mostraNotifica(record) {
+            const dip = dipendentiGlobali.find(d => String(d.id) === String(record.dipendente_id));
+            const nome = dip ? `${dip.nome} ${dip.cognome}` : 'Qualcuno';
+            const info = analizzaTipoAzione(record.tipo_azione);
+            
+            const toastContainer = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            
+            let coloreAzione = info.tipo === 'INGRESSO' ? 'text-emerald-400 border-emerald-500' : 'text-rose-400 border-rose-500';
+            
+            el.className = `bg-slate-800 border-2 ${coloreAzione} text-white p-4 rounded-xl shadow-2xl toast-enter flex flex-col`;
+            el.innerHTML = `
+                <div class="text-[10px] uppercase font-bold text-slate-400 mb-1">Nuova Registrazione</div>
+                <div class="font-bold text-sm mb-1">${nome}</div>
+                <div class="text-xs font-mono bg-slate-900 px-2 py-1 rounded inline-block w-fit">${info.tipo}</div>
+            `;
+            
+            toastContainer.appendChild(el);
+            setTimeout(() => el.remove(), 6000); // Rimuove dopo 6 sec
+        }
 
         function apriLabel(idLabel, bottone) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -255,12 +299,15 @@
             return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
-        // --- SISTEMA DI CARICAMENTO E GESTIONE ERRORI ---
         async function caricaDati() {
             try {
                 const { data: dipendenti, error: dErr } = await supabaseClient.from('dipendenti').select('*').order('cognome');
                 if (dErr) throw dErr;
                 dipendentiGlobali = dipendenti;
+
+                if(dipendenti.length > 0 && idFiltroAttuale === null) {
+                    idFiltroAttuale = dipendenti[0].id;
+                }
 
                 const { data: timbrature, error: tErr } = await supabaseClient
                     .from('timbrature')
@@ -274,14 +321,25 @@
                 aggiornaAnagraficaEDropdown();
                 filtraERenderizza();
             } catch (err) { 
-                console.error("Errore Dettagliato:", err);
-                alert("Si è verificato un errore nel caricamento dal database.\nMessaggio: " + err.message); 
+                console.error(err);
+                alert("Errore caricamento database: " + err.message); 
             }
+        }
+
+        async function caricaDatiSilenzioso() {
+            try {
+                const { data: timbrature } = await supabaseClient
+                    .from('timbrature')
+                    .select('id, orario, tipo_azione, dipendente_id, dipendenti(id, nome, cognome)')
+                    .order('orario', { ascending: false });
+                timbratureGlobali = timbrature || [];
+                filtraERenderizza();
+            } catch (err) { }
         }
 
         function aggiornaPillsMenu() {
             const container = document.getElementById('container-pills');
-            let html = `<button onclick="selezionaPill('tutti')" id="pill-tutti" class="pill-inactive flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">Tutti (Globale)</button>`;
+            let html = '';
             dipendentiGlobali.forEach(d => {
                 html += `<button onclick="selezionaPill('${d.id}')" id="pill-${d.id}" class="pill-inactive flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">${d.nome} ${d.cognome}</button>`;
             });
@@ -300,8 +358,7 @@
                 b.classList.remove('pill-active');
                 b.classList.add('pill-inactive');
             });
-            const targetId = idFiltroAttuale === 'tutti' ? 'pill-tutti' : `pill-${idFiltroAttuale}`;
-            const targetBtn = document.getElementById(targetId);
+            const targetBtn = document.getElementById(`pill-${idFiltroAttuale}`);
             if(targetBtn) {
                 targetBtn.classList.remove('pill-inactive');
                 targetBtn.classList.add('pill-active');
@@ -313,7 +370,7 @@
             const editDip = document.getElementById('edit-dipendente');
             const containerLista = document.getElementById('lista-dipendenti');
 
-            manualDip.innerHTML = '<option value="">-- Scegli Dipendente --</option>';
+            manualDip.innerHTML = '';
             editDip.innerHTML = '';
             containerLista.innerHTML = '';
 
@@ -341,21 +398,86 @@
         }
 
         async function eliminaDipendente(id, nomeCompleto) {
-            if (!confirm(`ATTENZIONE:\nVuoi eliminare definitivamente ${nomeCompleto}?\nQuesta operazione rimuoverà la risorsa dal sistema.`)) return;
+            if (!confirm(`ATTENZIONE:\nVuoi eliminare definitivamente ${nomeCompleto}?`)) return;
             try {
-                const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
-                if (error) throw error;
-                alert("Dipendente rimosso con successo dall'anagrafica.");
+                await supabaseClient.from('dipendenti').delete().eq('id', id);
+                if(idFiltroAttuale == id) idFiltroAttuale = null; // Resetta se era selezionato
                 await caricaDati();
             } catch (err) {
-                alert("Errore durante l'eliminazione dipendente: " + err.message);
+                alert("Errore durante l'eliminazione.");
             }
         }
 
+        // --- CHIUSURA IN RIMASTI APERTI ---
+        async function chiudiTimbratureAperte() {
+            if (!confirm("Avviare la chiusura automatica degli INGRESSI passati rimasti senza USCITA?\nVerrà inserita un'USCITA fittizia alle ore 18:00 dello stesso giorno per i giorni precedenti a oggi.")) return;
+            
+            const oggiStr = new Date().toISOString().split('T')[0];
+            let operazioniInsert = [];
+
+            // Analizziamo tutto il DB globale (così sistema per tutti)
+            const raggruppati = timbratureGlobali.reduce((acc, t) => {
+                const d = t.orario.split('T')[0];
+                if(d === oggiStr) return acc; // Ignora oggi
+                
+                const dId = t.dipendente_id || (t.dipendenti?.id);
+                if(!dId) return acc;
+
+                if(!acc[d]) acc[d] = {};
+                if(!acc[d][dId]) acc[d][dId] = [];
+                acc[d][dId].push(t);
+                return acc;
+            }, {});
+
+            for (const data in raggruppati) {
+                for (const dId in raggruppati[data]) {
+                    let recs = raggruppati[data][dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    let ultimoIn = null;
+                    
+                    recs.forEach(r => {
+                        let info = analizzaTipoAzione(r.tipo_azione);
+                        if (info.tipo === 'INGRESSO') ultimoIn = r;
+                        else if (info.tipo === 'USCITA') ultimoIn = null; // Chiuso correttamente
+                    });
+                    
+                    if (ultimoIn) {
+                        let dataUscita = new Date(ultimoIn.orario);
+                        dataUscita.setHours(18,0,0,0);
+                        // Correggo il fuso orario basico per non sbarellare (Javascript setHours è locale)
+                        let isoUscita = dataUscita.toISOString(); 
+                        operazioniInsert.push({
+                            dipendente_id: dId,
+                            orario: isoUscita,
+                            tipo_azione: 'USCITA',
+                            latitudine: 0,
+                            longitudine: 0
+                        });
+                    }
+                }
+            }
+
+            if(operazioniInsert.length === 0) {
+                alert("Nessun intervento necessario. Tutti gli IN dei giorni passati sono correttamente chiusi.");
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('timbrature').insert(operazioniInsert);
+                if (error) throw error;
+                alert(`Completato! Sono state inserite ${operazioniInsert.length} USCITE automatiche.`);
+                caricaDati();
+            } catch(e) {
+                alert("Errore durante l'operazione automatica: " + e.message);
+            }
+        }
+
+
         function filtraERenderizza() {
+            if(!idFiltroAttuale) return; // Niente da mostrare
+
             const meseFiltro = document.getElementById('filtro-mese').value; 
             let filtrate = timbratureGlobali.filter(t => {
-                let checkDip = idFiltroAttuale === 'tutti' ? true : String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
+                let checkDip = String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
                 let checkMese = meseFiltro ? t.orario.startsWith(meseFiltro) : true;
                 return checkDip && checkMese;
             });
@@ -366,13 +488,6 @@
         }
 
         function calcolaStatistiche(filtrate, meseFiltro) {
-            if (idFiltroAttuale === 'tutti') {
-                document.getElementById('ore-oggi').innerText = '-';
-                document.getElementById('ore-settimana').innerText = '-';
-                document.getElementById('ore-mese').innerText = '-';
-                return;
-            }
-
             let totOggi = 0; let totSettimana = 0; let totMese = 0;
             const oggiStr = new Date().toISOString().split('T')[0];
             const inizioSettimanaStr = getInizioSettimana(new Date());
@@ -438,28 +553,19 @@
                 let oreGiornoTotale = 0;
                 
                 if (datiGiornalieri[g] && datiGiornalieri[g].length > 0) {
-                    let mappaDipGiorno = {};
-                    datiGiornalieri[g].forEach(r => {
-                        let dId = r.dipendente_id || 'unkn';
-                        if(!mappaDipGiorno[dId]) mappaDipGiorno[dId] = [];
-                        mappaDipGiorno[dId].push(r);
+                    let arr = datiGiornalieri[g].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    let uIn = null;
+                    arr.forEach(rec => {
+                        let info = analizzaTipoAzione(rec.tipo_azione);
+                        if(info.tipo === 'INGRESSO') uIn = rec;
+                        else if(info.tipo === 'USCITA' && uIn) {
+                            let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                            if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
+                            uIn = null;
+                        } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                            oreGiornoTotale += info.ore;
+                        }
                     });
-
-                    for(let dId in mappaDipGiorno){
-                        let arr = mappaDipGiorno[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                        let uIn = null;
-                        arr.forEach(rec => {
-                            let info = analizzaTipoAzione(rec.tipo_azione);
-                            if(info.tipo === 'INGRESSO') uIn = rec;
-                            else if(info.tipo === 'USCITA' && uIn) {
-                                let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
-                                if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
-                                uIn = null;
-                            } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
-                                oreGiornoTotale += info.ore;
-                            }
-                        });
-                    }
                 }
 
                 let badgeOreHtml = '';
@@ -500,28 +606,19 @@
                 let strData = `${d}/${m}/${y}`;
 
                 let oreGiornoTotale = 0;
-                let mappaDipGiorno = {};
-                recordsData.forEach(r => {
-                    let dId = r.dipendente_id || 'unkn';
-                    if(!mappaDipGiorno[dId]) mappaDipGiorno[dId] = [];
-                    mappaDipGiorno[dId].push(r);
+                let arr = recordsData.sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                let uIn = null;
+                arr.forEach(rec => {
+                    let info = analizzaTipoAzione(rec.tipo_azione);
+                    if(info.tipo === 'INGRESSO') uIn = rec;
+                    else if(info.tipo === 'USCITA' && uIn) {
+                        let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                        if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
+                        uIn = null;
+                    } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                        oreGiornoTotale += info.ore;
+                    }
                 });
-
-                for(let dId in mappaDipGiorno){
-                    let arr = mappaDipGiorno[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                    let uIn = null;
-                    arr.forEach(rec => {
-                        let info = analizzaTipoAzione(rec.tipo_azione);
-                        if(info.tipo === 'INGRESSO') uIn = rec;
-                        else if(info.tipo === 'USCITA' && uIn) {
-                            let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
-                            if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
-                            uIn = null;
-                        } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
-                            oreGiornoTotale += info.ore;
-                        }
-                    });
-                }
 
                 let htmlBlocco = `
                     <div class="bg-slate-900 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm">
@@ -532,9 +629,8 @@
                         <div class="p-2 flex flex-col gap-1.5">
                 `;
 
-                recordsData.sort((a,b) => new Date(a.orario) - new Date(b.orario)).forEach(t => {
+                recordsData.forEach(t => {
                     const info = analizzaTipoAzione(t.tipo_azione);
-                    const nome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Risorsa eliminata/sconosciuta';
                     const oraArr = formattaOra(arrotondaAi15Minuti(t.orario));
                     
                     let colAzione = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
@@ -546,13 +642,11 @@
                     htmlBlocco += `
                         <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg text-xs hover:bg-slate-800 transition border border-transparent hover:border-slate-700">
                             <div class="flex-1">
-                                <span class="font-bold text-slate-200 block sm:inline mr-2">${nome}</span>
                                 <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${colAzione}">${info.tipo} ${stringaExtra}</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="text-right">
                                     <span class="font-mono text-sky-300 font-bold text-sm">${oraArr}</span>
-                                    <span class="text-[9px] text-slate-500 block">reale: ${formattaOra(new Date(t.orario))}</span>
                                 </div>
                                 <button onclick="apriModaleEdit('${t.id}')" class="bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg text-[10px] transition">✏️</button>
                             </div>
@@ -601,25 +695,23 @@
             const nuovoOrarioISO = new Date(dataGrezza).toISOString();
 
             try {
-                const { error } = await supabaseClient.from('timbrature').update({ 
+                await supabaseClient.from('timbrature').update({ 
                     dipendente_id: nuovoDipId,
                     orario: nuovoOrarioISO,
                     tipo_azione: azioneFinale 
                 }).eq('id', idInModifica);
-                if (error) throw error;
                 chiudiModaleEdit();
                 await caricaDati();
-            } catch (err) { alert("Errore modifica: " + err.message); }
+            } catch (err) { alert("Errore modifica."); }
         }
 
         async function eliminaRecord() {
             if (!confirm("Eliminare definitivamente questa singola timbratura?")) return;
             try {
-                const { error } = await supabaseClient.from('timbrature').delete().eq('id', idInModifica);
-                if (error) throw error;
+                await supabaseClient.from('timbrature').delete().eq('id', idInModifica);
                 chiudiModaleEdit();
                 await caricaDati();
-            } catch (err) { alert("Errore eliminazione: " + err.message); }
+            } catch (err) { alert("Errore eliminazione."); }
         }
 
         async function aggiungiTimbraturaManuale() {
@@ -635,19 +727,18 @@
             const orarioISO = new Date(orarioStr).toISOString();
 
             try {
-                const { error } = await supabaseClient.from('timbrature').insert({
+                await supabaseClient.from('timbrature').insert({
                     dipendente_id: dipIdStr,
                     orario: orarioISO,
                     tipo_azione: azioneSel,
                     latitudine: 0,
                     longitudine: 0
                 });
-                if (error) throw error;
                 alert("Salvato.");
                 document.getElementById('manual-orario').value = '';
                 await caricaDati();
                 apriLabel('label-timbrature', document.querySelectorAll('.tab-btn')[0]);
-            } catch (err) { alert("Errore salvataggio: " + err.message); }
+            } catch (err) { alert("Errore salvataggio."); }
         }
 
         async function aggiungiDipendente() {
@@ -655,44 +746,42 @@
             const cognome = document.getElementById('nuovo-cognome').value.trim();
             if(!nome || !cognome) return;
             try {
-                const { error } = await supabaseClient.from('dipendenti').insert({ nome, cognome });
-                if (error) throw error;
+                await supabaseClient.from('dipendenti').insert({ nome, cognome });
                 document.getElementById('nuovo-nome').value = ''; 
                 document.getElementById('nuovo-cognome').value = ''; 
                 await caricaDati(); 
                 alert("Dipendente inserito!");
-            } catch(err) {
-                alert("Errore inserimento dipendente: " + err.message);
-            }
+            } catch(err) { }
         }
 
         function generaPDF() {
+            if(!idFiltroAttuale) return;
+
             const meseFiltro = document.getElementById('filtro-mese').value; 
             let filtrate = timbratureGlobali.filter(t => {
-                let checkDip = idFiltroAttuale === 'tutti' ? true : String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
+                let checkDip = String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
                 let checkMese = meseFiltro ? t.orario.startsWith(meseFiltro) : true;
                 return checkDip && checkMese;
             });
 
-            if (filtrate.length === 0) { alert("Nessun dato da esportare per questo mese."); return; }
+            if (filtrate.length === 0) { alert("Nessun dato da esportare."); return; }
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // Intestazione
             doc.setFontSize(16); 
             doc.text("PROSPETTO PRESENZE E CALENDARIO", 14, 20);
             doc.setFontSize(10);
-            const nomeFiltro = idFiltroAttuale === 'tutti' ? "TUTTI I DIPENDENTI" : document.getElementById('pill-'+idFiltroAttuale).innerText.toUpperCase();
+            const targetBtn = document.getElementById('pill-'+idFiltroAttuale);
+            const nomeFiltro = targetBtn ? targetBtn.innerText.toUpperCase() : "DIPENDENTE";
             doc.text(`Filtro Risorsa: ${nomeFiltro}   |   Mese di Riferimento: ${meseFiltro}`, 14, 26);
 
             // --- 1. SEZIONE CALENDARIO MENSILE VISIVO ---
             const [anno, mese] = meseFiltro.split('-').map(Number);
             const ggTotali = new Date(anno, mese, 0).getDate();
             let ggStart = new Date(anno, mese - 1, 1).getDay();
-            ggStart = ggStart === 0 ? 6 : ggStart - 1; // Adatta a Lun=0, Dom=6
+            ggStart = ggStart === 0 ? 6 : ggStart - 1; 
 
-            // Raggruppa ore totali per ogni giorno del mese per il calendario
             let orePerGiorno = {};
             filtrate.forEach(t => {
                 let gNum = new Date(t.orario).getDate();
@@ -707,28 +796,19 @@
             for (let g = 1; g <= ggTotali; g++) {
                 let oreGiornoTotale = 0;
                 if (orePerGiorno[g]) {
-                    let mappaDip = {};
-                    orePerGiorno[g].forEach(r => {
-                        let dId = r.dipendente_id || 'unkn';
-                        if(!mappaDip[dId]) mappaDip[dId] = [];
-                        mappaDip[dId].push(r);
+                    let arr = orePerGiorno[g].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    let uIn = null;
+                    arr.forEach(rec => {
+                        let info = analizzaTipoAzione(rec.tipo_azione);
+                        if(info.tipo === 'INGRESSO') uIn = rec;
+                        else if(info.tipo === 'USCITA' && uIn) {
+                            let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                            if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
+                            uIn = null;
+                        } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                            oreGiornoTotale += info.ore;
+                        }
                     });
-                    
-                    for(let dId in mappaDip) {
-                        let arr = mappaDip[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                        let uIn = null;
-                        arr.forEach(rec => {
-                            let info = analizzaTipoAzione(rec.tipo_azione);
-                            if(info.tipo === 'INGRESSO') uIn = rec;
-                            else if(info.tipo === 'USCITA' && uIn) {
-                                let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
-                                if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
-                                uIn = null;
-                            } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
-                                oreGiornoTotale += info.ore;
-                            }
-                        });
-                    }
                 }
 
                 let contenutoCella = `${g}`;
@@ -746,7 +826,6 @@
             }
             if (indiceGiorno > 0) calendarioData.push(rigaSettimana);
 
-            // Stampa la griglia del calendario
             doc.autoTable({
                 startY: 32,
                 head: [['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM']],
@@ -756,17 +835,12 @@
                 headStyles: { fillColor: [14, 165, 233], textColor: [255,255,255], fontStyle: 'bold' }
             });
 
-            // --- 2. SEZIONE REGISTRO DETTAGLIATO (Come Prima) ---
+            // --- 2. SEZIONE REGISTRO DETTAGLIATO ---
             const strutturato = {};
             filtrate.forEach(t => {
                 const dataKey = t.orario.split('T')[0];
-                const dipNome = t.dipendenti ? `${t.dipendenti.cognome} ${t.dipendenti.nome}` : 'Non Assegnato';
-                const dipId = t.dipendente_id || 'unkn';
-                
-                if(!strutturato[dataKey]) strutturato[dataKey] = {};
-                if(!strutturato[dataKey][dipId]) strutturato[dataKey][dipId] = { nome: dipNome, record: [] };
-                
-                strutturato[dataKey][dipId].record.push(t);
+                if(!strutturato[dataKey]) strutturato[dataKey] = [];
+                strutturato[dataKey].push(t);
             });
 
             let righeTabella = [];
@@ -774,67 +848,62 @@
                 let [y, m, d] = dataKey.split('-');
                 let dataFormattata = `${d}/${m}/${y}`;
 
-                Object.keys(strutturato[dataKey]).forEach(dipId => {
-                    let pacchetto = strutturato[dataKey][dipId];
-                    let ordinati = pacchetto.record.sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                let ordinati = strutturato[dataKey].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                let oreCalcolate = 0;
+                let uIn = null;
+                let arrayDettagli = [];
+
+                ordinati.forEach(rec => {
+                    let info = analizzaTipoAzione(rec.tipo_azione);
+                    let oraFormattata = formattaOra(arrotondaAi15Minuti(rec.orario));
                     
-                    let oreCalcolate = 0;
-                    let uIn = null;
-                    let arrayDettagli = [];
-
-                    ordinati.forEach(rec => {
-                        let info = analizzaTipoAzione(rec.tipo_azione);
-                        let oraFormattata = formattaOra(arrotondaAi15Minuti(rec.orario));
-                        
-                        if(info.tipo === 'INGRESSO') {
-                            uIn = rec;
-                            arrayDettagli.push(`IN ${oraFormattata}`);
-                        } else if(info.tipo === 'USCITA') {
-                            arrayDettagli.push(`OUT ${oraFormattata}`);
-                            if(uIn) {
-                                let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
-                                if(diff > 0) oreCalcolate += diff / (1000 * 60 * 60);
-                                uIn = null;
-                            }
-                        } else {
-                            oreCalcolate += info.ore;
-                            arrayDettagli.push(`${info.tipo} (${info.ore}h)`);
+                    if(info.tipo === 'INGRESSO') {
+                        uIn = rec;
+                        arrayDettagli.push(`IN ${oraFormattata}`);
+                    } else if(info.tipo === 'USCITA') {
+                        arrayDettagli.push(`OUT ${oraFormattata}`);
+                        if(uIn) {
+                            let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                            if(diff > 0) oreCalcolate += diff / (1000 * 60 * 60);
+                            uIn = null;
                         }
-                    });
-
-                    righeTabella.push([
-                        dataFormattata,
-                        pacchetto.nome,
-                        `${oreCalcolate.toFixed(1)} ore`,
-                        arrayDettagli.join('  |  ')
-                    ]);
+                    } else {
+                        oreCalcolate += info.ore;
+                        arrayDettagli.push(`${info.tipo} (${info.ore}h)`);
+                    }
                 });
+
+                righeTabella.push([
+                    dataFormattata,
+                    `${oreCalcolate.toFixed(1)} ore`,
+                    arrayDettagli.join('  |  ')
+                ]);
             });
 
-            // Scrive il titolo per la seconda tabella partendo da dove è finito il calendario
             let finalYCalendario = doc.lastAutoTable.finalY || 32;
             doc.setFontSize(12);
             doc.text("REGISTRO DETTAGLIATO GIORNALIERO", 14, finalYCalendario + 12);
 
-            // Stampa la tabella dettagliata
             doc.autoTable({ 
                 startY: finalYCalendario + 16, 
-                head: [['Data', 'Dipendente', 'Ore Totali', 'Sequenza Movimenti']], 
+                head: [['Data', 'Ore Totali', 'Sequenza Movimenti']], 
                 body: righeTabella,
                 theme: 'striped',
                 styles: { cellPadding: 2.5, fontSize: 8.5, lineColor: [210,210,210], lineWidth: 0.1 },
                 headStyles: { fillColor: [30, 41, 59], textColor: [255,255,255], fontStyle: 'bold' },
                 columnStyles: {
-                    0: { cellWidth: 22 },
-                    1: { cellWidth: 40, fontStyle: 'bold' },
-                    2: { cellWidth: 24, textColor: [16, 185, 129], fontStyle: 'bold' }
+                    0: { cellWidth: 25 },
+                    1: { cellWidth: 25, textColor: [16, 185, 129], fontStyle: 'bold' }
                 }
             });
 
-            doc.save(`Report_Presenze_Conteggio_${meseFiltro}.pdf`);
+            doc.save(`Report_Presenze_${nomeFiltro.replace(' ','_')}_${meseFiltro}.pdf`);
         }
 
-        window.onload = caricaDati;
+        window.onload = () => {
+            initRealtime();
+            caricaDati();
+        };
     </script>
 </body>
 </html>
