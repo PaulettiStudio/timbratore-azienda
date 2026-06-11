@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Console Admin - Presenze e Calendario</title>
+    <title>Console Admin - Presenze e Calendario Pro</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,10 +14,9 @@
         body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         input[type="month"]::-webkit-calendar-picker-indicator,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-        .grid-7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+        .grid-7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         
-        /* Stili per i bottoni dipendenti (Pills) */
         .pill-active { background-color: #0284c7; color: white; border: 1px solid #0369a1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .pill-inactive { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; }
         .pill-inactive:hover { background-color: #334155; color: white; }
@@ -30,7 +29,7 @@
             <div class="flex justify-between items-center border-b border-slate-700 pb-2">
                 <h3 class="text-lg font-black text-white">Modifica Record</h3>
                 <button onclick="eliminaRecord()" class="text-xs bg-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white px-3 py-1.5 rounded-lg transition font-bold">
-                    🗑️ Elimina
+                    🗑️ Elimina Timbratura
                 </button>
             </div>
             
@@ -49,7 +48,7 @@
                     </select>
                 </div>
                 <div id="edit-container-durata" class="hidden">
-                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Ore Compute (es. 4.5):</label>
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Ore Compute:</label>
                     <input type="number" id="edit-ore" step="0.5" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
                 </div>
                 <div>
@@ -68,7 +67,7 @@
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-4xl mx-auto">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin</h1>
+                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v2.5 PRO</span></h1>
                 <input type="month" id="filtro-mese" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-sky-500 outline-none">
             </div>
             
@@ -100,39 +99,34 @@
             </div>
 
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-sm">
-                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Filtra Dipendente:</div>
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Seleziona Risorsa:</div>
                 <div id="container-pills" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide items-center">
                     <button onclick="selezionaPill('tutti')" id="pill-tutti" class="pill-active flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">Tutti (Globale)</button>
-                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 
                 <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-md w-full overflow-hidden">
-                    <div class="flex justify-between items-center mb-3">
+                    <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
                         <div class="text-xs font-bold text-slate-300 uppercase tracking-widest" id="nome-mese-titolo">Mese</div>
-                        <div class="text-[9px] text-slate-500 flex gap-2">
-                            <span class="text-emerald-400">● IN</span>
-                            <span class="text-rose-400">● OUT</span>
-                        </div>
+                        <div class="text-[10px] text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-500/20">Solo Ore Giornaliere</div>
                     </div>
-                    <div class="grid-7 text-center text-[10px] font-bold text-slate-500 mb-1">
+                    <div class="grid-7 text-center text-[10px] font-bold text-slate-500 mb-2">
                         <div>LUN</div><div>MAR</div><div>MER</div><div>GIO</div><div>VEN</div><div>SAB</div><div>DOM</div>
                     </div>
-                    <div id="griglia-calendario-fisico" class="grid-7">
-                        </div>
+                    <div id="griglia-calendario-fisico" class="grid-7"></div>
                 </div>
 
                 <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-md flex flex-col gap-2 h-full max-h-[600px]">
                     <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lista Giornaliera</h3>
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registro Ore e Dettagli</h3>
                         <button onclick="generaPDF()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-md transition">
-                            🖨️ Esporta PDF
+                            🖨️ Esporta PDF Pro
                         </button>
                     </div>
                     
-                    <div id="contenitore-lista-movimenti" class="flex flex-col gap-4 overflow-y-auto pr-1">
-                        </div>
+                    <div id="contenitore-lista-movimenti" class="flex flex-col gap-4 overflow-y-auto pr-1"></div>
                 </div>
 
             </div>
@@ -140,17 +134,14 @@
 
         <section id="label-inserimento" class="tab-content hidden flex flex-col gap-4">
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col gap-5 shadow-md">
-                
                 <div>
                     <label class="text-xs font-bold text-slate-300 block mb-1">1. Dipendente</label>
                     <select id="manual-dipendente" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500"></select>
                 </div>
-
                 <div>
                     <label class="text-xs font-bold text-slate-300 block mb-1">2. Data e Ora Evento</label>
                     <input type="datetime-local" id="manual-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500">
                 </div>
-
                 <div>
                     <label class="text-xs font-bold text-slate-300 block mb-2">3. Tipo di Registrazione</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -172,12 +163,10 @@
                         </label>
                     </div>
                 </div>
-
                 <div id="container-durata-extra" class="hidden bg-slate-900/50 p-3 rounded-xl border border-slate-700">
-                    <label class="text-[11px] font-bold text-slate-300 block mb-1">Durata in Ore (es. 4.5 o 8)</label>
-                    <input type="number" id="manual-ore" step="0.5" value="8" placeholder="Es. 8" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                    <label class="text-[11px] font-bold text-slate-300 block mb-1">Durata in Ore (es. 8)</label>
+                    <input type="number" id="manual-ore" step="0.5" value="8" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
                 </div>
-
                 <button onclick="aggiungiTimbraturaManuale()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-4 rounded-xl text-sm transition shadow-lg active:scale-95 mt-2">
                     Registra nel Database
                 </button>
@@ -194,14 +183,13 @@
                 <button onclick="aggiungiDipendente()" class="bg-emerald-600 font-bold p-3 rounded-xl text-sm text-white hover:bg-emerald-500 transition">Salva Anagrafica</button>
             </div>
             
-            <h2 class="text-sm font-bold text-slate-400 uppercase mt-4 tracking-wider">Link App Dipendenti (QR/Badge)</h2>
+            <h2 class="text-sm font-bold text-slate-400 uppercase mt-4 tracking-wider">Gestione Risorse Correnti</h2>
             <div id="lista-dipendenti" class="flex flex-col gap-3"></div>
         </section>
 
     </main>
 
     <script>
-        // CONFIGURAZIONE SUPABASE REALE
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -214,7 +202,6 @@
         const oggiIniziale = new Date();
         document.getElementById('filtro-mese').value = oggiIniziale.toISOString().substring(0, 7);
 
-        // GESTIONE TABS NAVIGAZIONE
         function apriLabel(idLabel, bottone) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(idLabel).classList.remove('hidden');
@@ -240,7 +227,6 @@
             else container.classList.add('hidden');
         }
 
-        // DECODER DELLE ORE PERSONALIZZATE (es. FERIE:4.5)
         function analizzaTipoAzione(tipoGrezzo) {
             if (tipoGrezzo && tipoGrezzo.includes(':')) {
                 let parti = tipoGrezzo.split(':');
@@ -249,13 +235,11 @@
             return { tipo: tipoGrezzo, ore: 8 };
         }
 
-        // ARROTONDAMENTO COMMERCIALE (15 MINUTI CON SOGLIA 7 MINUTI)
         function arrotondaAi15Minuti(dataIso) {
             let d = new Date(dataIso);
             let m = d.getMinutes();
             let resto = m % 15;
             let arrot = resto >= 7 ? m + (15 - resto) : m - resto;
-            
             if (arrot === 60) { d.setHours(d.getHours() + 1); d.setMinutes(0); } 
             else { d.setMinutes(arrot); }
             d.setSeconds(0, 0);
@@ -263,6 +247,7 @@
         }
 
         function formattaOra(d) { return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
+        
         function getInizioSettimana(d) {
             let date = new Date(d);
             let day = date.getDay();
@@ -270,7 +255,6 @@
             return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
-        // RECUPERO DATI DAL DATABASE
         async function caricaDati() {
             try {
                 const { data: dipendenti, error: dErr } = await supabaseClient.from('dipendenti').select('*').order('cognome');
@@ -288,22 +272,15 @@
                 aggiornaPillsMenu();
                 aggiornaAnagraficaEDropdown();
                 filtraERenderizza();
-            } catch (err) {
-                console.error("Errore di rete o DB:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
-        // GESTIONE PILLS (BOTTONI DIPENDENTI)
         function aggiornaPillsMenu() {
             const container = document.getElementById('container-pills');
-            
-            // Ricrea i pulsanti eccetto 'tutti'
             let html = `<button onclick="selezionaPill('tutti')" id="pill-tutti" class="pill-inactive flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">Tutti (Globale)</button>`;
-            
             dipendentiGlobali.forEach(d => {
                 html += `<button onclick="selezionaPill('${d.id}')" id="pill-${d.id}" class="pill-inactive flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition">${d.nome} ${d.cognome}</button>`;
             });
-            
             container.innerHTML = html;
             evidenziaPillCorrente();
         }
@@ -319,7 +296,6 @@
                 b.classList.remove('pill-active');
                 b.classList.add('pill-inactive');
             });
-            
             const targetId = idFiltroAttuale === 'tutti' ? 'pill-tutti' : `pill-${idFiltroAttuale}`;
             const targetBtn = document.getElementById(targetId);
             if(targetBtn) {
@@ -328,7 +304,6 @@
             }
         }
 
-        // AGGIORNA ALTRE SELECT E ANAGRAFICA
         function aggiornaAnagraficaEDropdown() {
             const manualDip = document.getElementById('manual-dipendente');
             const editDip = document.getElementById('edit-dipendente');
@@ -348,21 +323,35 @@
 
                 containerLista.innerHTML += `
                     <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">${optText}</div>
-                            <div class="text-[9px] text-slate-500 font-mono mt-0.5">${linkBadge.substring(0,40)}...</div>
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="font-bold text-sm text-slate-200 truncate">${optText}</div>
+                            <div class="text-[9px] text-slate-500 font-mono truncate mt-0.5">${linkBadge}</div>
                         </div>
-                        <button onclick="navigator.clipboard.writeText('${linkBadge}'); alert('Link Copiato!');" class="bg-sky-600/20 text-sky-400 hover:bg-sky-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition border border-sky-500/30">Copia Link</button>
+                        <div class="flex gap-1.5 flex-shrink-0">
+                            <button onclick="navigator.clipboard.writeText('${linkBadge}'); alert('Link Copiato!');" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition border border-slate-600">Copia</button>
+                            <button onclick="eliminaDipendente('${d.id}', '${d.nome} ${d.cognome}')" class="bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition border border-rose-500/30">❌ Elimina</button>
+                        </div>
                     </div>
                 `;
             });
         }
 
-        // LOGICA CENTRALE DI FILTRAGGIO E RENDER
+        // AZIONE: CANCELLAZIONE DIPENDENTE DALL'ANAGRAFICA
+        async function部署_eliminaDipendente(id, nomeCompleto) { /* Placeholder */ }
+        async function eliminaDipendente(id, nomeCompleto) {
+            if (!confirm(`ATTENZIONE:\nVuoi eliminare definitivamente ${nomeCompleto}?\nQuesta operazione rimuoverà la risorsa dal sistema.`)) return;
+            try {
+                const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
+                if (error) throw error;
+                alert("Dipendente rimosso con successo dall'anagrafica.");
+                await caricaDati();
+            } catch (err) {
+                alert("Errore durante l'eliminazione dipendente: " + err.message);
+            }
+        }
+
         function filtraERenderizza() {
             const meseFiltro = document.getElementById('filtro-mese').value; 
-            
-            // Filtra per dipendente e mese
             let filtrate = timbratureGlobali.filter(t => {
                 let checkDip = idFiltroAttuale === 'tutti' ? true : String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
                 let checkMese = meseFiltro ? t.orario.startsWith(meseFiltro) : true;
@@ -370,11 +359,10 @@
             });
 
             calcolaStatistiche(filtrate, meseFiltro);
-            renderizzaCalendarioINOUT(filtrate, meseFiltro);
+            renderizzaCalendarioSoloOre(filtrate, meseFiltro);
             renderizzaListaGruppiGiornalieri(filtrate);
         }
 
-        // STATISTICHE
         function calcolaStatistiche(filtrate, meseFiltro) {
             if (idFiltroAttuale === 'tutti') {
                 document.getElementById('ore-oggi').innerText = '-';
@@ -421,8 +409,8 @@
             document.getElementById('ore-mese').innerText = totMese.toFixed(1) + 'h';
         }
 
-        // CALENDARIO CON INDICATORI IN/OUT
-        function renderizzaCalendarioINOUT(filtrate, meseSceltoStr) {
+        // NUOVA LOGICA: VISTA CALENDARIO CON SOLO IL CONTEGGIO ORE
+        function renderizzaCalendarioSoloOre(filtrate, meseSceltoStr) {
             const griglia = document.getElementById('griglia-calendario-fisico');
             griglia.innerHTML = '';
             if(!meseSceltoStr) return;
@@ -434,7 +422,6 @@
             let ggStart = new Date(anno, mese - 1, 1).getDay();
             ggStart = ggStart === 0 ? 6 : ggStart - 1;
 
-            // Prepara i dati giornalieri
             let datiGiornalieri = {};
             filtrate.forEach(t => {
                 let gNum = new Date(t.orario).getDate();
@@ -442,57 +429,63 @@
                 datiGiornalieri[gNum].push(t);
             });
 
-            // Offset inizio mese
             for (let i = 0; i < ggStart; i++) {
-                griglia.innerHTML += `<div class="bg-transparent h-16"></div>`;
+                griglia.innerHTML += `<div class="bg-transparent h-12"></div>`;
             }
 
-            // Stampa giorni
             for (let g = 1; g <= ggTotali; g++) {
-                let htmlGiorno = '';
+                let oreGiornoTotale = 0;
                 
                 if (datiGiornalieri[g] && datiGiornalieri[g].length > 0) {
-                    // Ordino per tempo
-                    let recordsGiorno = datiGiornalieri[g].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                    
-                    // Se siamo in "tutti", mostriamo solo un indicatore generico per non intasare
-                    if(idFiltroAttuale === 'tutti') {
-                        htmlGiorno = `<div class="mt-1 text-[8px] bg-slate-700/50 text-slate-300 rounded px-1 text-center truncate">${recordsGiorno.length} Eventi</div>`;
-                    } else {
-                        // Se c'è un dipendente, mostriamo gli orari IN e OUT
-                        recordsGiorno.forEach(rec => {
+                    let mappaDipGiorno = {};
+                    datiGiornalieri[g].forEach(r => {
+                        let dId = r.dipendente_id || 'unkn';
+                        if(!mappaDipGiorno[dId]) mappaDipGiorno[dId] = [];
+                        mappaDipGiorno[dId].push(r);
+                    });
+
+                    for(let dId in mappaDipGiorno){
+                        let arr = mappaDipGiorno[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                        let uIn = null;
+                        arr.forEach(rec => {
                             let info = analizzaTipoAzione(rec.tipo_azione);
-                            let ora = formattaOra(arrotondaAi15Minuti(rec.orario));
-                            
-                            if(info.tipo === 'INGRESSO') htmlGiorno += `<div class="text-[9px] text-emerald-400 leading-tight">IN ${ora}</div>`;
-                            if(info.tipo === 'USCITA') htmlGiorno += `<div class="text-[9px] text-rose-400 leading-tight">OUT ${ora}</div>`;
-                            if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') htmlGiorno += `<div class="text-[9px] text-amber-400 leading-tight">${info.tipo.substring(0,3)} ${info.ore}h</div>`;
+                            if(info.tipo === 'INGRESSO') uIn = rec;
+                            else if(info.tipo === 'USCITA' && uIn) {
+                                let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                                if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
+                                uIn = null;
+                            } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                                oreGiornoTotale += info.ore;
+                            }
                         });
                     }
                 }
 
+                let badgeOreHtml = '';
+                if (oreGiornoTotale > 0) {
+                    badgeOreHtml = `<div class="text-[11px] bg-emerald-500 text-slate-950 font-black rounded px-1 text-center font-mono py-0.5 shadow-sm">${oreGiornoTotale.toFixed(1)}h</div>`;
+                } else if (datiGiornalieri[g] && datiGiornalieri[g].length > 0) {
+                    badgeOreHtml = `<div class="text-[9px] bg-slate-700 text-slate-400 font-bold rounded px-1 text-center py-0.5">Scansioni</div>`;
+                }
+
                 griglia.innerHTML += `
-                    <div class="bg-slate-900/60 border border-slate-700/60 h-16 rounded-xl p-1 flex flex-col shadow-inner overflow-hidden">
-                        <span class="text-[10px] font-bold text-slate-400">${g}</span>
-                        <div class="flex-1 flex flex-col gap-0.5 justify-end">
-                            ${htmlGiorno}
-                        </div>
+                    <div class="bg-slate-900/80 border border-slate-700 h-14 rounded-xl p-1 flex flex-col justify-between shadow-inner">
+                        <span class="text-[10px] font-bold text-slate-400 pl-0.5">${g}</span>
+                        ${badgeOreHtml}
                     </div>
                 `;
             }
         }
 
-        // REGISTRO RAGGRUPPATO PER DATA
         function renderizzaListaGruppiGiornalieri(filtrate) {
             const container = document.getElementById('contenitore-lista-movimenti');
             container.innerHTML = '';
 
             if (filtrate.length === 0) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-500 py-8 italic">Nessun dato presente nel periodo selezionato.</div>';
+                container.innerHTML = '<div class="text-center text-xs text-slate-500 py-8 italic">Nessun dato presente.</div>';
                 return;
             }
 
-            // 1. Raggruppa per data YYYY-MM-DD
             const gruppi = filtrate.reduce((acc, obj) => {
                 const d = obj.orario.split('T')[0];
                 if(!acc[d]) acc[d] = [];
@@ -500,15 +493,11 @@
                 return acc;
             }, {});
 
-            // 2. Itera sulle date (ordinate decrescenti)
             Object.keys(gruppi).sort().reverse().forEach(dataKey => {
                 let recordsData = gruppi[dataKey];
-                
-                // Formatta la data per il titolo
                 let [y, m, d] = dataKey.split('-');
                 let strData = `${d}/${m}/${y}`;
 
-                // Calcolo ore del giorno per questa lista (Considera dipendenti multipli o singolo)
                 let oreGiornoTotale = 0;
                 let mappaDipGiorno = {};
                 recordsData.forEach(r => {
@@ -533,19 +522,15 @@
                     });
                 }
 
-                // Costruisci blocco giornaliero
                 let htmlBlocco = `
                     <div class="bg-slate-900 border border-slate-700/80 rounded-xl overflow-hidden shadow-sm">
-                        
-                        <div class="bg-slate-800/80 px-4 py-2 border-b border-slate-700/80 flex justify-between items-center">
+                        <div class="bg-slate-800 px-4 py-2 border-b border-slate-700/80 flex justify-between items-center">
                             <span class="font-bold text-sm text-sky-400">📅 ${strData}</span>
-                            <span class="text-[10px] font-bold bg-slate-900 text-slate-300 px-2 py-1 rounded border border-slate-700">Totale: ${oreGiornoTotale.toFixed(1)}h</span>
+                            <span class="text-[10px] font-bold bg-slate-950 text-emerald-400 px-2 py-1 rounded border border-slate-700 font-mono">Somma: ${oreGiornoTotale.toFixed(1)}h</span>
                         </div>
-                        
                         <div class="p-2 flex flex-col gap-1.5">
                 `;
 
-                // Ordina records per ora crescente
                 recordsData.sort((a,b) => new Date(a.orario) - new Date(b.orario)).forEach(t => {
                     const info = analizzaTipoAzione(t.tipo_azione);
                     const nome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Risorsa';
@@ -568,9 +553,7 @@
                                     <span class="font-mono text-sky-300 font-bold text-sm">${oraArr}</span>
                                     <span class="text-[9px] text-slate-500 block">reale: ${formattaOra(new Date(t.orario))}</span>
                                 </div>
-                                <button onclick="apriModaleEdit('${t.id}')" class="bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg text-[10px] transition">
-                                    ✏️
-                                </button>
+                                <button onclick="apriModaleEdit('${t.id}')" class="bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg text-[10px] transition">✏️</button>
                             </div>
                         </div>
                     `;
@@ -581,13 +564,9 @@
             });
         }
 
-        // ==========================================
-        // SISTEMA DI MODIFICA E CANCELLAZIONE
-        // ==========================================
         function apriModaleEdit(id) {
             idInModifica = id;
             const t = timbratureGlobali.find(x => x.id === id);
-            
             let recId = t.dipendente_id || (t.dipendenti ? t.dipendenti.id : null);
             document.getElementById('edit-dipendente').value = recId;
             
@@ -599,7 +578,6 @@
             let d = new Date(t.orario);
             d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
             document.getElementById('edit-nuovo-orario').value = d.toISOString().slice(0, 16);
-            
             document.getElementById('modale-edit').classList.remove('hidden');
         }
 
@@ -613,14 +591,12 @@
             const azioneBase = document.getElementById('edit-azione').value;
             const oreCustom = document.getElementById('edit-ore').value || 8;
             const dataGrezza = document.getElementById('edit-nuovo-orario').value;
-            
             if(!dataGrezza || !nuovoDipId) return;
 
             let azioneFinale = azioneBase;
             if(azioneBase === 'FERIE' || azioneBase === 'PERMESSO') {
                 azioneFinale = `${azioneBase}:${oreCustom}`;
             }
-
             const nuovoOrarioISO = new Date(dataGrezza).toISOString();
 
             try {
@@ -629,17 +605,14 @@
                     orario: nuovoOrarioISO,
                     tipo_azione: azioneFinale 
                 }).eq('id', idInModifica);
-                
                 if (error) throw error;
                 chiudiModaleEdit();
                 await caricaDati();
-            } catch (err) {
-                alert("Errore modifica.");
-            }
+            } catch (err) { alert("Errore modifica."); }
         }
 
         async function eliminaRecord() {
-            if (!confirm("Sicuro di voler eliminare definitivamente questo record?")) return;
+            if (!confirm("Eliminare definitivamente questa singola timbratura?")) return;
             try {
                 const { error } = await supabaseClient.from('timbrature').delete().eq('id', idInModifica);
                 if (error) throw error;
@@ -648,21 +621,16 @@
             } catch (err) { alert("Errore eliminazione."); }
         }
 
-        // ==========================================
-        // INSERIMENTI NUOVI 
-        // ==========================================
         async function aggiungiTimbraturaManuale() {
             const dipIdStr = document.getElementById('manual-dipendente').value;
             const orarioStr = document.getElementById('manual-orario').value;
             let azioneSel = document.querySelector('input[name="manual-azione"]:checked').value;
-
-            if (!dipIdStr || !orarioStr) { alert("Compila Dipendente e Orario."); return; }
+            if (!dipIdStr || !orarioStr) { alert("Compila tutti i campi richiesti."); return; }
             
             if (azioneSel === 'FERIE' || azioneSel === 'PERMESSO') {
                 const oreCustom = document.getElementById('manual-ore').value || 8;
                 azioneSel = `${azioneSel}:${oreCustom}`;
             }
-
             const orarioISO = new Date(orarioStr).toISOString();
 
             try {
@@ -674,12 +642,11 @@
                     longitudine: 0
                 });
                 if (error) throw error;
-
-                alert("Salvato con successo.");
+                alert("Salvato.");
                 document.getElementById('manual-orario').value = '';
                 await caricaDati();
                 apriLabel('label-timbrature', document.querySelectorAll('.tab-btn')[0]);
-            } catch (err) { alert("Errore inserimento."); }
+            } catch (err) { alert("Errore salvataggio."); }
         }
 
         async function aggiungiDipendente() {
@@ -690,16 +657,13 @@
             if (!error) { 
                 document.getElementById('nuovo-nome').value = ''; 
                 document.getElementById('nuovo-cognome').value = ''; 
-                caricaDati(); 
-                alert("Dipendente aggiunto!");
+                await caricaDati(); 
+                alert("Dipendente inserito!");
             }
         }
 
-        // ==========================================
-        // ESPORTAZIONE PDF A BLOCCHI GIORNALIERI
-        // ==========================================
+        // NUOVA LOGICA: GENERAZIONE PDF CONTABILE PULITO (CONTEGGIO ORE SU UNA RIGA)
         function generaPDF() {
-            // Rifiltro i dati correnti
             const meseFiltro = document.getElementById('filtro-mese').value; 
             let filtrate = timbratureGlobali.filter(t => {
                 let checkDip = idFiltroAttuale === 'tutti' ? true : String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
@@ -707,58 +671,89 @@
                 return checkDip && checkMese;
             });
 
-            if (filtrate.length === 0) { alert("Nessun record da esportare."); return; }
+            if (filtrate.length === 0) { alert("Nessun dato da esportare."); return; }
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // Intestazione
-            doc.setFontSize(16); doc.text("Registro Presenze Mensile", 14, 20);
+            doc.setFontSize(16); doc.text("PROSPETTO CONTEGGIO ORE PRESENZE", 14, 20);
             doc.setFontSize(10);
-            const nomeFiltro = idFiltroAttuale === 'tutti' ? "Globale (Tutti)" : document.getElementById('pill-'+idFiltroAttuale).innerText;
-            doc.text(`Filtro: ${nomeFiltro}  |  Mese: ${meseFiltro}`, 14, 26);
+            const nomeFiltro = idFiltroAttuale === 'tutti' ? "TUTTI I DIPENDENTI" : document.getElementById('pill-'+idFiltroAttuale).innerText.toUpperCase();
+            doc.text(`Filtro Risorsa: ${nomeFiltro}   |   Mese di Riferimento: ${meseFiltro}`, 14, 26);
 
-            // Raggruppo per data per costruire la tabella
-            const gruppi = filtrate.reduce((acc, obj) => {
-                const d = obj.orario.split('T')[0];
-                if(!acc[d]) acc[d] = [];
-                acc[d].push(obj);
-                return acc;
-            }, {});
-
-            let bodyTabella = [];
-
-            Object.keys(gruppi).sort().forEach(dataKey => {
-                // Riga Titolo Data
-                let [y, m, d] = dataKey.split('-');
-                bodyTabella.push([{ content: `Data: ${d}/${m}/${y}`, colSpan: 4, styles: { fillColor: [240, 240, 240], fontStyle: 'bold', textColor: [0,0,0] } }]);
+            // Raggruppa per data e dipendente per riga singola pulita
+            const strutturato = {};
+            filtrate.forEach(t => {
+                const dataKey = t.orario.split('T')[0];
+                const dipNome = t.dipendenti ? `${t.dipendenti.cognome} ${t.dipendenti.nome}` : 'Non Assegnato';
+                const dipId = t.dipendente_id || 'unkn';
                 
-                // Righe Dati
-                let records = gruppi[dataKey].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                records.forEach(t => {
-                    const info = analizzaTipoAzione(t.tipo_azione);
-                    const n = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : '-';
-                    let eventoTxt = info.tipo;
-                    if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') eventoTxt += ` (${info.ore}h)`;
+                if(!strutturato[dataKey]) strutturato[dataKey] = {};
+                if(!strutturato[dataKey][dipId]) strutturato[dataKey][dipId] = { nome: dipNome, record: [] };
+                
+                strutturato[dataKey][dipId].record.push(t);
+            });
+
+            let righeTabella = [];
+
+            // Scorri le date in ordine cronologico crescente per il report
+            Object.keys(strutturato).sort().forEach(dataKey => {
+                let [y, m, d] = dataKey.split('-');
+                let dataFormattata = `${d}/${m}/${y}`;
+
+                Object.keys(strutturato[dataKey]).forEach(dipId => {
+                    let pacchetto = strutturato[dataKey][dipId];
+                    let ordinati = pacchetto.record.sort((a,b) => new Date(a.orario) - new Date(b.orario));
                     
-                    bodyTabella.push([
-                        '', // Cella vuota sotto la data per l'indentazione visiva
-                        n, 
-                        eventoTxt, 
-                        formattaOra(arrotondaAi15Minuti(t.orario))
+                    let oreCalcolate = 0;
+                    let uIn = null;
+                    let arrayDettagli = [];
+
+                    ordinati.forEach(rec => {
+                        let info = analizzaTipoAzione(rec.tipo_azione);
+                        let oraFormattata = formattaOra(arrotondaAi15Minuti(rec.orario));
+                        
+                        if(info.tipo === 'INGRESSO') {
+                            uIn = rec;
+                            arrayDettagli.push(`IN ${oraFormattata}`);
+                        } else if(info.tipo === 'USCITA') {
+                            arrayDettagli.push(`OUT ${oraFormattata}`);
+                            if(uIn) {
+                                let diff = arrotondaAi15Minuti(rec.orario) - arrotondaAi15Minuti(uIn.orario);
+                                if(diff > 0) oreCalcolate += diff / (1000 * 60 * 60);
+                                uIn = null;
+                            }
+                        } else {
+                            // Ferie o Permessi
+                            oreCalcolate += info.ore;
+                            arrayDettagli.push(`${info.tipo} (${info.ore}h)`);
+                        }
+                    });
+
+                    righeTabella.push([
+                        dataFormattata,
+                        pacchetto.nome,
+                        `${oreCalcolate.toFixed(1)} ore`,
+                        arrayDettagli.join('  |  ')
                     ]);
                 });
             });
 
             doc.autoTable({ 
                 startY: 32, 
-                head: [['', 'Dipendente', 'Evento', 'Ora Calcolata']], 
-                body: bodyTabella,
-                theme: 'plain', // Uso plain per gestire i colori personalizzati della riga Data
-                styles: { cellPadding: 2, fontSize: 9, lineColor: [200,200,200], lineWidth: 0.1 }
+                head: [['Data', 'Dipendente', 'Ore Totali', 'Sequenza Movimenti Giornalieri']], 
+                body: righeTabella,
+                theme: 'striped',
+                styles: { cellPadding: 2.5, fontSize: 8.5, lineColor: [210,210,210], lineWidth: 0.1 },
+                headStyles: { fillColor: [30, 41, 59], textColor: [255,255,255], fontStyle: 'bold' },
+                columnStyles: {
+                    0: { cellWidth: 22 },
+                    1: { cellWidth: 40, fontStyle: 'bold' },
+                    2: { cellWidth: 24, textColor: [16, 185, 129], fontStyle: 'bold' }
+                }
             });
 
-            doc.save(`Presenze_${nomeFiltro.replace(' ','_')}_${meseFiltro}.pdf`);
+            doc.save(`Report_Presenze_Conteggio_${meseFiltro}.pdf`);
         }
 
         window.onload = caricaDati;
