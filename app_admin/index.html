@@ -21,14 +21,40 @@
 
     <div id="modale-edit" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col gap-4">
-            <h3 class="text-lg font-black text-white">Modifica Orario</h3>
-            <p class="text-xs text-slate-400">Correggi l'orario effettivo della timbratura. Il calcolo arrotondato si adatterà automaticamente.</p>
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 class="text-lg font-black text-white">Modifica Record</h3>
+                <button onclick="eliminaRecord()" class="text-xs bg-rose-600/20 text-rose-500 hover:bg-rose-600 hover:text-white px-3 py-1.5 rounded-lg transition font-bold">
+                    🗑️ Elimina
+                </button>
+            </div>
             
-            <input type="datetime-local" id="edit-nuovo-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500">
+            <div class="flex flex-col gap-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Assegnato a:</label>
+                    <select id="edit-dipendente" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500"></select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Tipo Registrazione:</label>
+                    <select id="edit-azione" onchange="toggleEditDurata()" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                        <option value="INGRESSO">INGRESSO</option>
+                        <option value="USCITA">USCITA</option>
+                        <option value="FERIE">FERIE</option>
+                        <option value="PERMESSO">PERMESSO</option>
+                    </select>
+                </div>
+                <div id="edit-container-durata" class="hidden">
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Ore Compute (es. 4.5):</label>
+                    <input type="number" id="edit-ore" step="0.5" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Data e Ora Scansione:</label>
+                    <input type="datetime-local" id="edit-nuovo-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                </div>
+            </div>
             
             <div class="flex gap-2 mt-2">
                 <button onclick="chiudiModaleEdit()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition">Annulla</button>
-                <button onclick="salvaModificaOrario()" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-xl transition shadow-lg">Salva Modifica</button>
+                <button onclick="salvaModificaOrario()" class="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-xl transition shadow-lg">Salva Tutto</button>
             </div>
         </div>
     </div>
@@ -185,7 +211,6 @@
         let vistaAttiva = 'calendario';
         let idInModifica = null;
 
-        // Imposta mese corrente
         const oggiIniziale = new Date();
         document.getElementById('filtro-mese').value = oggiIniziale.toISOString().substring(0, 7);
 
@@ -225,8 +250,13 @@
             else container.classList.add('hidden');
         }
 
-        // DECODER DELLE ORE PERSONALIZZATE SENZA TOCCARE IL DATABASE
-        // Legge "FERIE:4.5" ed estrae tipo (FERIE) e ore (4.5). Se normale, default 8.
+        function toggleEditDurata() {
+            const val = document.getElementById('edit-azione').value;
+            const container = document.getElementById('edit-container-durata');
+            if(val === 'FERIE' || val === 'PERMESSO') container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        }
+
         function analizzaTipoAzione(tipoGrezzo) {
             if (tipoGrezzo.includes(':')) {
                 let parti = tipoGrezzo.split(':');
@@ -235,7 +265,6 @@
             return { tipo: tipoGrezzo, ore: 8 };
         }
 
-        // ARROTONDAMENTO COMMERCIALE (15 MINUTI CON SOGLIA A 7 MINUTI)
         function arrotondaAi15Minuti(dataIso) {
             let d = new Date(dataIso);
             let m = d.getMinutes();
@@ -256,7 +285,6 @@
             return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
-        // CARICAMENTO SUPABASE
         async function caricaDati() {
             try {
                 const { data: dipendenti, error: dErr } = await supabaseClient.from('dipendenti').select('*').order('cognome');
@@ -281,16 +309,19 @@
         function aggiornaSelettoriMenu() {
             const filtroDip = document.getElementById('filtro-dipendente');
             const manualDip = document.getElementById('manual-dipendente');
+            const editDip = document.getElementById('edit-dipendente');
             const containerLista = document.getElementById('lista-dipendenti');
 
             filtroDip.innerHTML = '<option value="tutti">Tutti i dipendenti</option>';
             manualDip.innerHTML = '<option value="">-- Scegli --</option>';
+            editDip.innerHTML = '';
             containerLista.innerHTML = '';
 
             dipendentiGlobali.forEach(d => {
                 const optText = `${d.cognome} ${d.nome}`;
                 filtroDip.innerHTML += `<option value="${d.id}">${optText}</option>`;
                 manualDip.innerHTML += `<option value="${d.id}">${optText}</option>`;
+                editDip.innerHTML += `<option value="${d.id}">${optText}</option>`;
 
                 const pb = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
                 const linkBadge = `${window.location.origin}${pb}badge.html?id=${d.id}`;
@@ -324,13 +355,11 @@
             });
 
             calcolaEVisualizzaMetriche(dipId, meseFiltro);
-            renderizzaCalendarioFisico(meseFiltro);
+            renderizzaCalendarioFisico(dipId, meseFiltro);
             renderizzaListaMovimentiSotto();
         }
 
-        // CONTEGGI SOLO PER DIPENDENTE SELEZIONATO
         function calcolaEVisualizzaMetriche(dipId, meseFiltro) {
-            // Selezionando "tutti", i contatori restano neutri (su tua richiesta)
             if (dipId === 'tutti') {
                 document.getElementById('ore-oggi').innerText = '-';
                 document.getElementById('ore-settimana').innerText = '-';
@@ -368,7 +397,7 @@
                         ultimoIn = null;
                     }
                 } else if (info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
-                    oreAggiunte = info.ore; // Legge ore personalizzate (es. 4.5)
+                    oreAggiunte = info.ore; 
                 }
 
                 if (oreAggiunte > 0) {
@@ -383,8 +412,8 @@
             document.getElementById('ore-mese').innerText = totMese.toFixed(1) + 'h';
         }
 
-        // GRIGLIA CALENDARIO
-        function renderizzaCalendarioFisico(meseSceltoStr) {
+        // GRIGLIA CALENDARIO - RISOLTO: MOSTRA "-" SE E' SELEZIONATO "TUTTI I DIPENDENTI"
+        function renderizzaCalendarioFisico(dipIdScelto, meseSceltoStr) {
             const griglia = document.getElementById('griglia-calendario-fisico');
             griglia.innerHTML = '';
             if(!meseSceltoStr) return;
@@ -398,7 +427,9 @@
 
             let orePerGiorno = {};
             let tipoDay = {};
+            const mostraTotaleCasella = (dipIdScelto !== 'tutti'); // Flag sicurezza
 
+            // Calcolo interno sempre, ma visualizzazione condizionata
             let logicaDip = {};
             timbratureFiltrate.forEach(t => {
                 let dId = t.dipendente_id || 'unkn';
@@ -420,7 +451,7 @@
                         if(diff > 0) orePerGiorno[gNum] += diff / (1000*60*60);
                         inPres = null;
                     } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
-                        orePerGiorno[gNum] += info.ore; // Applica le ore custom
+                        orePerGiorno[gNum] += info.ore; 
                         tipoDay[gNum] = info.tipo;
                     }
                 });
@@ -434,7 +465,13 @@
                 let oreTot = orePerGiorno[g] || 0;
                 let str = ''; let col = 'text-sky-400';
 
-                if (oreTot > 0) {
+                // Se ho selezionato "Tutti" e ci sono ore in questo giorno, mostro un "-" (Niente somme assurde)
+                if (!mostraTotaleCasella && oreTot > 0) {
+                    str = '-';
+                    col = 'text-slate-500';
+                } 
+                // Se ho selezionato UN dipendente, mostro il monte ore suo
+                else if (mostraTotaleCasella && oreTot > 0) {
                     str = `${oreTot.toFixed(1)}h`;
                     if(tipoDay[g] === 'FERIE') col = 'text-amber-400 font-bold';
                     if(tipoDay[g] === 'PERMESSO') col = 'text-indigo-400 font-bold';
@@ -449,7 +486,6 @@
             }
         }
 
-        // REGISTRO SCRITTO (CON TASTO MODIFICA)
         function renderizzaListaMovimentiSotto() {
             const container = document.getElementById('contenitore-lista-movimenti');
             if (timbratureFiltrate.length === 0) {
@@ -474,7 +510,7 @@
                 if(info.tipo === 'PERMESSO') { colore = 'text-indigo-400 bg-indigo-400/10 border-indigo-500/10'; oraCalcolata = `${info.ore}h`; }
 
                 container.innerHTML += `
-                    <div class="bg-slate-900/50 border border-slate-700/40 rounded-xl p-2.5 flex justify-between items-center text-xs">
+                    <div class="bg-slate-900/50 border border-slate-700/40 rounded-xl p-2.5 flex justify-between items-center text-xs gap-2">
                         <div class="flex-1">
                             <span class="font-bold text-slate-200 block">${nome}</span>
                             <span class="text-[10px] text-slate-400">${giornoStr} - <span class="font-mono">Reale: ${oraReale}</span></span>
@@ -484,7 +520,7 @@
                             </div>
                         </div>
                         <div>
-                            <button onclick="apriModaleEdit('${t.id}')" class="bg-sky-600/20 border border-sky-500/30 text-sky-400 hover:bg-sky-600 hover:text-white px-2 py-1.5 rounded-lg transition text-[10px] font-bold">
+                            <button onclick="apriModaleEdit('${t.id}')" class="bg-sky-600/20 border border-sky-500/30 text-sky-400 hover:bg-sky-600 hover:text-white px-3 py-2 rounded-lg transition text-[10px] font-bold shadow-sm">
                                 ✏️ Modifica
                             </button>
                         </div>
@@ -493,12 +529,22 @@
             });
         }
 
-        // --- SISTEMA DI MODIFICA ORARIO ---
+        // --- SISTEMA DI MODIFICA TOTALE E CANCELLAZIONE ---
         function apriModaleEdit(id) {
             idInModifica = id;
             const t = timbratureGlobali.find(x => x.id === id);
             
-            // Per pre-compilare correttamente l'input datetime-local col fuso orario giusto
+            // Popola Dipendente
+            let recId = t.dipendente_id || (t.dipendenti ? t.dipendenti.id : null);
+            document.getElementById('edit-dipendente').value = recId;
+            
+            // Popola Azione e Ore
+            const info = analizzaTipoAzione(t.tipo_azione);
+            document.getElementById('edit-azione').value = info.tipo;
+            document.getElementById('edit-ore').value = info.ore;
+            toggleEditDurata();
+
+            // Popola Orario col fuso corretto
             let d = new Date(t.orario);
             d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
             document.getElementById('edit-nuovo-orario').value = d.toISOString().slice(0, 16);
@@ -512,18 +558,45 @@
         }
 
         async function salvaModificaOrario() {
+            const nuovoDipId = document.getElementById('edit-dipendente').value;
+            const azioneBase = document.getElementById('edit-azione').value;
+            const oreCustom = document.getElementById('edit-ore').value || 8;
             const dataGrezza = document.getElementById('edit-nuovo-orario').value;
-            if(!dataGrezza) return;
+            
+            if(!dataGrezza || !nuovoDipId) return;
+
+            let azioneFinale = azioneBase;
+            if(azioneBase === 'FERIE' || azioneBase === 'PERMESSO') {
+                azioneFinale = `${azioneBase}:${oreCustom}`;
+            }
 
             const nuovoOrarioISO = new Date(dataGrezza).toISOString();
 
             try {
-                const { error } = await supabaseClient.from('timbrature').update({ orario: nuovoOrarioISO }).eq('id', idInModifica);
+                const { error } = await supabaseClient.from('timbrature').update({ 
+                    dipendente_id: nuovoDipId,
+                    orario: nuovoOrarioISO,
+                    tipo_azione: azioneFinale 
+                }).eq('id', idInModifica);
+                
                 if (error) throw error;
                 chiudiModaleEdit();
                 await caricaDati();
             } catch (err) {
-                alert("Errore modifica.");
+                alert("Errore durante il salvataggio della modifica.");
+            }
+        }
+
+        async function eliminaRecord() {
+            if (!confirm("ATTENZIONE: Questa azione è irreversibile. Sei sicuro di voler eliminare questo record?")) return;
+            
+            try {
+                const { error } = await supabaseClient.from('timbrature').delete().eq('id', idInModifica);
+                if (error) throw error;
+                chiudiModaleEdit();
+                await caricaDati();
+            } catch (err) {
+                alert("Errore durante l'eliminazione.");
             }
         }
         // ----------------------------------
@@ -534,7 +607,6 @@
             filtraERenderizza();
         }
 
-        // SALVATAGGIO INSERIMENTO (CON ORE CUSTOM E FIX DIPENDENTE PURAMENTE STRINGA)
         async function aggiungiTimbraturaManuale() {
             const dipIdStr = document.getElementById('manual-dipendente').value;
             const orarioStr = document.getElementById('manual-orario').value;
@@ -542,7 +614,6 @@
 
             if (!dipIdStr || !orarioStr) { alert("Compila Dipendente e Orario."); return; }
             
-            // Aggiungo le ore personalizzate al formato (es. FERIE:4.5)
             if (azioneSel === 'FERIE' || azioneSel === 'PERMESSO') {
                 const oreCustom = document.getElementById('manual-ore').value || 8;
                 azioneSel = `${azioneSel}:${oreCustom}`;
@@ -551,7 +622,6 @@
             const orarioISO = new Date(orarioStr).toISOString();
 
             try {
-                // Invio l'ID del dipendente PURAMENTE come stringa
                 const { error } = await supabaseClient.from('timbrature').insert({
                     dipendente_id: dipIdStr,
                     orario: orarioISO,
@@ -570,7 +640,6 @@
             }
         }
 
-        // EXPORT PDF SINTESI 
         function generaPDF() {
             if (timbratureFiltrate.length === 0) { alert("Nessun record da esportare."); return; }
 
@@ -621,7 +690,6 @@
 
             doc.autoTable({ startY: 33, head: [['Data', 'Dipendente', 'Evento', 'Computo', 'Scansione']], body: righeTabella, headStyles: { fillColor: [2, 132, 199] } });
 
-            // Solo se è selezionato un singolo dipendente, stampo i conteggi finali
             if(selD.value !== 'tutti') {
                 let fineT = doc.lastAutoTable.finalY || 40;
                 doc.setFontSize(12); doc.text("RIEPILOGO TOTALI DIPENDENTE", 14, fineT + 12);
