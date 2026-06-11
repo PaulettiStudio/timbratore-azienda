@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    
+    <link rel="manifest" href="manifest-admin.json?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Admin Registro">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/128/1548/1548723.png">
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console Amministratore Pro - Gestione Presenze & Calendario</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        
+        <header class="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-950 tracking-tight">Console Risorse Umane Pro</h1>
+                <p class="text-slate-500 text-sm mt-1">Gestione anagrafica, giustificativi, link magici di accesso e reportistica periodica.</p>
+            </div>
+            <button onclick="inizializzaPannello()" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2 border border-slate-300 rounded-lg text-sm shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" /></svg>
+                Sincronizza Dati
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
+                <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-sky-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                    Nuovo Dipendente
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nome</label>
+                        <input id="dip-nome" type="text" placeholder="Es. Mario" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Cognome</label>
+                        <input id="dip-cognome" type="text" placeholder="Es. Rossi" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Numero di cellulare</label>
+                        <input id="dip-cellulare" type="tel" placeholder="Es. 3331234567" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ore Contratto</label>
+                            <input id="dip-ore" type="number" value="40" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ferie (Ore)</label>
+                            <input id="dip-ferie" type="number" value="160" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                        </div>
+                    </div>
+                    <button onclick="aggiungiDipendente()" class="w-full mt-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold p-2.5 rounded-lg text-sm shadow-sm transition">
+                        Salva in Anagrafica
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 text-slate-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        Organico Aziendale
+                    </h2>
+                    <div class="overflow-y-auto max-h-[260px] border border-slate-100 rounded-xl">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200 sticky top-0">
+                                    <th class="p-3">Nominativo</th>
+                                    <th class="p-3">Cellulare</th>
+                                    <th class="p-3 text-center">Contratto</th>
+                                    <th class="p-3 text-center">Ferie Residue</th>
+                                    <th class="p-3 text-center">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabella-dipendenti" class="text-sm divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-md font-bold mb-4 text-emerald-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    Registrazione Giustificativi (Ferie / Permessi)
+                </h2>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Dipendente</label>
+                        <select id="form-assenza-dipendente" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600"></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Causale</label>
+                        <select id="form-assenza-tipo" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600">
+                            <option value="ferie">Ferie</option>
+                            <option value="permesso">Permesso Orario</option>
+                            <option value="riposo">Riposo Compensativo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data Giorno (gg/mm/aaaa)</label>
+                        <input id="form-assenza-inizio" type="text" placeholder="Es. 15/04/2026" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600 font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Ore da Scalare</label>
+                        <input id="form-assenza-ore" type="number" step="0.5" placeholder="Es. 8" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-emerald-600">
+                    </div>
+                </div>
+                <button onclick="creaRichiestaAssenza()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+                    Approva e Salva Giustificativo
+                </button>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-md font-bold mb-4 text-indigo-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Forza Inserimento Manuale Timbratura
+                </h2>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Dipendente</label>
+                        <select id="form-manuale-dipendente" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600"></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Tipo Azione</label>
+                        <select id="form-manuale-tipo" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600">
+                            <option value="INGRESSO">Ingresso</option>
+                            <option value="USCITA">Uscita</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data (gg/mm/aaaa)</label>
+                        <input id="form-manuale-data" type="text" placeholder="Es. 15/04/2026" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600 font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Ora Esatta (24h - HH:mm)</label>
+                        <input id="form-manuale-ora" type="text" placeholder="Es. 14:30" class="w-full border border-slate-200 p-2 rounded-lg bg-slate-50 focus:outline-indigo-600 font-mono text-sm">
+                    </div>
+                </div>
+                <button onclick="inserisciTimbraturaManuale()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+                    Inserisci Record a Registro
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Pannello Analitico Dipendente
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Filtra ed esamina le ore lavorate complessive, giornaliere e mensili.</p>
+                </div>
+                <div class="w-full lg:w-72">
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Dipendente</label>
+                    <select id="select-report-dipendente" onchange="caricaReportSpecifico()" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-semibold bg-slate-50 focus:outline-sky-600"></select>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap items-end justify-between gap-4 text-xs">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data Inizio (Dal)</label>
+                        <input id="filtro-inizio" type="date" onchange="sincronizzaMeseDaInput(); caricaReportSpecifico();" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Data Fine (Al)</label>
+                        <input id="filtro-fine" type="date" onchange="sincronizzaMeseDaInput(); caricaReportSpecifico();" class="border border-slate-300 p-2 rounded-lg bg-white focus:outline-sky-600 font-medium">
+                    </div>
+                </div>
+                
+                <div class="flex bg-slate-200 p-1 rounded-lg">
+                    <button id="btn-vista-calendario" onclick="cambiaVista('calendario')" class="bg-white text-slate-900 font-bold px-4 py-1.5 rounded-md shadow-sm transition">
+                        Vista Calendario 📅
+                    </button>
+                    <button id="btn-vista-registro" onclick="cambiaVista('registro')" class="text-slate-600 hover:text-slate-900 font-bold px-4 py-1.5 rounded-md transition">
+                        Vista Registro 📋
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center md:text-left">
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Oggi</span>
+                    <p id="ore-oggi" class="text-xl font-black text-amber-900 mt-1">0.0 ore</p>
+                </div>
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+                    <span class="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">Questa Settimana</span>
+                    <p id="ore-settimana" class="text-xl font-black text-indigo-900 mt-1">0.0 ore</p>
+                </div>
+                <div class="bg-sky-50 p-4 rounded-xl border border-sky-200">
+                    <span class="text-[10px] uppercase font-bold text-sky-600 tracking-wider">Questo Mese</span>
+                    <p id="ore-mese" class="text-xl font-black text-sky-900 mt-1">0.0 ore</p>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-300 ring-2 ring-emerald-600/10">
+                    <span class="text-[10px] uppercase font-bold text-emerald-700 tracking-wider font-extrabold">Periodo Selezionato 🎯</span>
+                    <p id="ore-periodo" class="text-2xl font-black text-emerald-900 mt-1">0.0 ore</p>
+                </div>
+            </div>
+
+            <div id="sezione-vista-calendario" class="block">
+                <div class="flex justify-between items-center bg-slate-800 text-white p-3 rounded-t-xl border-x border-t border-slate-700">
+                    <button onclick="sfogliaMese(-1)" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">◀ Mese Prec.</button>
+                    <h3 id="label-mese-anno-corrente" class="font-extrabold text-sm uppercase tracking-wider text-center">GENNAIO 2026</h3>
+                    <button onclick="sfogliaMese(1)" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">Mese Succ. ▶</button>
+                </div>
+                <div class="grid grid-cols-7 gap-2 bg-slate-100 p-3 border-x border-slate-200 text-center font-bold text-xs uppercase text-slate-600 tracking-wider">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
+                </div>
+                <div id="griglia-giorni-calendario" class="grid grid-cols-7 gap-2 border-b border-x border-slate-200 p-3 rounded-b-xl bg-slate-50 min-h-[350px]">
+                    </div>
+            </div>
+
+            <div id="sezione-vista-registro" class="hidden overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                            <th class="p-3 font-semibold">Tipo Evento</th>
+                            <th class="p-3 font-semibold">Data Rilevazione</th>
+                            <th class="p-3 font-semibold">Orario Preciso</th>
+                            <th class="p-3 font-semibold text-center">Azioni Amministratore</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabella-report-corpo" class="text-sm divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="4" class="p-6 text-center text-slate-400 italic">Seleziona un dipendente.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="modal-link-accesso" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-violet-100 text-violet-600 mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900" id="link-titolo-nominativo">Link di Accesso Rapido</h3>
+            <p class="text-xs text-slate-400 mt-1 mb-4">Invia questo indirizzo al dipendente oppure fagli inquadrare il QR Code. Non serviranno password.</p>
+            
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-center mb-4">
+                <img id="qrcode-immagine" src="" alt="Generazione QR Code..." class="w-40 h-40 object-contain">
+            </div>
+
+            <div class="flex gap-2 mb-4">
+                <input id="input-link-generato" type="text" readonly class="w-full border border-slate-200 p-2 rounded-lg text-xs bg-slate-50 text-slate-500 font-mono focus:outline-none">
+                <button onclick="copiaLinkAccesso()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-2 rounded-lg text-xs tracking-tight transition shrink-0">Copia</button>
+            </div>
+
+            <button onclick="chiudiModalLinkAccesso()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg text-sm transition">Chiudi Finestra</button>
+        </div>
+    </div>
+
+    <div id="modal-modifica-dipendente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Anagrafica Dipendente</h3>
+            <p class="text-xs text-slate-400 mb-4">I cambiamenti aggiorneranno l'organico e i menu di selectione.</p>
+            
+            <input type="hidden" id="edit-dip-id">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nome</label>
+                    <input id="edit-dip-nome" type="text" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Cognome</label>
+                    <input id="edit-dip-cognome" type="text" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Numero di Cellulare</label>
+                    <input id="edit-dip-cellulare" type="tel" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ore Contratto</label>
+                        <input id="edit-dip-ore" type="number" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ferie Residue (Ore)</label>
+                        <input id="edit-dip-ferie" type="number" step="0.5" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="chiudiModificaDipendenteModal()" class="px-4 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 rounded-lg transition">Annulla</button>
+                <button onclick="salvaModificaDipendente()" class="px-4 py-2 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">Salva Modifiche</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-modifica" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Modifica Record Timbratura</h3>
+            <p class="text-xs text-slate-400 mb-4">I cambiamenti si rifletteranno immediatamente sui conteggi orari.</p>
+            
+            <input type="hidden" id="edit-timbratura-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tipo Azione</label>
+                    <select id="edit-tipo" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600">
+                        <option value="INGRESSO">Ingresso</option>
+                        <option value="USCITA">Uscita</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Data (gg/mm/aaaa)</label>
+                    <input id="edit-data" type="text" placeholder="gg/mm/aaaa" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Ora (24h - HH:mm)</label>
+                    <input id="edit-ora" type="text" placeholder="HH:mm" class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 focus:outline-sky-600 font-mono">
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="chiudiModificaModal()" class="px-4 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100 rounded-lg transition">Annulla</button>
+                <button onclick="salvaModificaTimbratura()" class="px-4 py-2 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">Salva Modifiche</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAZIONE PARAMETRI SUPABASE ---
+        const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let vistaAttiva = 'calendario';
+        let dataCalendarioPuntatore = new Date();
+        let elencoDipendenti = []; 
+
+        // FUNZIONI DI FORMATTAZIONE PROPRIETARIE
+        function formattaDataManuale(stringaISO) {
+            const d = new Date(stringaISO);
+            const giorno = String(d.getDate()).padStart(2, '0');
+            const mese = String(d.getMonth() + 1).padStart(2, '0');
+            const anno = d.getFullYear();
+            return `${giorno}/${mese}/${anno}`;
+        }
+
+        function formattaOraManuale24h(stringaISO, mostraSecondi = false) {
+            const d = new Date(stringaISO);
+            const ore = String(d.getHours()).padStart(2, '0');
+            const minuti = String(d.getMinutes()).padStart(2, '0');
+            if (mostraSecondi) {
+                const secondi = String(d.getSeconds()).padStart(2, '0');
+                return `${ore}:${minuti}:${secondi}`;
+            }
+            return `${ore}:${minuti}`;
+        }
+
+        function impostaCampiDataOraDefault() {
+            const ora = new Date();
+            const g = String(ora.getDate()).padStart(2, '0');
+            const m = String(ora.getMonth() + 1).padStart(2, '0');
+            const a = ora.getFullYear();
+            const hh = String(ora.getHours()).padStart(2, '0');
+            const mm = String(ora.getMinutes()).padStart(2, '0');
+            
+            const dataOggiStr = `${g}/${m}/${a}`;
+            const oraOggiStr = `${hh}:${mm}`;
+            
+            document.getElementById('form-assenza-inizio').value = dataOggiStr;
+            document.getElementById('form-manuale-data').value = dataOggiStr;
+            document.getElementById('form-manuale-ora').value = oraOggiStr;
+        }
+
+        function impostaDateFiltriDaPuntatore() {
+            const y = dataCalendarioPuntatore.getFullYear();
+            const m = dataCalendarioPuntatore.getMonth();
+            const primoGiorno = new Date(y, m, 1);
+            const ultimoGiorno = new Date(y, m + 1, 0);
+
+            document.getElementById('filtro-inizio').value = primoGiorno.toISOString().split('T')[0];
+            document.getElementById('filtro-fine').value = ultimoGiorno.toISOString().split('T')[0];
+        }
+
+        function sincronizzaMeseDaInput() {
+            const inputInizio = document.getElementById('filtro-inizio').value;
+            if (inputInizio) {
+                dataCalendarioPuntatore = new Date(inputInizio + "T00:00:00");
+            }
+        }
+
+        async function inizializzaPannello() {
+            dataCalendarioPuntatore = new Date();
+            impostaDateFiltriDaPuntatore();
+            impostaCampiDataOraDefault();
+            await caricaListaDipendenti();
+            caricaReportSpecifico();
+        }
+
+        function sfogliaMese(direzione) {
+            dataCalendarioPuntatore.setMonth(dataCalendarioPuntatore.getMonth() + direzione);
+            impostaDateFiltriDaPuntatore();
+            caricaReportSpecifico();
+        }
+
+        function cambiaVista(tipo) {
+            vistaAttiva = tipo;
+            const btnCal = document.getElementById('btn-vista-calendario');
+            const btnReg = document.getElementById('btn-vista-registro');
+            const sezCal = document.getElementById('sezione-vista-calendario');
+            const sezReg = document.getElementById('sezione-vista-registro');
+
+            if(tipo === 'calendario') {
+                btnCal.className = "bg-white text-slate-900 font-bold px-4 py-1.5 rounded-md shadow-sm transition";
+                btnReg.className = "text-slate-600 hover:text-slate-900 font-bold px-4 py-1.5 rounded-md transition";
+                sezCal.classList.remove('hidden');
+                sezReg.classList.add('hidden');
+            } else {
+                btnReg.className = "bg-white text-slate-900 font-bold px-4 py-1.5 rounded-md shadow-sm transition";
+                btnCal.className = "text-slate-600 hover:text-slate-900 font-bold px-4 py-1.5 rounded-md transition";
+                sezReg.classList.remove('hidden');
+                sezCal.classList.add('hidden');
+            }
+            caricaReportSpecifico();
+        }
+
+        // --- GESTIONE ANAGRAFICA DIPENDENTI ---
+        async function caricaListaDipendenti() {
+            try {
+                const { data: dipendenti, error } = await supabaseClient
+                    .from('dipendenti')
+                    .select('*')
+                    .order('cognome', { ascending: true });
+
+                if (error) throw error;
+
+                elencoDipendenti = dipendenti || [];
+
+                const tabella = document.getElementById('tabella-dipendenti');
+                const selectAssenze = document.getElementById('form-assenza-dipendente');
+                const selectManuale = document.getElementById('form-manuale-dipendente');
+                const selectReport = document.getElementById('select-report-dipendente');
+                
+                const vecchioValoreReport = selectReport.value;
+
+                tabella.innerHTML = '';
+                selectAssenze.innerHTML = '';
+                selectManuale.innerHTML = '';
+                selectReport.innerHTML = '';
+
+                if(elencoDipendenti.length === 0) {
+                    tabella.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Nessun dipendente in organico.</td></tr>`;
+                    return;
+                }
+
+                elencoDipendenti.forEach(d => {
+                    tabella.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-semibold text-slate-900">${d.cognome} ${d.nome}</td>
+                        <td class="p-3 font-mono text-xs text-slate-500">${d.cellulare || '-'}</td>
+                        <td class="p-3 text-center text-slate-600">${d.ore_settimanali_contratto}h</td>
+                        <td class="p-3 text-center font-bold text-slate-700">${d.saldo_ferie_ore}h</td>
+                        <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                            <button onclick="apriModalLinkAccesso('${d.id}')" class="text-xs bg-violet-50 hover:bg-violet-100 text-violet-700 font-bold px-2.5 py-1 rounded-md border border-violet-200 transition">Link</button>
+                            <button onclick="apriModificaDipendenteModal('${d.id}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-600 font-bold px-2.5 py-1 rounded-md border border-sky-200 transition">Modifica</button>
+                            <button onclick="eliminaDipendente('${d.id}', '${d.nome} ${d.cognome}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1 rounded-md border border-red-200 transition">Elimina</button>
+                        </td>
+                    </tr>`;
+
+                    const opzioneHtml = `<option value="${d.id}">${d.cognome} ${d.nome}</option>`;
+                    selectAssenze.innerHTML += opzioneHtml;
+                    selectManuale.innerHTML += opzioneHtml;
+                    selectReport.innerHTML += opzioneHtml;
+                });
+
+                if (vecchioValoreReport) selectReport.value = vecchioValoreReport;
+            } catch (err) {
+                console.error("Errore caricamento anagrafica:", err);
+            }
+        }
+
+        async function aggiungiDipendente() {
+            const nome = document.getElementById('dip-nome').value.trim();
+            const cognome = document.getElementById('dip-cognome').value.trim();
+            const cellulare = document.getElementById('dip-cellulare').value.trim();
+            const ore = parseInt(document.getElementById('dip-ore').value) || 40;
+            const ferie = parseFloat(document.getElementById('dip-ferie').value) || 0;
+
+            if (!nome || !cognome) {
+                alert("Nome e Cognome sono campi obbligatori!");
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('dipendenti').insert({
+                    nome: nome, cognome: cognome, cellulare: cellulare, ore_settimanali_contratto: ore, saldo_ferie_ore: ferie
+                });
+                if (error) throw error;
+
+                alert("Dipendente inserito!");
+                document.getElementById('dip-nome').value = '';
+                document.getElementById('dip-cognome').value = '';
+                document.getElementById('dip-cellulare').value = '';
+                await caricaListaDipendenti();
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore inserimento dipendente: " + err.message);
+            }
+        }
+
+        // --- SISTEMA DI GENERAZIONE LINK E QR CODE ACCESSO ---
+        function apriModalLinkAccesso(id) {
+            const dipendente = elencoDipendenti.find(d => d.id === id);
+            if(!dipendente) return;
+
+            document.getElementById('link-titolo-nominativo').innerText = `${dipendente.nome} ${dipendente.cognome}`;
+            
+            const percorsoAttuale = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+            const urlAccessoCompleto = `${percorsoAttuale}/badge.html?id=${id}`;
+
+            document.getElementById('input-link-generato').value = urlAccessoCompleto;
+            
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlAccessoCompleto)}`;
+            document.getElementById('qrcode-immagine').src = qrApiUrl;
+
+            document.getElementById('modal-link-accesso').classList.remove('hidden');
+        }
+
+        function chiudiModalLinkAccesso() {
+            document.getElementById('modal-link-accesso').classList.add('hidden');
+        }
+
+        function copiaLinkAccesso() {
+            const inputLink = document.getElementById('input-link-generato');
+            inputLink.select();
+            inputLink.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(inputLink.value);
+            alert("Link di accesso copiato negli appunti! Ora puoi inviarlo su WhatsApp.");
+        }
+
+        // --- EDITING ANAGRAFICA ---
+        function apriModificaDipendenteModal(id) {
+            const dipendente = elencoDipendenti.find(d => d.id === id);
+            if(!dipendente) return;
+
+            document.getElementById('edit-dip-id').value = dipendente.id;
+            document.getElementById('edit-dip-nome').value = dipendente.nome;
+            document.getElementById('edit-dip-cognome').value = dipendente.cognome;
+            document.getElementById('edit-dip-cellulare').value = dipendente.cellulare || '';
+            document.getElementById('edit-dip-ore').value = dipendente.ore_settimanali_contratto;
+            document.getElementById('edit-dip-ferie').value = dipendente.saldo_ferie_ore;
+            
+            document.getElementById('modal-modifica-dipendente').classList.remove('hidden');
+        }
+
+        function chiudiModificaDipendenteModal() {
+            document.getElementById('modal-modifica-dipendente').classList.add('hidden');
+        }
+
+        async function salvaModificaDipendente() {
+            const id = document.getElementById('edit-dip-id').value;
+            const nome = document.getElementById('edit-dip-nome').value.trim();
+            const cognome = document.getElementById('edit-dip-cognome').value.trim();
+            const cellulare = document.getElementById('edit-dip-cellulare').value.trim();
+            const ore = parseInt(document.getElementById('edit-dip-ore').value) || 0;
+            const ferie = parseFloat(document.getElementById('edit-dip-ferie').value) || 0;
+
+            if (!nome || !cognome) {
+                alert("Nome e Cognome non possono essere lasciati vuoti!");
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('dipendenti').update({
+                    nome: nome, cognome: cognome, cellulare: cellulare, ore_settimanali_contratto: ore, saldo_ferie_ore: ferie
+                }).eq('id', id);
+
+                if (error) throw error;
+
+                alert("Dati anagrafici salvati!");
+                chiudiModificaDipendenteModal();
+                await caricaListaDipendenti();
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore salvataggio modifiche dipendente: " + err.message);
+            }
+        }
+
+        async function eliminaDipendente(id, nominativo) {
+            if (!confirm(`Vuoi eliminare ${nominativo}? Verranno cancellate tutte le sue timbrature associate.`)) return;
+            try {
+                const { error } = await supabaseClient.from('dipendenti').delete().eq('id', id);
+                if (error) throw error;
+                alert("Dipendente rimosso.");
+                await caricaListaDipendenti();
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore eliminazione: " + err.message);
+            }
+        }
+
+        // --- GESTIONE GIUSTIFICATIVI ---
+        async function creaRichiestaAssenza() {
+            const dipendenteId = document.getElementById('form-assenza-dipendente').value;
+            const tipo = document.getElementById('form-assenza-tipo').value;
+            const dataInput = document.getElementById('form-assenza-inizio').value.trim();
+            const oreDaScalare = parseFloat(document.getElementById('form-assenza-ore').value);
+
+            const regexData = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (!regexData.test(dataInput)) {
+                alert("Formato data non valido! Usa il formato gg/mm/aaaa");
+                return;
+            }
+
+            if (!dipendenteId || isNaN(oreDaScalare)) {
+                alert("Tutti i dati dell'assenza sono obbligatori!");
+                return;
+            }
+
+            try {
+                const parti = dataInput.split('/');
+                const dataInizioISO = `${parti[2]}-${parti[1]}-${parti[0]}`; 
+
+                const { data: dip, error: errFetch } = await supabaseClient.from('dipendenti').select('saldo_ferie_ore').eq('id', dipendenteId).single();
+                if (errFetch) throw errFetch;
+                
+                const nuovoSaldo = dip.saldo_ferie_ore - oreDaScalare;
+
+                const { error: errAssenza } = await supabaseClient.from('richieste_assenza').insert({
+                    dipendente_id: dipendenteId, tipo: tipo, data_inizio: dataInizioISO, data_fine: dataInizioISO, ore_totali: oreDaScalare, stato: 'approvato'
+                });
+                if (errAssenza) throw errAssenza;
+
+                const { error: errUpdate } = await supabaseClient.from('dipendenti').update({ saldo_ferie_ore: nuovoSaldo }).eq('id', dipendenteId);
+                if (errUpdate) throw errUpdate;
+
+                alert("Giustificativo approvato e ore scalate!");
+                document.getElementById('form-assenza-ore').value = '';
+                impostaCampiDataOraDefault();
+                await caricaListaDipendenti();
+            } catch (err) {
+                alert("Errore giustificativo: " + err.message);
+            }
+        }
+
+        // --- INSERIMENTO MANUALE TIMBRATURA ---
+        async function inserisciTimbraturaManuale() {
+            const dipendenteId = document.getElementById('form-manuale-dipendente').value;
+            const tipoAzione = document.getElementById('form-manuale-tipo').value;
+            const dataInput = document.getElementById('form-manuale-data').value.trim();
+            const oraInput = document.getElementById('form-manuale-ora').value.trim();
+
+            const regexData = /^\d{2}\/\d{2}\/\d{4}$/;
+            const regexOra = /^\d{2}:\d{2}$/;
+
+            if (!regexData.test(dataInput) || !regexOra.test(oraInput)) {
+                alert("Formato Data o Ora non valido!");
+                return;
+            }
+
+            if(!dipendenteId) {
+                alert("Seleziona un dipendente!");
+                return;
+            }
+
+            try {
+                const partiData = dataInput.split('/');
+                const partiOra = oraInput.split(':');
+                
+                const dataOggetto = new Date(
+                    parseInt(partiData[2], 10),
+                    parseInt(partiData[1], 10) - 1,
+                    parseInt(partiData[0], 10),
+                    parseInt(partiOra[0], 10),
+                    parseInt(partiOra[1], 10),
+                    0
+                );
+                const orarioISO = dataOggetto.toISOString();
+
+                const { error } = await supabaseClient.from('timbrature').insert({
+                    dipendente_id: dipendenteId, tipo_azione: tipoAzione, orario: orarioISO, latitudine: 0, longitudine: 0
+                });
+                if (error) throw error;
+
+                alert("Timbratura manuale salvata!");
+                impostaCampiDataOraDefault();
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore inserimento timbratura: " + err.message);
+            }
+        }
+
+        // --- REPORTISTICA E CALENDARIO ---
+        async function caricaReportSpecifico() {
+            const dipendenteId = document.getElementById('select-report-dipendente').value;
+            const corpoTabella = document.getElementById('tabella-report-corpo');
+            const grigliaCal = document.getElementById('griglia-giorni-calendario');
+            const labelMeseAnno = document.getElementById('label-mese-anno-corrente');
+
+            const mesiNomi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+            labelMeseAnno.innerText = `${mesiNomi[dataCalendarioPuntatore.getMonth()]} ${dataCalendarioPuntatore.getFullYear()}`.toUpperCase();
+
+            if (!dipendenteId) {
+                corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun dipendente selezionato.</td></tr>`;
+                grigliaCal.innerHTML = `<div class="col-span-7 p-12 text-center text-slate-400 italic">Seleziona un dipendente in alto per generare il calendario delle presenze.</div>`;
+                return;
+            }
+
+            try {
+                const filtroInizioRaw = document.getElementById('filtro-inizio').value;
+                const filtroFineRaw = document.getElementById('filtro-fine').value;
+                const limiteInizio = filtroInizioRaw ? new Date(filtroInizioRaw + "T00:00:00") : null;
+                const limiteFine = filtroFineRaw ? new Date(filtroFineRaw + "T23:59:59") : null;
+
+                const { data: timbrature, error } = await supabaseClient
+                    .from('timbrature')
+                    .select('*')
+                    .eq('dipendente_id', dipendenteId)
+                    .order('orario', { ascending: true });
+
+                if (error) throw error;
+
+                let oreOggi = 0, oreSettimana = 0, oreMese = 0, orePeriodoPersonalizzato = 0;
+                const oggi = new Date();
+                const correnteLunedi = new Date(oggi);
+                const numeroGiorno = correnteLunedi.getDay();
+                const diffLunedi = correnteLunedi.getDate() - numeroGiorno + (numeroGiorno === 0 ? -6 : 1);
+                correnteLunedi.setDate(diffLunedi);
+                correnteLunedi.setHours(0,0,0,0);
+
+                let ultimoIngressoGenerale = null;
+
+                timbrature.forEach(t => {
+                    const dataT = new Date(t.orario);
+                    const azioneFormattata = t.tipo_azione.toUpperCase(); 
+
+                    if (azioneFormattata === 'INGRESSO') {
+                        ultimoIngressoGenerale = dataT;
+                    } else if (azioneFormattata === 'USCITA' && ultimoIngressoGenerale) {
+                        const diffMs = dataT - ultimoIngressoGenerale;
+                        const diffOre = diffMs / (1000 * 60 * 60);
+
+                        if (dataT.toDateString() === oggi.toDateString()) oreOggi += diffOre;
+                        if (dataT >= correnteLunedi) oreSettimana += diffOre;
+                        if (dataT.getFullYear() === oggi.getFullYear() && dataT.getMonth() === oggi.getMonth()) oreMese += diffOre;
+                        if ((!limiteInizio || dataT >= limiteInizio) && (!limiteFine || dataT <= limiteFine)) orePeriodoPersonalizzato += diffOre;
+
+                        ultimoIngressoGenerale = null; 
+                    }
+                });
+
+                document.getElementById('ore-oggi').innerText = `${oreOggi.toFixed(1)} ore`;
+                document.getElementById('ore-settimana').innerText = `${oreSettimana.toFixed(1)} ore`;
+                document.getElementById('ore-mese').innerText = `${oreMese.toFixed(1)} ore`;
+                document.getElementById('ore-periodo').innerText = `${orePeriodoPersonalizzato.toFixed(1)} ore`;
+
+                const timbratureInvertite = [...timbrature].reverse();
+                corpoTabella.innerHTML = '';
+                let recordVisibili = 0;
+
+                timbratureInvertite.forEach(t => {
+                    const dataOggetto = new Date(t.orario);
+                    if (limiteInizio && dataOggetto < limiteInizio) return;
+                    if (limiteFine && dataOggetto > limiteFine) return;
+                    recordVisibili++;
+
+                    const isIngresso = t.tipo_azione.toUpperCase() === 'INGRESSO';
+                    const badgeColor = isIngresso ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
+                    const labelAzione = isIngresso ? 'INGRESSO' : 'USCITA';
+
+                    const dataFormattata = formattaDataManuale(t.orario); 
+                    const oraFormattata = formattaOraManuale24h(t.orario, true);
+
+                    corpoTabella.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeColor}">${labelAzione}</span></td>
+                        <td class="p-3 text-slate-700 font-medium">${dataFormattata}</td>
+                        <td class="p-3 font-mono text-sm text-slate-600 font-bold">${oraFormattata}</td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="apriModificaModal('${t.id}', '${labelAzione}', '${t.orario}')" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2 py-1 rounded border border-sky-200 transition">Modifica</button>
+                            <button onclick="eliminaTimbratura('${t.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-2 py-1 rounded border border-rose-200 transition">Elimina</button>
+                        </td>
+                    </tr>`;
+                });
+
+                if (recordVisibili === 0) {
+                    corpoTabella.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">Nessun record per il periodo.</td></tr>`;
+                }
+
+                // CALENDARIO MENSILE
+                grigliaCal.innerHTML = '';
+                const primoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth(), 1);
+                const ultimoDelMese = new Date(dataCalendarioPuntatore.getFullYear(), dataCalendarioPuntatore.getMonth() + 1, 0);
+
+                let spaziVuotiIniziali = primoDelMese.getDay() === 0 ? 6 : primoDelMese.getDay() - 1;
+                for(let i = 0; i < spaziVuotiIniziali; i++) {
+                    grigliaCal.innerHTML += `<div class="bg-slate-100/50 rounded-lg p-1 min-h-[75px] border border-dashed border-slate-200"></div>`;
+                }
+
+                for(let giornoCorrente = 1; giornoCorrente <= ultimoDelMese.getDate(); giornoCorrente++) {
+                    const dataStringCercata = `${dataCalendarioPuntatore.getFullYear()}-${(dataCalendarioPuntatore.getMonth()+1).toString().padStart(2,'0')}-${giornoCorrente.toString().padStart(2,'0')}`;
+                    
+                    const timbratureDelGiorno = timbrature
+                        .filter(t => t.orario.startsWith(dataStringCercata))
+                        .sort((a, b) => new Date(a.orario) - new Date(b.orario));
+
+                    let oreLavorateGiorno = 0;
+                    let marcatoreIngressoGiorno = null;
+
+                    let stringaEventiGiorno = timbratureDelGiorno.map(t => {
+                        const oraMinuti24h = formattaOraManuale24h(t.orario, false);
+                        const isIng = t.tipo_azione.toUpperCase() === 'INGRESSO';
+                        
+                        if (isIng) {
+                            marcatoreIngressoGiorno = new Date(t.orario);
+                        } else if (!isIng && marcatoreIngressoGiorno) {
+                            oreLavorateGiorno += (new Date(t.orario) - marcatoreIngressoGiorno) / (1000 * 60 * 60);
+                            marcatoreIngressoGiorno = null;
+                        }
+
+                        const coloreTesto = isIng ? 'text-green-600 font-bold' : 'text-red-500';
+                        const simbolo = isIng ? '▶' : '◀';
+                        return `<div class="text-[10px] ${coloreTesto} truncate">${simbolo} ${oraMinuti24h}</div>`;
+                    }).join('');
+
+                    const stringaTotaleGiornoHTML = oreLavorateGiorno > 0 
+                        ? `<div class="text-right text-[10px] font-extrabold text-slate-700 bg-slate-200/80 px-1 py-0.5 rounded border-t border-slate-300 mt-auto">Tot: ${oreLavorateGiorno.toFixed(1)}h</div>` 
+                        : '';
+
+                    const isOggi = oggi.getDate() === giornoCorrente && oggi.getMonth() === dataCalendarioPuntatore.getMonth() && oggi.getFullYear() === dataCalendarioPuntatore.getFullYear();
+                    const stileBordoGiorno = isOggi ? 'ring-2 ring-sky-500 bg-sky-50/40 border-sky-300' : 'bg-white border-slate-200';
+                    const intestazioneDataCella = `${giornoCorrente.toString().padStart(2,'0')}/${(dataCalendarioPuntatore.getMonth()+1).toString().padStart(2,'0')}/${dataCalendarioPuntatore.getFullYear()}`;
+
+                    grigliaCal.innerHTML += `
+                    <div class="border p-1.5 min-h-[95px] rounded-xl flex flex-col justify-between shadow-sm transition hover:bg-slate-50 ${stileBordoGiorno}">
+                        <div class="text-right font-bold text-[9px] text-slate-400 tracking-tighter">${intestazioneDataCella}</div>
+                        <div class="space-y-0.5 mt-0.5 overflow-y-auto max-h-[48px] flex-grow">${stringaEventiGiorno}</div>
+                        ${stringaTotaleGiornoHTML}
+                    </div>`;
+                }
+
+            } catch (err) {
+                console.error("Errore caricamento report:", err);
+            }
+        }
+
+        // --- AMMINISTRAZIONE REGISTRO TIMBRATURE ---
+        function apriModificaModal(id, tipo, orario) {
+            document.getElementById('edit-timbratura-id').value = id;
+            document.getElementById('edit-tipo').value = tipo;
+            
+            const d = new Date(orario);
+            const giorno = String(d.getDate()).padStart(2, '0');
+            const mese = String(d.getMonth() + 1).padStart(2, '0');
+            const anno = d.getFullYear();
+            const ore = String(d.getHours()).padStart(2, '0');
+            const minuti = String(d.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('edit-data').value = `${giorno}/${mese}/${anno}`;
+            document.getElementById('edit-ora').value = `${ore}:${minuti}`;
+            document.getElementById('modal-modifica').classList.remove('hidden');
+        }
+
+        function chiudiModificaModal() {
+            document.getElementById('modal-modifica').classList.add('hidden');
+        }
+
+        async function salvaModificaTimbratura() {
+            const id = document.getElementById('edit-timbratura-id').value;
+            const nuovoTipo = document.getElementById('edit-tipo').value;
+            const dataInput = document.getElementById('edit-data').value.trim();
+            const oraInput = document.getElementById('edit-ora').value.trim();
+
+            const regexData = /^\d{2}\/\d{2}\/\d{4}$/;
+            const regexOra = /^\d{2}:\d{2}$/;
+            
+            if (!regexData.test(dataInput) || !regexOra.test(oraInput)) {
+                alert("Formato Data o Ora non valido!");
+                return;
+            }
+
+            try {
+                const partiData = dataInput.split('/');
+                const partiOra = oraInput.split(':');
+                
+                const dataOggetto = new Date(
+                    parseInt(partiData[2], 10),
+                    parseInt(partiData[1], 10) - 1,
+                    parseInt(partiData[0], 10),
+                    parseInt(partiOra[0], 10),
+                    parseInt(partiOra[1], 10),
+                    0
+                );
+                const orarioISO = dataOggetto.toISOString();
+
+                const { error } = await supabaseClient.from('timbrature').update({ tipo_azione: nuovoTipo, orario: orarioISO }).eq('id', id);
+                if (error) throw error;
+
+                alert("Record modificato con successo!");
+                chiudiModificaModal();
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore modifica: " + err.message);
+            }
+        }
+
+        async function eliminaTimbratura(id) {
+            if (!confirm("Eliminare definitivamente questo record?")) return;
+            try {
+                const { error } = await supabaseClient.from('timbrature').delete().eq('id', id);
+                if (error) throw error;
+                alert("Record rimosso.");
+                caricaReportSpecifico();
+            } catch (err) {
+                alert("Errore eliminazione: " + err.message);
+            }
+        }
+
+        inizializzaPannello();
+    </script>
+</body>
+</html>
