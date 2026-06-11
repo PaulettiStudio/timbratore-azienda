@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Console Admin - Gestione Totale Presenze</title>
+    <title>Console Admin - Dashboard e Calendario Presenze</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <style> touch-action: manipulation; </style>
+    <style> 
+        touch-action: manipulation; 
+        input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+    </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
 
@@ -18,8 +21,8 @@
         <h1 class="text-xl font-black text-white text-center mb-4">Pannello Amministratore</h1>
         
         <div class="flex bg-slate-900 rounded-xl p-1 gap-1">
-            <button onclick="apriLabel('label-timbrature', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg bg-sky-600 text-white transition">Registro Ore</button>
-            <button onclick="apriLabel('label-inserimento', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">+ Inserisci Ferie/Ore</button>
+            <button onclick="apriLabel('label-timbrature', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg bg-sky-600 text-white transition">Calendario & Ore</button>
+            <button onclick="apriLabel('label-inserimento', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">+ Giustificativi / Ore</button>
             <button onclick="apriLabel('label-dipendenti', this)" class="tab-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Anagrafica</button>
         </div>
     </header>
@@ -38,15 +41,15 @@
                     <span id="ore-settimana" class="text-base font-black text-sky-400 font-mono">0.0h</span>
                 </div>
                 <div class="bg-slate-900/50 p-2 rounded-xl border border-slate-800">
-                    <span class="text-[9px] font-bold uppercase text-slate-400 block">Mese Corrente</span>
+                    <span class="text-[9px] font-bold uppercase text-slate-400 block">Mese Selezionato</span>
                     <span id="ore-mese" class="text-base font-black text-amber-400 font-mono">0.0h</span>
                 </div>
             </div>
 
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                    <span class="text-xs font-bold text-sky-400 uppercase tracking-wider">Filtra Ricerca</span>
-                    <button onclick="resetFiltri()" class="text-[11px] text-slate-400 hover:text-white underline">Resetta</button>
+                    <span class="text-xs font-bold text-sky-400 uppercase tracking-wider">Filtra Risorse e Periodo</span>
+                    <button onclick="resetFiltri()" class="text-[11px] text-slate-400 hover:text-white underline">Reset</button>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -56,44 +59,49 @@
                         </select>
                     </div>
                     <div>
-                        <label class="text-[10px] text-slate-400 block mb-1 font-bold uppercase">Giorno Specifico</label>
-                        <input type="date" id="filtro-data" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white w-full focus:border-sky-500 outline-none">
+                        <label class="text-[10px] text-slate-400 block mb-1 font-bold uppercase">Mese del Calendario</label>
+                        <input type="month" id="filtro-mese" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white w-full focus:border-sky-500 outline-none">
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mt-2">
-                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Vista Calendario</h2>
-                <div class="flex gap-2">
-                    <button onclick="generaPDF()" class="text-xs bg-sky-600/20 text-sky-400 border border-sky-500/30 px-2.5 py-1 rounded-lg font-bold hover:bg-sky-600/30 transition">🖨️ Esporta PDF</button>
-                    <button onclick="caricaDati()" class="text-xs bg-slate-700 px-2.5 py-1 rounded-lg font-bold hover:bg-slate-600 transition">↻</button>
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-md">
+                <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-3" id="nome-mese-titolo">Mese</div>
+                
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 mb-1">
+                    <div>LUN</div><div>MAR</div><div>MER</div><div>GIO</div><div>VEN</div><div>SAB</div><div>DOM</div>
                 </div>
+                
+                <div id="griglia-calendario-fisico" class="grid grid-cols-7 gap-1">
+                    </div>
             </div>
 
-            <div id="contenitore-calendario" class="flex flex-col gap-6">
-                <p class="text-center text-slate-500 text-sm mt-10 animate-pulse">Caricamento in corso...</p>
+            <div class="flex justify-between items-center mt-2">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Dettaglio Movimenti</h2>
+                <button onclick="generaPDF()" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-xl font-black shadow-md transition">🖨️ Esporta PDF Totale</button>
             </div>
+
+            <div id="contenitore-lista-movimenti" class="flex flex-col gap-2">
+                </div>
         </section>
 
         <section id="label-inserimento" class="tab-content hidden flex flex-col gap-4">
-            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Inserimento Report & Giustificativi</h2>
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Inserimento Manuale d'Ufficio</h2>
             
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col gap-4 shadow-md">
-                <p class="text-xs text-slate-400">Usa questo modulo per registrare ore lavorative esterne oppure per inserire giornate di **Ferie** o **Permessi**.</p>
-                
                 <div>
                     <label class="text-xs font-bold text-slate-300 block mb-1">1. Seleziona Dipendente</label>
                     <select id="manual-dipendente" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white w-full outline-none focus:border-sky-500">
-                        </select>
+                    </select>
                 </div>
 
                 <div>
-                    <label class="text-xs font-bold text-slate-300 block mb-1">2. Data e Ora dell'evento</label>
+                    <label class="text-xs font-bold text-slate-300 block mb-1">2. Data e Ora della Scansione</label>
                     <input type="datetime-local" id="manual-orario" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white w-full outline-none focus:border-sky-500">
                 </div>
 
                 <div>
-                    <label class="text-xs font-bold text-slate-300 block mb-1">3. Tipo di Voce / Azione</label>
+                    <label class="text-xs font-bold text-slate-300 block mb-1">3. Tipo di Evento / Giustificativo</label>
                     <div class="grid grid-cols-2 gap-2">
                         <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-emerald-500">
                             <input type="radio" name="manual-azione" value="INGRESSO" checked class="accent-emerald-500">
@@ -105,32 +113,32 @@
                         </label>
                         <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-amber-500">
                             <input type="radio" name="manual-azione" value="FERIE" class="accent-amber-500">
-                            <span class="text-xs font-bold text-amber-400">🌴 FERIE</span>
+                            <span class="text-xs font-bold text-amber-400">🌴 FERIE (8h)</span>
                         </label>
                         <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-indigo-500">
                             <input type="radio" name="manual-azione" value="PERMESSO" class="accent-indigo-500">
-                            <span class="text-xs font-bold text-indigo-400">⏱️ PERMESSO</span>
+                            <span class="text-xs font-bold text-indigo-400">⏱️ PERMESSO (8h)</span>
                         </label>
                     </div>
                 </div>
 
-                <button onclick="aggiungiTimbraturaManuale()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold p-3.5 rounded-xl text-sm transition mt-2 shadow-lg active:scale-95">
-                    Salva nel Database
+                <button onclick="aggiungiTimbraturaManuale()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold p-3.5 rounded-xl text-sm transition shadow-lg active:scale-95">
+                    Registra nel Sistema
                 </button>
             </div>
         </section>
 
         <section id="label-dipendenti" class="tab-content hidden flex flex-col gap-4">
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-col gap-3">
-                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Nuovo Profilo Dipendente</h3>
+                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Aggiungi Dipendente</h3>
                 <div class="flex gap-2">
                     <input type="text" id="nuovo-nome" placeholder="Nome" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm w-full outline-none">
                     <input type="text" id="nuovo-cognome" placeholder="Cognome" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm w-full outline-none">
                 </div>
-                <button onclick="aggiungiDipendente()" class="bg-emerald-600 font-bold p-2.5 rounded-xl text-sm hover:bg-emerald-500 transition">Crea Anagrafica</button>
+                <button onclick="aggiungiDipendente()" class="bg-emerald-600 font-bold p-2.5 rounded-xl text-sm hover:bg-emerald-500 transition">Salva Anagrafica</button>
             </div>
 
-            <h2 class="text-sm font-bold text-slate-400 uppercase mt-4 tracking-wider">Badge & Collegamenti Personali</h2>
+            <h2 class="text-sm font-bold text-slate-400 uppercase mt-4 tracking-wider">Link Badge Generati</h2>
             <div id="lista-dipendenti" class="flex flex-col gap-3"></div>
         </section>
 
@@ -146,6 +154,10 @@
         let dipendentiGlobali = [];
         let timbratureFiltrate = [];
 
+        // Imposta il mese corrente di default nell'input filtro
+        const ad oggiIniziale = new Date();
+        document.getElementById('filtro-mese').value = ad oggiIniziale.toISOString().substring(0, 7);
+
         function apriLabel(idLabel, bottone) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(idLabel).classList.remove('hidden');
@@ -157,18 +169,12 @@
             bottone.classList.add('bg-sky-600', 'text-white');
         }
 
-        // CORRETTO: ARROTONDAMENTO AI 15 MINUTI CON REGOLA DEI 7 MINUTI
+        // ALGORITMO COMMERCIALE DEI 15 MINUTI CON SOGLIA A 7 MINUTI
         function arrotondaAi15Minuti(dataIso) {
             let d = new Date(dataIso);
             let m = d.getMinutes();
             let resto = m % 15;
-            let arrot;
-            
-            if (resto >= 7) {
-                arrot = m + (15 - resto); // Salta al quarto d'ora successivo
-            } else {
-                arrot = m - resto;        // Arrotonda al quarto d'ora precedente
-            }
+            let arrot = resto >= 7 ? m + (15 - resto) : m - resto;
             
             if (arrot === 60) {
                 d.setHours(d.getHours() + 1);
@@ -187,7 +193,7 @@
         function getInizioSettimana(data) {
             let d = new Date(data);
             let day = d.getDay();
-            let diff = d.getDate() - day + (day == 0 ? -6 : 1); // Imposta Lunedì come inizio
+            let diff = d.getDate() - day + (day == 0 ? -6 : 1);
             return new Date(d.setDate(diff)).toISOString().split('T')[0];
         }
 
@@ -209,7 +215,6 @@
                 filtraERenderizza();
             } catch (err) {
                 console.error(err);
-                document.getElementById('contenitore-calendario').innerHTML = '<p class="text-rose-500 text-center text-xs">Errore di sincronizzazione.</p>';
             }
         }
 
@@ -232,54 +237,51 @@
 
                 containerLista.innerHTML += `
                     <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-sm">
-                        <div class="flex justify-between items-center mb-1.5">
+                        <div class="flex justify-between items-center mb-1">
                             <span class="font-bold text-sm text-slate-200">${d.cognome} ${d.nome}</span>
-                            <button onclick="navigator.clipboard.writeText('${linkBadge}'); alert('Copiato!');" class="text-[11px] bg-slate-700 text-sky-400 px-2 py-1 rounded font-bold">Copia Link</button>
+                            <button onclick="navigator.clipboard.writeText('${linkBadge}'); alert('Copiato!');" class="text-[11px] bg-slate-700 text-sky-400 px-2 py-0.5 rounded font-bold">Copia</button>
                         </div>
-                        <div class="text-[10px] text-slate-500 font-mono break-all bg-slate-900/50 p-2 rounded border border-slate-800">${linkBadge}</div>
+                        <div class="text-[10px] text-slate-500 font-mono break-all bg-slate-900/50 p-1.5 rounded border border-slate-800">${linkBadge}</div>
                     </div>
                 `;
             });
         }
 
-        // MOTORE DI CALCOLO ORE E FILTRAGGIO (GIORNO / SETTIMANA / MESE)
+        // APPLICA FILTRI, AGGIORNA DASHBOARD E GENERA IL CALENDARIO FISICO
         function filtraERenderizza() {
             const dipendenteScelto = document.getElementById('filtro-dipendente').value;
-            const dataScelta = document.getElementById('filtro-data').value;
+            const meseSceltoStr = document.getElementById('filtro-mese').value; // Formato YYYY-MM
 
-            // 1. Applica Filtri Visivi
+            // Filtra per dipendente e per la corrispondenza dell'anno/mese selezionato
             timbratureFiltrate = timbratureGlobali.filter(t => {
                 let matchDipendente = true;
-                let matchData = true;
+                let matchMese = true;
 
                 if (dipendenteScelto !== 'tutti') {
                     const idRecord = t.dipendente_id || (t.dipendenti ? t.dipendenti.id : null);
                     matchDipendente = String(idRecord) === String(dipendenteScelto);
                 }
-                if (dataScelta) {
-                    const dataRecordStr = new Date(t.orario).toISOString().split('T')[0];
-                    matchData = dataRecordStr === dataScelta;
+                if (meseSceltoStr) {
+                    const recordMeseStr = t.orario.substring(0, 7); // Prende YYYY-MM dalla stringa ISO
+                    matchMese = recordMeseStr === meseSceltoStr;
                 }
-                return matchDipendente && matchData;
+                return matchDipendente && matchMese;
             });
 
-            // 2. Calcolo Statistiche (Dashboard Totali)
-            calcolaEVisualizzaMetriche(dipendenteScelto);
-
-            // 3. Renderizza nel Calendario
-            renderizzaVistaCalendario();
+            calcolaEVisualizzaMetriche(dipendenteScelto, meseSceltoStr);
+            renderizzaCalendarioFisico(meseSceltoStr);
+            renderizzaListaMovimentiSotto();
         }
 
-        function calcolaEVisualizzaMetriche(dipendenteId) {
+        // CALCOLO ORE LIVE PER CONTEGGI (GIORNO, SETTIMANA, MESE)
+        function calcolaEVisualizzaMetriche(dipendenteId, meseFiltro) {
             let totaleOggi = 0;
             let totaleSettimana = 0;
             let totaleMese = 0;
 
             const oggiStr = new Date().toISOString().split('T')[0];
             const inizioSettimanaStr = getInizioSettimana(new Date());
-            const meseCorrenteStr = new Date().toISOString().substring(0, 7); // YYYY-MM
 
-            // Raggruppa per dipendente per calcolare i blocchi IN/OUT
             let mappaDip = {};
             timbratureGlobali.forEach(t => {
                 const id = t.dipendente_id || (t.dipendenti ? t.dipendenti.id : 'ignoto');
@@ -289,16 +291,14 @@
             });
 
             for (let id in mappaDip) {
-                // Ordina dal più vecchio al più recente
                 mappaDip[id].sort((a, b) => new Date(a.orario) - new Date(b.orario));
-                
                 let ultimoIngresso = null;
 
                 mappaDip[id].forEach(t => {
                     let dataObj = new Date(t.orario);
                     let dataStr = dataObj.toISOString().split('T')[0];
                     let settStr = getInizioSettimana(dataObj);
-                    let mesStr = dataObj.toISOString().substring(0, 7);
+                    let recMeseStr = t.orario.substring(0, 7);
 
                     let oreDaAggiungere = 0;
 
@@ -306,20 +306,18 @@
                         ultimoIngresso = t;
                     } else if (t.tipo_azione === 'USCITA') {
                         if (ultimoIngresso) {
-                            let dataIn = arrotondaAi15Minuti(ultimoIngresso.orario);
-                            let dataOut = arrotondaAi15Minuti(t.orario);
-                            let diff = dataOut - dataIn;
+                            let diff = arrotondaAi15Minuti(t.orario) - arrotondaAi15Minuti(ultimoIngresso.orario);
                             if (diff > 0) oreDaAggiungere = diff / (1000 * 60 * 60);
                             ultimoIngresso = null;
                         }
                     } else if (t.tipo_azione === 'FERIE' || t.tipo_azione === 'PERMESSO') {
-                        oreDaAggiungere = 8; // Convenzione aziendale di 8 ore
+                        oreDaAggiungere = 8; 
                     }
 
                     if (oreDaAggiungere > 0) {
                         if (dataStr === oggiStr) totaleOggi += oreDaAggiungere;
                         if (settStr === inizioSettimanaStr) totaleSettimana += oreDaAggiungere;
-                        if (mesStr === meseCorrenteStr) totaleMese += oreDaAggiungere;
+                        if (recMeseStr === meseFiltro) totaleMese += oreDaAggiungere;
                     }
                 });
             }
@@ -329,109 +327,133 @@
             document.getElementById('ore-mese').innerText = totaleMese.toFixed(1) + 'h';
         }
 
-        // COMPOSIZIONE STRUTTURA A CALENDARIO
-        function renderizzaVistaCalendario() {
-            const container = document.getElementById('contenitore-calendario');
-            if (timbratureFiltrate.length === 0) {
-                container.innerHTML = '<p class="text-center text-sm text-slate-500 py-10">Nessun dato registrato nel calendario.</p>';
-                return;
-            }
+        // GENERATORE DELLA MATRICE FISICA DEL CALENDARIO A QUADRATINI
+        function renderizzaCalendarioFisico(meseSceltoStr) {
+            const griglia = document.getElementById('griglia-calendario-fisico');
+            griglia.innerHTML = '';
 
-            const giorniRaggruppati = {};
+            const [anno, mese] = meseSceltoStr.split('-').map(Number);
+            
+            // Imposta etichetta titolo del mese
+            const opzioniMese = { month: 'long', year: 'numeric' };
+            document.getElementById('nome-mese-titolo').innerText = new Date(anno, mese - 1, 1).toLocaleDateString('it-IT', opzioniMese);
+
+            // Calcolo parametri del mese
+            const primoGiornoMese = new Date(anno, mese - 1, 1);
+            const ultimoGiornoMese = new Date(anno, mese, 0);
+            const totaleGiorni = ultimoGiornoMese.getDate();
+            
+            // Trova il giorno della settimana del primo giorno (0=Dom, 1=Lun... convertiamo in 0=Lun, 6=Dom)
+            let giornoSettimanaIniziale = primoGiornoMese.getDay();
+            giornoSettimanaIniziale = giornoSettimanaIniziale === 0 ? 6 : giornoSettimanaIniziale - 1;
+
+            // Raggruppa ore del mese per giorno numerico
+            let orePerGiorno = {};
+            let tipoPrevalenteGiorno = {}; // Per impostare il colore se c'è ferie/permesso
+
+            let dipLogici = {};
             timbratureFiltrate.forEach(t => {
-                const dataObj = new Date(t.orario);
-                const opzioni = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-                const chiaveGiorno = dataObj.toLocaleDateString('it-IT', opzioni);
-
-                if (!giorniRaggruppati[chiaveGiorno]) giorniRaggruppati[chiaveGiorno] = { record: [], oreGiorno: 0 };
-                giorniRaggruppati[chiaveGiorno].record.push(t);
+                let dId = t.dipendente_id || 'unkn';
+                if(!dipLogici[dId]) dipLogici[dId] = [];
+                dipLogici[dId].push(t);
             });
 
-            // Calcolo ore giornaliere specifiche per la label del giorno
-            for (let giorno in giorniRaggruppati) {
-                let dipGiornalieri = {};
-                giorniRaggruppati[giorno].record.forEach(t => {
-                    let dId = t.dipendente_id || 'unkn';
-                    if(!dipGiornalieri[dId]) dipGiornalieri[dId] = [];
-                    dipGiornalieri[dId].push(t);
-                });
+            for(let dId in dipLogici) {
+                dipLogici[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                let inPres = null;
+                dipLogici[dId].forEach(r => {
+                    let dataR = new Date(r.orario);
+                    let gNum = dataR.getDate();
+                    if(!orePerGiorno[gNum]) orePerGiorno[gNum] = 0;
 
-                let oreTotaliDelGiorno = 0;
-                for(let dId in dipGiornalieri) {
-                    dipGiornalieri[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                    let inPresenza = null;
-                    dipGiornalieri[dId].forEach(r => {
-                        if(r.tipo_azione === 'INGRESSO') inPresenza = r;
-                        else if(r.tipo_azione === 'USCITA' && inPresenza) {
-                            let diff = arrotondaAi15Minuti(r.orario) - arrotondaAi15Minuti(inPresenza.orario);
-                            if(diff > 0) oreTotaliDelGiorno += diff / (1000*60*60);
-                            inPresenza = null;
-                        } else if(r.tipo_azione === 'FERIE' || r.tipo_azione === 'PERMESSO') {
-                            oreTotaliDelGiorno += 8;
-                        }
-                    });
+                    if(r.tipo_azione === 'INGRESSO') inPres = r;
+                    else if(r.tipo_azione === 'USCITA' && inPres) {
+                        let diff = arrotondaAi15Minuti(r.orario) - arrotondaAi15Minuti(inPres.orario);
+                        if(diff > 0) orePerGiorno[gNum] += diff / (1000*60*60);
+                        inPres = null;
+                    } else if(r.tipo_azione === 'FERIE' || r.tipo_azione === 'PERMESSO') {
+                        orePerGiorno[gNum] += 8;
+                        tipoPrevalenteGiorno[gNum] = r.tipo_azione;
+                    }
+                });
+            }
+
+            // 1. Genera spazi vuoti per i giorni del mese precedente
+            for (let i = 0; i < giornoSettimanaIniziale; i++) {
+                griglia.innerHTML += `<div class="bg-slate-900/20 border border-transparent h-14 rounded-lg"></div>`;
+            }
+
+            // 2. Genera i quadratini fisici del mese
+            for (let giorno = 1; giorno <= totaleGiorni; giorno++) {
+                const oreMaturate = orePerGiorno[giorno] || 0;
+                let stringaOre = '';
+                let coloreTestoOre = 'text-sky-400';
+
+                if (oreMaturate > 0) {
+                    stringaOre = `${oreMaturate.toFixed(1)}h`;
+                    if(tipoPrevalenteGiorno[giorno] === 'FERIE') coloreTestoOre = 'text-amber-400 font-bold';
+                    if(tipoPrevalenteGiorno[giorno] === 'PERMESSO') coloreTestoOre = 'text-indigo-400 font-bold';
                 }
-                giorniRaggruppati[giorno].oreGiorno = oreTotaliDelGiorno;
-            }
 
-            container.innerHTML = '';
-
-            for (const [giorno, info] of Object.entries(giorniRaggruppati)) {
-                let bloccoGiornoHTML = `
-                    <div class="flex flex-col gap-2">
-                        <div class="flex justify-between items-center bg-slate-800/60 border border-slate-700/50 px-3 py-2 rounded-xl">
-                            <span class="text-xs font-black uppercase text-sky-400 tracking-wider capitalize">${giorno}</span>
-                            <span class="text-xs font-mono font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-700 text-slate-300">Tot: ${info.oreGiorno.toFixed(1)}h</span>
-                        </div>
-                        <div class="flex flex-col gap-2 pl-1">
+                griglia.innerHTML += `
+                    <div class="bg-slate-900/60 border border-slate-700/60 h-14 rounded-xl p-1 flex flex-col justify-between relative shadow-inner">
+                        <span class="text-[10px] font-bold text-slate-400">${giorno}</span>
+                        <span class="text-[10px] font-mono text-right ${coloreTestoOre} mt-auto tracking-tighter">${stringaOre}</span>
+                    </div>
                 `;
-
-                info.record.forEach(t => {
-                    const dataReale = new Date(t.orario);
-                    const oraReale = formattaOra(dataReale);
-                    const nome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Risorsa';
-                    
-                    let coloreBadge = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
-                    let oraMostrata = formattaOra(arrotondaAi15Minuti(t.orario));
-
-                    if(t.tipo_azione === 'USCITA') coloreBadge = 'text-rose-400 bg-rose-400/10 border-rose-500/20';
-                    if(t.tipo_azione === 'FERIE') { coloreBadge = 'text-amber-400 bg-amber-400/10 border-amber-500/20'; oraMostrata = "Config"; }
-                    if(t.tipo_azione === 'PERMESSO') { coloreBadge = 'text-indigo-400 bg-indigo-400/10 border-indigo-500/20'; oraMostrata = "Config"; }
-
-                    bloccoGiornoHTML += `
-                        <div class="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                            <div>
-                                <h4 class="font-bold text-slate-200 text-sm">${nome}</h4>
-                                <p class="text-[11px] text-slate-500">Reale: <span class="font-mono">${oraReale}</span></p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${coloreBadge}">${t.tipo_azione}</span>
-                                <div class="text-base font-mono font-black text-sky-400 mt-0.5">${oraMostrata}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                bloccoGiornoHTML += `</div></div>`;
-                container.innerHTML += bloccoGiornoHTML;
             }
+        }
+
+        // VISTA ELENCO DETTAGLIATA SOTTO IL CALENDARIO
+        function renderizzaListaMovimentiSotto() {
+            const container = document.getElementById('contenitore-lista-movimenti');
+            if (timbratureFiltrate.length === 0) {
+                container.innerHTML = '<p class="text-center text-xs text-slate-500 py-4">Nessun movimento analitico trovato.</p>';
+                return;
+            }
+            container.innerHTML = '';
+            
+            timbratureFiltrate.forEach(t => {
+                const dataReale = new Date(t.orario);
+                const giornoStr = dataReale.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+                const oraReale = formattaOra(dataReale);
+                const nome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Risorsa';
+                
+                let colore = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/10';
+                let oraCalcolata = formattaOra(arrotondaAi15Minuti(t.orario));
+
+                if(t.tipo_azione === 'USCITA') colore = 'text-rose-400 bg-rose-400/10 border-rose-500/10';
+                if(t.tipo_azione === 'FERIE') { colore = 'text-amber-400 bg-amber-400/10 border-amber-500/10'; oraCalcolata = "8 Ore"; }
+                if(t.tipo_azione === 'PERMESSO') { colore = 'text-indigo-400 bg-indigo-400/10 border-indigo-500/10'; oraCalcolata = "8 Ore"; }
+
+                container.innerHTML += `
+                    <div class="bg-slate-800/50 border border-slate-700/40 rounded-xl p-2.5 flex justify-between items-center text-xs">
+                        <div>
+                            <span class="font-bold text-slate-200 block">${nome}</span>
+                            <span class="text-[10px] text-slate-400">${giornoStr} - Reale: ${oraReale}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${colore}">${t.tipo_azione}</span>
+                            <div class="font-mono text-sky-400 font-bold mt-0.5">${oraCalcolata}</div>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         function resetFiltri() {
             document.getElementById('filtro-dipendente').value = 'tutti';
-            document.getElementById('filtro-data').value = '';
+            document.getElementById('filtro-mese').value = new Date().toISOString().substring(0, 7);
             filtraERenderizza();
         }
 
-        // SALVATAGGIO DI UN COMPILATO (MANUALE / FERIE / PERMESSI)
+        // SALVATAGGIO REGOLE INSERIMENTI MANUALE / FERIE / PERMESSI
         async function aggiungiTimbraturaManuale() {
             const dipendenteId = document.getElementById('manual-dipendente').value;
             const orarioStringa = document.getElementById('manual-orario').value;
             const azioneSelezionata = document.querySelector('input[name="manual-azione"]:checked').value;
 
-            if (!dipendenteId) { alert("Seleziona un dipendente."); return; }
-            if (!orarioStringa) { alert("Scegli data e ora."); return; }
-
+            if (!dipendenteId || !orarioStringa) { alert("Compila tutti i campi richiesti."); return; }
             const dataIsoCorretta = new Date(orarioStringa).toISOString();
 
             try {
@@ -440,20 +462,18 @@
                     orario: dataIsoCorretta,
                     tipo_azione: azioneSelezionata
                 });
-
                 if (error) throw error;
 
-                alert("Registrazione inserita con successo!");
+                alert("Operazione completata con successo!");
                 document.getElementById('manual-orario').value = '';
                 await caricaDati();
                 apriLabel('label-timbrature', document.querySelectorAll('.tab-btn')[0]);
             } catch (err) {
-                alert("Errore di inserimento.");
-                console.error(err);
+                alert("Errore inserimento a database.");
             }
         }
 
-        // GENERAZIONE PDF COERENTE CON L'ARROTONDAMENTO COMMERCIALE
+        // ESPORTAZIONE PDF CON RESOCONTO AGGREGATO STATISTICO (GIORNO/SETTIMANA/MESE)
         function generaPDF() {
             if (timbratureFiltrate.length === 0) {
                 alert("Nessun record da esportare.");
@@ -464,10 +484,40 @@
             const doc = new jsPDF();
 
             doc.setFontSize(18);
-            doc.text("Registro Ore e Giustificativi", 14, 20);
+            doc.text("Registro Presenze e Riepilogo Ore Commerciali", 14, 20);
             
-            doc.setFontSize(10);
-            doc.text("Arrotondamento commerciale dei 15 minuti con soglia scatto a 7 minuti.", 14, 27);
+            doc.setFontSize(9);
+            const selettoreDip = document.getElementById('filtro-dipendente');
+            const dipTesto = selettoreDip.value === 'tutti' ? "Tutto il personale" : selettoreDip.options[selettoreDip.selectedIndex].text;
+            doc.text(`Risorsa: ${dipTesto}  |  Mese di riferimento: ${document.getElementById('filtro-mese').value}`, 14, 26);
+            doc.text("Nota: Ore calcolate secondo l'arrotondamento commerciale con tolleranza dei 7 minuti.", 14, 30);
+
+            // Contatori totalizzatori per il riepilogo finale del PDF
+            let oreLavorateEffettive = 0;
+            let giorniFerieTotali = 0;
+            let giorniPermessoTotali = 0;
+
+            // Mappatura per calcolo ore del report
+            let raggruppamentoLogico = {};
+            timbratureFiltrate.forEach(t => {
+                let dId = t.dipendente_id || 'unkn';
+                if(!raggruppamentoLogico[dId]) raggruppamentoLogico[dId] = [];
+                raggruppamentoLogico[dId].push(t);
+            });
+
+            for(let dId in raggruppamentoLogico){
+                raggruppamentoLogico[dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                let ultimoIn = null;
+                raggruppamentoLogico[dId].forEach(r => {
+                    if(r.tipo_azione === 'INGRESSO') ultimoIn = r;
+                    else if(r.tipo_azione === 'USCITA' && ultimoIn) {
+                        let diff = arrotondaAi15Minuti(r.orario) - arrotondaAi15Minuti(ultimoIn.orario);
+                        if(diff > 0) oreLavorateEffettive += diff / (1000*60*60);
+                        ultimoIn = null;
+                    } else if(r.tipo_azione === 'FERIE') giorniFerieTotali++;
+                      else if(r.tipo_azione === 'PERMESSO') giorniPermessoTotali++;
+                });
+            }
 
             const righeTabella = timbratureFiltrate.map(t => {
                 const dataReale = new Date(t.orario);
@@ -476,31 +526,52 @@
                 const azione = t.tipo_azione;
                 
                 let oraArrot = formattaOra(arrotondaAi15Minuti(t.orario));
-                if(azione === 'FERIE' || azione === 'PERMESSO') oraArrot = "Giornata (8h)";
+                if(azione === 'FERIE' || azione === 'PERMESSO') oraArrot = "Giornata Intera (8h)";
 
                 return [giorno, nome, azione, oraArrot, `(reale: ${formattaOra(dataReale)})`];
             });
 
+            // Tabella 1: Lista Analitica Movimenti
             doc.autoTable({
-                startY: 33,
-                head: [['Data', 'Dipendente', 'Tipo Voce', 'Ora Computata', 'Scansione Effettiva']],
+                startY: 35,
+                head: [['Data', 'Dipendente', 'Tipo Evento', 'Ora Computata', 'Scansione Originale']],
                 body: righeTabella,
                 theme: 'striped',
                 headStyles: { fillColor: [2, 132, 199] }
             });
 
-            doc.save(`Report_Presenze.pdf`);
+            // Tabella 2: Quadro di Sintesi e Resoconti Totali (Richiesto!)
+            let fineTabellaUno = doc.lastAutoTable.finalY || 40;
+            
+            doc.setFontSize(12);
+            doc.text("QUADRO RIASSUNTIVO CONTEGGI TOTALE", 14, fineTabellaUno + 12);
+
+            const righeTotali = [
+                ["Totale Ore Effettive Lavorate nel Periodo", `${oreLavorateEffettive.toFixed(1)} Ore`],
+                ["Totale Giornate di Ferie Sfruttate", `${giorniFerieTotali} Giorni (${giorniFerieTotali * 8}h computate)`],
+                ["Totale Giornate di Permesso Richieste", `${giorniPermessoTotali} Giorni (${giorniPermessoTotali * 8}h computate)`],
+                ["MONTE ORE GENERALE COMPLESSIVO (Lavoro + Giustificativi)", `${(oreLavorateEffettive + (giorniFerieTotali*8) + (giorniPermessoTotali*8)).toFixed(1)} Ore`]
+            ];
+
+            doc.autoTable({
+                startY: fineTabellaUno + 16,
+                head: [['Voce di Resoconto Contabile', 'Totale Accumulato']],
+                body: righeTotali,
+                theme: 'grid',
+                headStyles: { fillColor: [30, 41, 59] }, // Colore scuro Slate per distinguere i totali
+                columnStyles: { 1: { fontStyle: 'bold', halign: 'right' } }
+            });
+
+            doc.save(`Resoconto_Totale_Presenze.pdf`);
         }
 
         async function aggiungiDipendente() {
             const nome = document.getElementById('nuovo-nome').value.trim();
             const cognome = document.getElementById('nuovo-cognome').value.trim();
-
-            if(!nome || !cognome) { alert("Campi vuoti."); return; }
+            if(!nome || !cognome) return;
 
             const { error } = await supabaseClient.from('dipendenti').insert({ nome, cognome });
-            if (error) alert("Errore: " + error.message);
-            else {
+            if (!error) {
                 document.getElementById('nuovo-nome').value = '';
                 document.getElementById('nuovo-cognome').value = '';
                 caricaDati();
