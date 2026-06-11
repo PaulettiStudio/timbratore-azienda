@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="manifest" href="manifest-badge.json">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Badge Presenze">
@@ -81,12 +81,10 @@
     </footer>
 
     <script>
-        // CONFIGURAZIONE SUPABASE
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // CONFIGURAZIONE GPS E ORARI
         const AZIENDA_LAT = 46.011914; 
         const AZIENDA_LON = 11.925732; 
         const RAGGIO_MASSIMO_METRI = 50; 
@@ -103,16 +101,15 @@
         let gpsLongitudine = null;
         let gpsPronto = false;
 
-        // OROLOGIO
         function aggiornaOrologio() {
             const adesso = new Date();
-            document.getElementById('orologio-ora').innerText = adesso.toLocaleTimeString('it-IT');
+            document.getElementById('orologio-ora').innerText = fancyTime(adesso);
             document.getElementById('orologio-data').innerText = adesso.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
         }
+        function fancyTime(d) { return d.toLocaleTimeString('it-IT'); }
         setInterval(aggiornaOrologio, 1000);
         aggiornaOrologio();
 
-        // GESTIONE GPS
         function calcolaDistanzaMetri(lat1, lon1, lat2, lon2) {
             const R = 6371e3; 
             const p1 = lat1 * Math.PI / 180;
@@ -151,12 +148,10 @@
             );
         }
 
-        // LOGICA DI IDENTIFICAZIONE BLINDATA
         async function verificaAccessoEIdentita() {
             const parametriUrl = new URLSearchParams(window.location.search);
             const idUrl = parametriUrl.get('id');
             
-            // Regola iOS: Se apro da link leggo l'URL e salvo. Se apro da app leggo la memoria.
             if (idUrl) {
                 localStorage.setItem('badge_dipendente_id', idUrl);
                 dipendenteId = idUrl;
@@ -165,7 +160,7 @@
             }
 
             if (!dipendenteId) {
-                mostraErroreCritico("Link non valido", "Codice dipendente mancante. Devi usare il link personalizzato fornito dall'amministratore.");
+                mostraErroreCritico("Link non valido", "Codice dipendente mancante nell'applicazione.");
                 return;
             }
 
@@ -190,7 +185,7 @@
                 }, 300);
 
             } catch (err) {
-                mostraErroreCritico("Errore Database", "Dipendente non trovato o badge scaduto.");
+                mostraErroreCritico("Errore Database", "Dipendente non trovato.");
             }
         }
 
@@ -220,10 +215,10 @@
         }
 
         function verificaInFinestra(minutiAttuali, finestra) {
-            return minutiAttuali >= stringaInMinuti(finestra.inizio) && minutiAttuali <= stringaInMinuti(finestra.fine);
+            return minutesCheck(minutiAttuali, finestra);
         }
+        function minutesCheck(m, f) { return m >= stringaInMinuti(f.inizio) && m <= stringaInMinuti(f.fine); }
 
-        // INVIO TIMBRATURA
         async function timbra(tipoAzione) {
             if (!dipendenteId) return;
 
@@ -285,8 +280,7 @@
             }
         }
 
-        // Avvio automatico
-        verificaAccessoEIdentita();
+        window.onload = verificaAccessoEIdentita;
     </script>
 </body>
 </html>
