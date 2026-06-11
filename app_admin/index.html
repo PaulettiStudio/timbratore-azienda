@@ -255,6 +255,7 @@
             return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
+        // --- SISTEMA DI CARICAMENTO E GESTIONE ERRORI ---
         async function caricaDati() {
             try {
                 const { data: dipendenti, error: dErr } = await supabaseClient.from('dipendenti').select('*').order('cognome');
@@ -263,7 +264,7 @@
 
                 const { data: timbrature, error: tErr } = await supabaseClient
                     .from('timbrature')
-                    .select('id, orario, tipo_azione, dipendente_id, dipendenti(nome, cognome)')
+                    .select('id, orario, tipo_azione, dipendente_id, dipendenti(id, nome, cognome)')
                     .order('orario', { ascending: false });
                 if (tErr) throw tErr;
                 
@@ -272,7 +273,10 @@
                 aggiornaPillsMenu();
                 aggiornaAnagraficaEDropdown();
                 filtraERenderizza();
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Errore Dettagliato:", err);
+                alert("Si è verificato un errore nel caricamento dal database.\nMessaggio: " + err.message); 
+            }
         }
 
         function aggiornaPillsMenu() {
@@ -329,15 +333,13 @@
                         </div>
                         <div class="flex gap-1.5 flex-shrink-0">
                             <button onclick="navigator.clipboard.writeText('${linkBadge}'); alert('Link Copiato!');" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition border border-slate-600">Copia</button>
-                            <button onclick="eliminaDipendente('${d.id}', '${d.nome} ${d.cognome}')" class="bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition border border-rose-500/30">❌ Elimina</button>
+                            <button onclick="eliminaDipendente('${d.id}', '${d.nome.replace("'", "\\'")} ${d.cognome.replace("'", "\\'")}')" class="bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition border border-rose-500/30">❌ Elimina</button>
                         </div>
                     </div>
                 `;
             });
         }
 
-        // AZIONE: CANCELLAZIONE DIPENDENTE DALL'ANAGRAFICA
-        async function部署_eliminaDipendente(id, nomeCompleto) { /* Placeholder */ }
         async function eliminaDipendente(id, nomeCompleto) {
             if (!confirm(`ATTENZIONE:\nVuoi eliminare definitivamente ${nomeCompleto}?\nQuesta operazione rimuoverà la risorsa dal sistema.`)) return;
             try {
@@ -409,7 +411,6 @@
             document.getElementById('ore-mese').innerText = totMese.toFixed(1) + 'h';
         }
 
-        // NUOVA LOGICA: VISTA CALENDARIO CON SOLO IL CONTEGGIO ORE
         function renderizzaCalendarioSoloOre(filtrate, meseSceltoStr) {
             const griglia = document.getElementById('griglia-calendario-fisico');
             griglia.innerHTML = '';
@@ -533,7 +534,7 @@
 
                 recordsData.sort((a,b) => new Date(a.orario) - new Date(b.orario)).forEach(t => {
                     const info = analizzaTipoAzione(t.tipo_azione);
-                    const nome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Risorsa';
+                    const nome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Risorsa eliminata/sconosciuta';
                     const oraArr = formattaOra(arrotondaAi15Minuti(t.orario));
                     
                     let colAzione = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
@@ -608,7 +609,7 @@
                 if (error) throw error;
                 chiudiModaleEdit();
                 await caricaDati();
-            } catch (err) { alert("Errore modifica."); }
+            } catch (err) { alert("Errore modifica: " + err.message); }
         }
 
         async function eliminaRecord() {
@@ -618,7 +619,7 @@
                 if (error) throw error;
                 chiudiModaleEdit();
                 await caricaDati();
-            } catch (err) { alert("Errore eliminazione."); }
+            } catch (err) { alert("Errore eliminazione: " + err.message); }
         }
 
         async function aggiungiTimbraturaManuale() {
@@ -646,23 +647,25 @@
                 document.getElementById('manual-orario').value = '';
                 await caricaDati();
                 apriLabel('label-timbrature', document.querySelectorAll('.tab-btn')[0]);
-            } catch (err) { alert("Errore salvataggio."); }
+            } catch (err) { alert("Errore salvataggio: " + err.message); }
         }
 
         async function aggiungiDipendente() {
             const nome = document.getElementById('nuovo-nome').value.trim();
             const cognome = document.getElementById('nuovo-cognome').value.trim();
             if(!nome || !cognome) return;
-            const { error } = await supabaseClient.from('dipendenti').insert({ nome, cognome });
-            if (!error) { 
+            try {
+                const { error } = await supabaseClient.from('dipendenti').insert({ nome, cognome });
+                if (error) throw error;
                 document.getElementById('nuovo-nome').value = ''; 
                 document.getElementById('nuovo-cognome').value = ''; 
                 await caricaDati(); 
                 alert("Dipendente inserito!");
+            } catch(err) {
+                alert("Errore inserimento dipendente: " + err.message);
             }
         }
 
-        // NUOVA LOGICA: GENERAZIONE PDF CONTABILE PULITO (CONTEGGIO ORE SU UNA RIGA)
         function generaPDF() {
             const meseFiltro = document.getElementById('filtro-mese').value; 
             let filtrate = timbratureGlobali.filter(t => {
@@ -681,7 +684,6 @@
             const nomeFiltro = idFiltroAttuale === 'tutti' ? "TUTTI I DIPENDENTI" : document.getElementById('pill-'+idFiltroAttuale).innerText.toUpperCase();
             doc.text(`Filtro Risorsa: ${nomeFiltro}   |   Mese di Riferimento: ${meseFiltro}`, 14, 26);
 
-            // Raggruppa per data e dipendente per riga singola pulita
             const strutturato = {};
             filtrate.forEach(t => {
                 const dataKey = t.orario.split('T')[0];
@@ -696,7 +698,6 @@
 
             let righeTabella = [];
 
-            // Scorri le date in ordine cronologico crescente per il report
             Object.keys(strutturato).sort().forEach(dataKey => {
                 let [y, m, d] = dataKey.split('-');
                 let dataFormattata = `${d}/${m}/${y}`;
@@ -724,7 +725,6 @@
                                 uIn = null;
                             }
                         } else {
-                            // Ferie o Permessi
                             oreCalcolate += info.ore;
                             arrayDettagli.push(`${info.tipo} (${info.ore}h)`);
                         }
