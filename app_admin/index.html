@@ -245,7 +245,7 @@
     </main>
 
     <script>
-        // Sostituisci i valori sottostanti con le tue credenziali di Supabase
+        // Collegamento diretto alle tue risorse Supabase
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -494,7 +494,7 @@
             filtraERenderizza();
         }
 
-        function永久evidenziaPillCorrente() {
+        function evidenziaPillCorrente() {
             document.querySelectorAll('#container-pills button').forEach(b => {
                 b.classList.remove('pill-active');
                 b.classList.add('pill-inactive');
@@ -1022,7 +1022,7 @@
                     contenutoCella += `\n\n${oreGiornoTotale.toFixed(1)} h`;
                 }
                 
-                rigaSettimana[indiceGiorno] = contenidoCella;
+                rigaSettimana[indiceGiorno] = contenutoCella;
                 accumulationSettimanaPDF += oreGiornoTotale;
                 indiceGiorno++;
 
