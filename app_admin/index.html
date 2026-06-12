@@ -245,8 +245,9 @@
     </main>
 
     <script>
-        const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
+        // Sostituisci i valori sottostanti con le tue credenziali di Supabase
+        const SUPABASE_URL = 'IL_TUO_URL_SUPABASE'; 
+        const SUPABASE_KEY = 'LA_TUA_CHIAVE_SUPABASE';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let timbratureGlobali = []; 
@@ -493,7 +494,7 @@
             filtraERenderizza();
         }
 
-        function evidenziaPillCorrente() {
+        function永久evidenziaPillCorrente() {
             document.querySelectorAll('#container-pills button').forEach(b => {
                 b.classList.remove('pill-active');
                 b.classList.add('pill-inactive');
@@ -536,8 +537,6 @@
                 `;
             });
         }
-
-        async functionGrid() {} 
 
         async function eliminaDipendente(id, nomeCompleto) {
             if (!confirm(`ATTENZIONE:\nVuoi eliminare definitivamente ${nomeCompleto}?`)) return;
@@ -623,12 +622,10 @@
 
             let celleGriglia = [];
             
-            // Padding iniziale del mese
             for (let i = 0; i < ggStart; i++) {
                 celleGriglia.push({ vuoto: true, ore: 0, html: `<div class="bg-transparent h-14"></div>` });
             }
 
-            // Popolamento dei singoli giorni fisici
             for (let g = 1; g <= ggTotali; g++) {
                 let oreGiornoTotale = 0;
                 let tipoGiornoSpeciale = null;
@@ -658,7 +655,6 @@
                 if (tipoGiornoSpeciale === 'RIPOSO') {
                     badgeOreHtml = `<div class="text-[9px] bg-sky-500 text-white font-bold rounded px-1 text-center py-0.5 leading-tight truncate shadow-sm">Riposo<br>${dettaglioSpeciale}</div>`;
                 } else if (tipoGiornoSpeciale === 'FERIE') {
-                    // RIMOSSA VISUALIZZAZIONE DELLE ORE IN CONFORMITÀ ALLA RICHIESTA
                     badgeOreHtml = `<div class="text-[10px] bg-amber-500 text-slate-900 font-bold rounded px-1 text-center py-2 leading-tight shadow-sm">Ferie</div>`;
                 } else if (oreGiornoTotale > 0) {
                     badgeOreHtml = `<div class="text-[11px] bg-emerald-500 text-slate-950 font-black rounded px-1 text-center font-mono py-0.5 shadow-sm">${oreGiornoTotale.toFixed(1)}h</div>`;
@@ -676,7 +672,6 @@
                 celleGriglia.push({ vuoto: false, ore: oreGiornoTotale, html: bloccoHtml });
             }
 
-            // Rendering della griglia con l'inserimento dell'ottava colonna (Totale Settimanale)
             let htmlFinale = '';
             let sommaSettimanale = 0;
 
@@ -684,7 +679,6 @@
                 htmlFinale += celleGriglia[i].html;
                 sommaSettimanale += celleGriglia[i].ore;
 
-                // Alla fine di ogni blocco di 7 giorni (colonna della domenica) inserisci il totale
                 if ((i + 1) % 7 === 0) {
                     htmlFinale += `
                         <div class="bg-sky-950/50 border border-sky-800/40 h-14 rounded-xl p-1 flex flex-col justify-center items-center shadow-sm">
@@ -696,7 +690,6 @@
                 }
             }
 
-            // Se l'ultima riga del mese è parziale, inserisci il padding vuoto rimanente e il totale finale corretto
             let restoCelle = celleGriglia.length % 7;
             if (restoCelle > 0) {
                 for (let i = 0; i < (7 - restoCelle); i++) {
@@ -760,7 +753,6 @@
 
                 recordsData.forEach(t => {
                     const info = analizzaTipoAzione(t.tipo_azione);
-                    const dipNome = t.dipendenti ? `${t.dipendenti.nome} ${t.dipendenti.cognome}` : 'Sconosciuto';
                     
                     const dataReale = new Date(t.orario);
                     const oraEsatta = formattaOraEsatta(dataReale);
@@ -845,7 +837,7 @@
 
             try {
                 await supabaseClient.from('timbrature').update({ 
-                    dipendente_id: nuevoDipId,
+                    dipendente_id: nuovoDipId,
                     orario: nuovoOrarioISO,
                     tipo_azione: azioneFinale 
                 }).eq('id', idInModifica);
@@ -854,7 +846,6 @@
             } catch (err) { alert("Errore modifica."); }
         }
 
-        async function recordElimina() {} 
         async function eliminaRecord() {
             if (!confirm("Eliminare definitivamente questa voce?")) return;
             try {
@@ -864,7 +855,6 @@
             } catch (err) { alert("Errore eliminazione."); }
         }
 
-        // AGGIORNATO CON CONTROLLO STRINGENTE DOPPIONI MATTINA/POMERIGGIO SULL'INSERIMENTO MANUALE
         async function aggiungiTimbraturaManuale() {
             const dipIdStr = document.getElementById('manual-dipendente').value;
             let azioneSel = document.querySelector('input[name="manual-azione"]:checked').value;
@@ -880,10 +870,8 @@
                 const dataSoloStringa = orarioStr.split('T')[0];
                 const oraSelezionata = dataSelezionata.getHours();
                 
-                // Definizione fascia turni: mattina prima delle 13, pomeriggio dalle 13 in poi
                 const fasciaScelta = oraSelezionata < 13 ? 'MATTINA' : 'POMERIGGIO';
 
-                // Controllo su timbrature caricate localmente per intercettare i doppioni
                 let giaPresentiQuelGiorno = timbratureGlobali.filter(t => {
                     let idCorrente = t.dipendente_id || (t.dipendenti?.id);
                     return String(idCorrente) === String(dipIdStr) && t.orario.startsWith(dataSoloStringa);
@@ -961,7 +949,6 @@
             } catch(err) { }
         }
 
-        // RIGENERATO EXPORT CON STRUTTURA AD 8 COLONNE (CON TOTALE SETTIMANALE) E RIMOZIONE CONTEGGIO VISIVO ORE FERIE
         function generaPDF() {
             if(!idFiltroAttuale) return;
 
@@ -1030,13 +1017,12 @@
                 if (tipoSpeciale === 'RIPOSO') {
                     contenutoCella += `\n\nRiposo\n${dettaglioSpeciale}`;
                 } else if (tipoSpeciale === 'FERIE') {
-                    // RIMOSSO CONTEGGIO ORE DAL TESTO CELLA PDF
                     contenutoCella += `\n\nFerie`;
                 } else if (oreGiornoTotale > 0) {
                     contenutoCella += `\n\n${oreGiornoTotale.toFixed(1)} h`;
                 }
                 
-                rigaSettimana[indiceGiorno] = contenutoCella;
+                rigaSettimana[indiceGiorno] = contenidoCella;
                 accumulationSettimanaPDF += oreGiornoTotale;
                 indiceGiorno++;
 
