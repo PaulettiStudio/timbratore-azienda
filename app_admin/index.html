@@ -13,7 +13,8 @@
     <style> 
         body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         input[type="month"]::-webkit-calendar-picker-indicator,
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
         .grid-7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         
@@ -45,16 +46,25 @@
                 </div>
                 <div>
                     <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Tipo Registrazione:</label>
-                    <select id="edit-azione" onchange="toggleEditDurata()" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                    <select id="edit-azione" onchange="toggleEditAzione()" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
                         <option value="INGRESSO">INGRESSO</option>
                         <option value="USCITA">USCITA</option>
                         <option value="FERIE">FERIE</option>
-                        <option value="PERMESSO">PERMESSO</option>
+                        <option value="RIPOSO">RIPOSO</option>
+                        <option value="PERMESSO" class="hidden">PERMESSO</option> 
                     </select>
                 </div>
                 <div id="edit-container-durata" class="hidden">
                     <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Ore Compute:</label>
                     <input type="number" id="edit-ore" step="0.5" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                </div>
+                <div id="edit-container-riposo" class="hidden">
+                    <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Turno Riposo:</label>
+                    <select id="edit-turno-riposo" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                        <option value="Giornata">Giornata Intera</option>
+                        <option value="Mattina">Mattina</option>
+                        <option value="Pomeriggio">Pomeriggio</option>
+                    </select>
                 </div>
                 <div>
                     <label class="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Data e Ora Scansione:</label>
@@ -72,7 +82,7 @@
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-4xl mx-auto">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v3.3 PRO</span></h1>
+                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v4.0 PRO</span></h1>
                 <input type="month" id="filtro-mese" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-sky-500 outline-none">
             </div>
             
@@ -145,39 +155,73 @@
 
         <section id="label-inserimento" class="tab-content hidden flex flex-col gap-4">
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col gap-5 shadow-md">
+                
                 <div>
                     <label class="text-xs font-bold text-slate-300 block mb-1">1. Dipendente</label>
                     <select id="manual-dipendente" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500"></select>
                 </div>
+
                 <div>
-                    <label class="text-xs font-bold text-slate-300 block mb-1">2. Data e Ora Evento</label>
-                    <input type="datetime-local" id="manual-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-300 block mb-2">3. Tipo di Registrazione</label>
+                    <label class="text-xs font-bold text-slate-300 block mb-2">2. Tipo di Registrazione</label>
                     <div class="grid grid-cols-2 gap-2">
                         <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-emerald-500">
-                            <input type="radio" name="manual-azione" value="INGRESSO" checked onchange="toggleDurataExtra()" class="accent-emerald-500">
+                            <input type="radio" name="manual-azione" value="INGRESSO" checked onchange="toggleModoInserimento()" class="accent-emerald-500">
                             <span class="text-xs font-bold text-emerald-400">INGRESSO</span>
                         </label>
                         <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-rose-500">
-                            <input type="radio" name="manual-azione" value="USCITA" onchange="toggleDurataExtra()" class="accent-rose-500">
+                            <input type="radio" name="manual-azione" value="USCITA" onchange="toggleModoInserimento()" class="accent-rose-500">
                             <span class="text-xs font-bold text-rose-400">USCITA</span>
                         </label>
                         <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-amber-500">
-                            <input type="radio" name="manual-azione" value="FERIE" onchange="toggleDurataExtra()" class="accent-amber-500">
-                            <span class="text-xs font-bold text-amber-400">🌴 FERIE</span>
+                            <input type="radio" name="manual-azione" value="FERIE" onchange="toggleModoInserimento()" class="accent-amber-500">
+                            <span class="text-xs font-bold text-amber-400">🌴 FERIE (Da/A)</span>
                         </label>
-                        <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-indigo-500">
-                            <input type="radio" name="manual-azione" value="PERMESSO" onchange="toggleDurataExtra()" class="accent-indigo-500">
-                            <span class="text-xs font-bold text-indigo-400">⏱️ PERMESSO</span>
+                        <label class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center gap-2 cursor-pointer border-2 has-[:checked]:border-sky-500">
+                            <input type="radio" name="manual-azione" value="RIPOSO" onchange="toggleModoInserimento()" class="accent-sky-500">
+                            <span class="text-xs font-bold text-sky-400">🛏️ RIPOSO</span>
                         </label>
                     </div>
                 </div>
-                <div id="container-durata-extra" class="hidden bg-slate-900/50 p-3 rounded-xl border border-slate-700">
-                    <label class="text-[11px] font-bold text-slate-300 block mb-1">Durata in Ore (es. 8)</label>
-                    <input type="number" id="manual-ore" step="0.5" value="8" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+
+                <div id="container-standard">
+                    <label class="text-xs font-bold text-slate-300 block mb-1">3. Data e Ora Evento</label>
+                    <input type="datetime-local" id="manual-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500">
                 </div>
+
+                <div id="container-ferie" class="hidden bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-3">
+                    <h4 class="text-xs font-bold text-amber-400 uppercase">Imposta Periodo Ferie</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] text-slate-400 block mb-1">Dal giorno:</label>
+                            <input type="date" id="manual-ferie-dal" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-400 block mb-1">Al giorno (incluso):</label>
+                            <input type="date" id="manual-ferie-al" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 block mb-1">Ore scalate al giorno (es. 8):</label>
+                        <input type="number" id="manual-ferie-ore" value="8" step="0.5" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <div id="container-riposo" class="hidden bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-3">
+                    <h4 class="text-xs font-bold text-sky-400 uppercase">Imposta Giorno di Riposo</h4>
+                    <div>
+                        <label class="text-[10px] text-slate-400 block mb-1">Data del riposo:</label>
+                        <input type="date" id="manual-riposo-data" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 block mb-1">Specifica Turno:</label>
+                        <select id="manual-riposo-turno" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-sky-500">
+                            <option value="Giornata">Giornata Intera</option>
+                            <option value="Mattina">Solo Mattina</option>
+                            <option value="Pomeriggio">Solo Pomeriggio</option>
+                        </select>
+                    </div>
+                </div>
+
                 <button onclick="aggiungiTimbraturaManuale()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-4 rounded-xl text-sm transition shadow-lg active:scale-95 mt-2">
                     Registra nel Database
                 </button>
@@ -255,26 +299,45 @@
             bottone.classList.add('bg-sky-600', 'text-white');
         }
 
-        function toggleDurataExtra() {
+        // GESTIONE CAMPI DINAMICI INSERIMENTO E MODIFICA
+        function toggleModoInserimento() {
             const val = document.querySelector('input[name="manual-azione"]:checked').value;
-            const container = document.getElementById('container-durata-extra');
-            if(val === 'FERIE' || val === 'PERMESSO') container.classList.remove('hidden');
-            else container.classList.add('hidden');
-        }
+            document.getElementById('container-standard').classList.add('hidden');
+            document.getElementById('container-ferie').classList.add('hidden');
+            document.getElementById('container-riposo').classList.add('hidden');
 
-        function toggleEditDurata() {
-            const val = document.getElementById('edit-azione').value;
-            const container = document.getElementById('edit-container-durata');
-            if(val === 'FERIE' || val === 'PERMESSO') container.classList.remove('hidden');
-            else container.classList.add('hidden');
-        }
-
-        function analizzaTipoAzione(tipoGrezzo) {
-            if (tipoGrezzo && tipoGrezzo.includes(':')) {
-                let parti = tipoGrezzo.split(':');
-                return { tipo: parti[0], ore: parseFloat(parti[1]) };
+            if(val === 'INGRESSO' || val === 'USCITA') {
+                document.getElementById('container-standard').classList.remove('hidden');
+            } else if (val === 'FERIE') {
+                document.getElementById('container-ferie').classList.remove('hidden');
+            } else if (val === 'RIPOSO') {
+                document.getElementById('container-riposo').classList.remove('hidden');
             }
-            return { tipo: tipoGrezzo, ore: 8 };
+        }
+
+        function toggleEditAzione() {
+            const val = document.getElementById('edit-azione').value;
+            document.getElementById('edit-container-durata').classList.add('hidden');
+            document.getElementById('edit-container-riposo').classList.add('hidden');
+
+            if(val === 'FERIE' || val === 'PERMESSO') {
+                document.getElementById('edit-container-durata').classList.remove('hidden');
+            } else if(val === 'RIPOSO') {
+                document.getElementById('edit-container-riposo').classList.remove('hidden');
+            }
+        }
+
+        // PARSER DELLE AZIONI AGGIORNATO (RIPOSO, FERIE, PERMESSO)
+        function analizzaTipoAzione(tipoGrezzo) {
+            if (!tipoGrezzo) return { tipo: 'Sconosciuto', ore: 0, dettaglio: '' };
+            if (tipoGrezzo.startsWith('RIPOSO:')) {
+                return { tipo: 'RIPOSO', dettaglio: tipoGrezzo.split(':')[1], ore: 0 };
+            }
+            if (tipoGrezzo.includes(':')) {
+                let parti = tipoGrezzo.split(':');
+                return { tipo: parti[0], ore: parseFloat(parti[1]), dettaglio: '' };
+            }
+            return { tipo: tipoGrezzo, ore: 0, dettaglio: '' };
         }
 
         function arrotondaAi15Minuti(dataIso) {
@@ -290,7 +353,7 @@
 
         // Funzioni formattazione orari
         function formattaOra(d) { return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
-        function formattaOraEsatta(d) { return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
+        function formattaOraEsatta(d) { return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
         
         function getInizioSettimana(d) {
             let date = new Date(d);
@@ -299,14 +362,14 @@
             return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
-        // --- CHIUSURA AUTOMATICA: Esamina i dati passati e crea le uscite mancanti ---
+        // --- CHIUSURA AUTOMATICA Sospesi ---
         async function gestisciChiusuraAutomaticaSospesi(timbrature, includiOggi = false) {
             const oggiStr = new Date().toISOString().split('T')[0];
             let operazioniInsert = [];
 
             const raggruppati = timbrature.reduce((acc, t) => {
                 const d = t.orario.split('T')[0];
-                if(!includiOggi && d === oggiStr) return acc; // Ignora oggi a meno che non sia forzato
+                if(!includiOggi && d === oggiStr) return acc; 
                 
                 const dId = t.dipendente_id || (t.dipendenti?.id);
                 if(!dId) return acc;
@@ -357,18 +420,14 @@
                 try {
                     await supabaseClient.from('timbrature').insert(operazioniInsert);
                     return true;
-                } catch(e) {
-                    console.error("Errore auto-close:", e);
-                    return false;
-                }
+                } catch(e) { return false; }
             }
             return false;
         }
 
-        // --- CHIUSURA MANUALE (Bottone Giallo) ---
         async function forzaChiusuraManuale() {
             if(!confirm("Vuoi forzare la chiusura di TUTTI i turni aperti (compresi quelli di oggi)?\nVerrà inserita un'uscita automatica.")) return;
-            const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbratureGlobali, true); // true = processa anche oggi
+            const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbratureGlobali, true); 
             if(necessitaRicarica) {
                 alert("Turni sospesi chiusi con successo!");
                 await caricaDati();
@@ -393,7 +452,6 @@
                     .order('orario', { ascending: false });
                 if (tErr) throw tErr;
                 
-                // L'automatismo silenzioso che agisce al caricamento pagina (NON tocca l'oggi)
                 const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbrature, false);
                 
                 if (necessitaRicarica) {
@@ -409,10 +467,7 @@
                 aggiornaPillsMenu();
                 aggiornaAnagraficaEDropdown();
                 filtraERenderizza();
-            } catch (err) { 
-                console.error(err);
-                alert("Errore caricamento database: " + err.message); 
-            }
+            } catch (err) { alert("Errore caricamento database: " + err.message); }
         }
 
         async function caricaDatiSilenzioso() {
@@ -492,9 +547,7 @@
                 await supabaseClient.from('dipendenti').delete().eq('id', id);
                 if(idFiltroAttuale == id) idFiltroAttuale = null; 
                 await caricaDati();
-            } catch (err) {
-                alert("Errore durante l'eliminazione.");
-            }
+            } catch (err) { alert("Errore durante l'eliminazione."); }
         }
 
         function filtraERenderizza() {
@@ -576,6 +629,8 @@
 
             for (let g = 1; g <= ggTotali; g++) {
                 let oreGiornoTotale = 0;
+                let tipoGiornoSpeciale = null;
+                let dettaglioSpeciale = '';
                 
                 if (datiGiornalieri[g] && datiGiornalieri[g].length > 0) {
                     let arr = datiGiornalieri[g].sort((a,b) => new Date(a.orario) - new Date(b.orario));
@@ -588,13 +643,21 @@
                             if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
                             uIn = null;
                         } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                            tipoGiornoSpeciale = 'FERIE';
                             oreGiornoTotale += info.ore;
+                        } else if(info.tipo === 'RIPOSO') {
+                            tipoGiornoSpeciale = 'RIPOSO';
+                            dettaglioSpeciale = info.dettaglio;
                         }
                     });
                 }
 
                 let badgeOreHtml = '';
-                if (oreGiornoTotale > 0) {
+                if (tipoGiornoSpeciale === 'RIPOSO') {
+                    badgeOreHtml = `<div class="text-[9px] bg-sky-500 text-white font-bold rounded px-1 text-center py-0.5 leading-tight truncate shadow-sm">Riposo<br>${dettaglioSpeciale}</div>`;
+                } else if (tipoGiornoSpeciale === 'FERIE') {
+                    badgeOreHtml = `<div class="text-[9px] bg-amber-500 text-slate-900 font-bold rounded px-1 text-center py-0.5 leading-tight shadow-sm">Ferie<br>${oreGiornoTotale}h</div>`;
+                } else if (oreGiornoTotale > 0) {
                     badgeOreHtml = `<div class="text-[11px] bg-emerald-500 text-slate-950 font-black rounded px-1 text-center font-mono py-0.5 shadow-sm">${oreGiornoTotale.toFixed(1)}h</div>`;
                 } else if (datiGiornalieri[g] && datiGiornalieri[g].length > 0) {
                     badgeOreHtml = `<div class="text-[9px] bg-slate-700 text-slate-400 font-bold rounded px-1 text-center py-0.5">Scansioni</div>`;
@@ -667,8 +730,8 @@
                     let colAzione = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
                     let stringaExtra = '';
                     if(info.tipo === 'USCITA') colAzione = 'text-rose-400 bg-rose-400/10 border-rose-500/20';
-                    if(info.tipo === 'FERIE') { colAzione = 'text-amber-400 bg-amber-400/10 border-amber-500/20'; stringaExtra = `(${info.ore}h)`; }
-                    if(info.tipo === 'PERMESSO') { colAzione = 'text-indigo-400 bg-indigo-400/10 border-indigo-500/20'; stringaExtra = `(${info.ore}h)`; }
+                    if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') { colAzione = 'text-amber-400 bg-amber-400/10 border-amber-500/20'; stringaExtra = `(${info.ore}h)`; }
+                    if(info.tipo === 'RIPOSO') { colAzione = 'text-sky-400 bg-sky-400/10 border-sky-500/20'; stringaExtra = `(${info.dettaglio})`; }
 
                     htmlBlocco += `
                         <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg text-xs hover:bg-slate-800 transition border border-transparent hover:border-slate-700">
@@ -701,9 +764,19 @@
             document.getElementById('edit-dipendente').value = recId;
             
             const info = analizzaTipoAzione(t.tipo_azione);
-            document.getElementById('edit-azione').value = info.tipo;
-            document.getElementById('edit-ore').value = info.ore;
-            toggleEditDurata();
+            // Assicuriamoci che PERMESSO diventi compatibile con l'UI, o manteniamo
+            let typeToSet = info.tipo;
+            if(typeToSet === 'PERMESSO') document.querySelector('option[value="PERMESSO"]').classList.remove('hidden');
+            
+            document.getElementById('edit-azione').value = typeToSet;
+            
+            if(typeToSet === 'FERIE' || typeToSet === 'PERMESSO') {
+                document.getElementById('edit-ore').value = info.ore;
+            } else if (typeToSet === 'RIPOSO') {
+                document.getElementById('edit-turno-riposo').value = info.dettaglio || 'Giornata';
+            }
+            
+            toggleEditAzione();
 
             let d = new Date(t.orario);
             d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -720,13 +793,17 @@
             const nuovoDipId = document.getElementById('edit-dipendente').value;
             const azioneBase = document.getElementById('edit-azione').value;
             const oreCustom = document.getElementById('edit-ore').value || 8;
+            const turnoRiposo = document.getElementById('edit-turno-riposo').value;
             const dataGrezza = document.getElementById('edit-nuovo-orario').value;
             if(!dataGrezza || !nuovoDipId) return;
 
             let azioneFinale = azioneBase;
             if(azioneBase === 'FERIE' || azioneBase === 'PERMESSO') {
                 azioneFinale = `${azioneBase}:${oreCustom}`;
+            } else if (azioneBase === 'RIPOSO') {
+                azioneFinale = `RIPOSO:${turnoRiposo}`;
             }
+            
             const nuovoOrarioISO = new Date(dataGrezza).toISOString();
 
             try {
@@ -741,7 +818,7 @@
         }
 
         async function eliminaRecord() {
-            if (!confirm("Eliminare definitivamente questa singola timbratura?")) return;
+            if (!confirm("Eliminare definitivamente questa singola timbratura/voce?")) return;
             try {
                 await supabaseClient.from('timbrature').delete().eq('id', idInModifica);
                 chiudiModaleEdit();
@@ -751,29 +828,59 @@
 
         async function aggiungiTimbraturaManuale() {
             const dipIdStr = document.getElementById('manual-dipendente').value;
-            const orarioStr = document.getElementById('manual-orario').value;
             let azioneSel = document.querySelector('input[name="manual-azione"]:checked').value;
-            if (!dipIdStr || !orarioStr) { alert("Compila tutti i campi richiesti."); return; }
-            
-            if (azioneSel === 'FERIE' || azioneSel === 'PERMESSO') {
-                const oreCustom = document.getElementById('manual-ore').value || 8;
-                azioneSel = `${azioneSel}:${oreCustom}`;
+            if (!dipIdStr) return alert("Seleziona un dipendente.");
+
+            let operazioniInsert = [];
+
+            if (azioneSel === 'INGRESSO' || azioneSel === 'USCITA') {
+                const orarioStr = document.getElementById('manual-orario').value;
+                if (!orarioStr) return alert("Inserisci l'orario.");
+                operazioniInsert.push({ dipendente_id: dipIdStr, orario: new Date(orarioStr).toISOString(), tipo_azione: azioneSel, latitudine:0, longitudine:0 });
+            } 
+            else if (azioneSel === 'RIPOSO') {
+                const dataStr = document.getElementById('manual-riposo-data').value;
+                const turno = document.getElementById('manual-riposo-turno').value;
+                if (!dataStr) return alert("Inserisci la data del riposo.");
+                
+                let d = new Date(dataStr);
+                d.setHours(8, 0, 0, 0); 
+                operazioniInsert.push({ dipendente_id: dipIdStr, orario: d.toISOString(), tipo_azione: `RIPOSO:${turno}`, latitudine:0, longitudine:0 });
             }
-            const orarioISO = new Date(orarioStr).toISOString();
+            else if (azioneSel === 'FERIE') {
+                const dalStr = document.getElementById('manual-ferie-dal').value;
+                const alStr = document.getElementById('manual-ferie-al').value;
+                const ore = document.getElementById('manual-ferie-ore').value || 8;
+                if (!dalStr || !alStr) return alert("Inserisci il periodo di ferie.");
+                
+                let start = new Date(dalStr);
+                let end = new Date(alStr);
+                if(start > end) return alert("La data 'Dal' deve essere precedente o uguale alla data 'Al'.");
+
+                let currentDate = new Date(start);
+                while(currentDate <= end) {
+                    let d = new Date(currentDate);
+                    d.setHours(8, 0, 0, 0);
+                    // Previene sfasamenti di timezone inserendo esattamente la data scelta a mezzogiorno locale
+                    let dLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+                    
+                    operazioniInsert.push({ 
+                        dipendente_id: dipIdStr, 
+                        orario: dLocal.toISOString(), 
+                        tipo_azione: `FERIE:${ore}`, 
+                        latitudine: 0, 
+                        longitudine: 0 
+                    });
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+            }
 
             try {
-                await supabaseClient.from('timbrature').insert({
-                    dipendente_id: dipIdStr,
-                    orario: orarioISO,
-                    tipo_azione: azioneSel,
-                    latitudine: 0,
-                    longitudine: 0
-                });
-                alert("Salvato.");
-                document.getElementById('manual-orario').value = '';
+                await supabaseClient.from('timbrature').insert(operazioniInsert);
+                alert("Salvataggio completato.");
                 await caricaDati();
                 apriLabel('label-timbrature', document.querySelectorAll('.tab-btn')[0]);
-            } catch (err) { alert("Errore salvataggio."); }
+            } catch (err) { alert("Errore salvataggio: " + err.message); }
         }
 
         async function aggiungiDipendente() {
@@ -830,6 +937,9 @@
 
             for (let g = 1; g <= ggTotali; g++) {
                 let oreGiornoTotale = 0;
+                let tipoSpeciale = null;
+                let dettaglioSpeciale = '';
+                
                 if (orePerGiorno[g]) {
                     let arr = orePerGiorno[g].sort((a,b) => new Date(a.orario) - new Date(b.orario));
                     let uIn = null;
@@ -841,13 +951,21 @@
                             if(diff > 0) oreGiornoTotale += diff/(1000*60*60);
                             uIn = null;
                         } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
+                            tipoSpeciale = 'FERIE';
                             oreGiornoTotale += info.ore;
+                        } else if(info.tipo === 'RIPOSO') {
+                            tipoSpeciale = 'RIPOSO';
+                            dettaglioSpeciale = info.dettaglio;
                         }
                     });
                 }
 
                 let contenutoCella = `${g}`;
-                if (oreGiornoTotale > 0) {
+                if (tipoSpeciale === 'RIPOSO') {
+                    contenutoCella += `\n\nRiposo\n${dettaglioSpeciale}`;
+                } else if (tipoSpeciale === 'FERIE') {
+                    contenutoCella += `\n\nFerie\n${oreGiornoTotale}h`;
+                } else if (oreGiornoTotale > 0) {
                     contenutoCella += `\n\n${oreGiornoTotale.toFixed(1)} h`;
                 }
                 
@@ -866,7 +984,7 @@
                 head: [['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM']],
                 body: calendarioData,
                 theme: 'grid',
-                styles: { halign: 'center', valign: 'middle', fontSize: 10, cellPadding: 3, minCellHeight: 16 },
+                styles: { halign: 'center', valign: 'middle', fontSize: 9, cellPadding: 2, minCellHeight: 14 },
                 headStyles: { fillColor: [14, 165, 233], textColor: [255,255,255], fontStyle: 'bold' }
             });
 
@@ -891,7 +1009,6 @@
                 ordinati.forEach(rec => {
                     let info = analizzaTipoAzione(rec.tipo_azione);
                     
-                    // Usiamo l'orario arrotondato per il report
                     let oraReport = formattaOra(arrotondaAi15Minuti(rec.orario));
                     
                     if(info.tipo === 'INGRESSO') {
@@ -904,9 +1021,11 @@
                             if(diff > 0) oreCalcolate += diff / (1000 * 60 * 60);
                             uIn = null;
                         }
-                    } else {
+                    } else if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') {
                         oreCalcolate += info.ore;
                         arrayDettagli.push(`${info.tipo} (${info.ore}h)`);
+                    } else if(info.tipo === 'RIPOSO') {
+                        arrayDettagli.push(`RIPOSO (${info.dettaglio})`);
                     }
                 });
 
