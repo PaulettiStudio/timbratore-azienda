@@ -83,12 +83,12 @@
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-4xl mx-auto">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v5.0 PRO</span></h1>
+                <h1 class="text-xl font-black text-white tracking-tight">Pannello Admin <span class="text-sky-500 font-normal text-xs font-mono">v5.5 PRO</span></h1>
                 <input type="month" id="filtro-mese" onchange="filtraERenderizza()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-sky-500 outline-none">
             </div>
             
             <div class="flex bg-slate-900 rounded-xl p-1 gap-1 overflow-x-auto scrollbar-hide">
-                <button onclick="apriLabel('label-timbrature', this)" class="tab-btn flex-1 min-w-fit px-3 py-2 text-xs font-bold rounded-lg bg-sky-600 text-white transition">Dashboard Dati</button>
+                <button onclick="apriLabel('label-timbrature', this)" class="tab-btn flex-1 min-w-fit px-3 py-2 text-xs font-bold rounded-lg bg-sky-600 text-white transition">Dashboard</button>
                 <button onclick="apriLabel('label-inserimento', this)" class="tab-btn flex-1 min-w-fit px-3 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">+ Inserisci</button>
                 <button onclick="apriLabel('label-pianificazione', this)" class="tab-btn flex-1 min-w-fit px-3 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">📅 Pianificazione</button>
                 <button onclick="apriLabel('label-dipendenti', this)" class="tab-btn flex-1 min-w-fit px-3 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Anagrafica</button>
@@ -125,7 +125,7 @@
                 <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 shadow-md lg:col-span-7 w-full overflow-hidden">
                     <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
                         <div class="text-xs font-bold text-slate-300 uppercase tracking-widest" id="nome-mese-titolo">Mese</div>
-                        <div class="text-[10px] text-sky-400 font-bold bg-sky-400/10 px-2 py-0.5 rounded border border-sky-500/20">Griglia con Totali</div>
+                        <div class="text-[10px] text-sky-400 font-bold bg-sky-400/10 px-2 py-0.5 rounded border border-sky-500/20">Solo Dati Reali</div>
                     </div>
                     <div class="grid-8 text-center text-[9px] font-black text-slate-500 mb-2">
                         <div>LUN</div><div>MAR</div><div>MER</div><div>GIO</div><div>VEN</div><div>SAB</div><div>DOM</div><div class="text-sky-400">TOT</div>
@@ -135,18 +135,18 @@
 
                 <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-md flex flex-col h-[550px] lg:col-span-5">
                     <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center border-b border-slate-700 pb-3 mb-3 gap-2">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registro e Dettagli</h3>
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registro Lavorato</h3>
                         <div class="flex gap-1">
-                            <button onclick="forzaChiusuraManuale()" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-1.5 rounded-lg text-[9px] font-bold shadow-md transition">
-                                ⚡ Chiudi Turni
+                            <button onclick="forzaAutomazioniManuali()" class="bg-amber-600 hover:bg-amber-500 text-white px-2 py-1.5 rounded-lg text-[9px] font-bold shadow-md transition">
+                                ⚡ Esegui Automazioni
                             </button>
                             <button onclick="generaPDF()" class="bg-sky-600 hover:bg-sky-500 text-white px-2 py-1.5 rounded-lg text-[9px] font-bold shadow-md transition">
-                                🖨️ PDF
+                                🖨️ Esporta PDF
                             </button>
                         </div>
                     </div>
                     
-                    <div class="flex-1 min-h-0 overflow-y-auto pr-2">
+                    <div class="flex-1 min-h-0 overflow-y-auto pr-2 scrollbar-hide">
                         <div id="contenitore-lista-movimenti" class="flex flex-col gap-4"></div>
                     </div>
                 </div>
@@ -187,7 +187,7 @@
                 <div id="container-standard">
                     <label class="text-xs font-bold text-slate-300 block mb-1">3. Data e Ora Evento</label>
                     <input type="datetime-local" id="manual-orario" class="bg-slate-900 border border-slate-600 rounded-xl px-3 py-3 text-sm text-white w-full outline-none focus:border-sky-500">
-                    <p class="text-[10px] text-slate-500 mt-1">N.B. Il sistema controlla che ci sia massimo 1 IN e 1 OUT per la fascia mattutina e altrettanti per la pomeridiana.</p>
+                    <p class="text-[10px] text-slate-500 mt-1">N.B. Il sistema controlla che ci sia massimo 1 IN e 1 OUT per fascia (mattina/pomeriggio).</p>
                 </div>
 
                 <div id="container-ferie" class="hidden bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-3">
@@ -203,7 +203,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="text-[10px] text-slate-400 block mb-1">Ore scalate al giorno (ai fini del conteggio):</label>
+                        <label class="text-[10px] text-slate-400 block mb-1">Ore interne calcolate al giorno (es. 8):</label>
                         <input type="number" id="manual-ferie-ore" value="8" step="0.5" class="bg-slate-950 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-full outline-none focus:border-amber-500">
                     </div>
                 </div>
@@ -232,7 +232,8 @@
 
         <section id="label-pianificazione" class="tab-content hidden flex flex-col gap-4">
             <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-md flex flex-col gap-4">
-                <h3 class="text-xs font-bold text-sky-400 uppercase tracking-wider border-b border-slate-700 pb-2">Pianificazione Turni di Lavoro</h3>
+                
+                <h3 class="text-xs font-bold text-sky-400 uppercase tracking-wider border-b border-slate-700 pb-2">Configurazione Ciclo Lavorativo</h3>
                 
                 <div>
                     <label class="text-xs font-bold text-slate-300 block mb-1">Dipendente</label>
@@ -255,12 +256,20 @@
                     </div>
                 </div>
 
-                <div id="piano-griglia-container" class="mt-4 flex flex-col gap-4">
-                    </div>
+                <div id="piano-griglia-container" class="mt-2 flex flex-col gap-4"></div>
 
                 <button onclick="salvaPianoLavoro()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold p-3 rounded-xl text-sm transition shadow-lg active:scale-95 mt-2">
-                    Salva Pianificazione
+                    Salva Configurazione Turni
                 </button>
+
+                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider border-b border-slate-700 pb-2 mt-6">Calendario Turni Programmati (Mese Corrente)</h3>
+                <div class="bg-slate-900/50 border border-slate-700 rounded-2xl p-3 shadow-inner w-full overflow-hidden">
+                    <div class="grid-7 text-center text-[9px] font-black text-slate-500 mb-2">
+                        <div>LUN</div><div>MAR</div><div>MER</div><div>GIO</div><div>VEN</div><div>SAB</div><div>DOM</div>
+                    </div>
+                    <div id="griglia-calendario-pianificazione" class="grid-7"></div>
+                </div>
+
             </div>
         </section>
 
@@ -281,7 +290,6 @@
     </main>
 
     <script>
-        // LE TUE CREDENZIALI REALI SUPABASE
         const SUPABASE_URL = 'https://gwvzrpuzhxvbxemdqapn.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_OmznfN1ZKY_2wkvW-LMtpA_5ITT0Q1B';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -400,7 +408,7 @@
             return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
-        // --- GESTIONE PIANIFICAZIONE TURNI ---
+        // --- GESTIONE PIANIFICAZIONE TURNI E CALENDARIO RELATIVO ---
         function generaGrigliaPiano() {
             const container = document.getElementById('piano-griglia-container');
             const ciclo = parseInt(document.getElementById('piano-ciclo').value);
@@ -410,12 +418,12 @@
             for(let w = 0; w < ciclo; w++) {
                 html += `<div class="bg-slate-900 border border-slate-700 rounded-xl p-3">`;
                 html += `<h4 class="text-[10px] font-bold text-slate-400 mb-2 uppercase border-b border-slate-700 pb-1">Settimana ${w+1}</h4>`;
-                html += `<div class="grid grid-cols-1 sm:grid-cols-7 gap-2">`;
+                html += `<div class="grid grid-cols-2 sm:grid-cols-7 gap-2">`;
                 for(let d = 0; d < 7; d++) {
                     html += `
                         <div class="flex flex-col">
                             <label class="text-[9px] text-slate-500 uppercase">${giorni[d]}</label>
-                            <input type="text" id="piano-w${w}-d${d}" placeholder="es. 08:00-12:00" class="bg-slate-950 border border-slate-600 rounded px-2 py-1.5 text-[11px] text-white outline-none focus:border-sky-500">
+                            <input type="text" id="piano-w${w}-d${d}" placeholder="es. 08-12" class="bg-slate-950 border border-slate-600 rounded px-2 py-1 text-[11px] text-white outline-none focus:border-sky-500">
                         </div>
                     `;
                 }
@@ -446,6 +454,8 @@
                 document.getElementById('piano-ciclo').value = 1;
                 generaGrigliaPiano();
             }
+            
+            renderizzaCalendarioPianificazione(dipendente);
         }
 
         async function salvaPianoLavoro() {
@@ -459,127 +469,171 @@
             for(let w = 0; w < ciclo; w++) {
                 for(let d = 0; d < 7; d++) {
                     const val = document.getElementById(`piano-w${w}-d${d}`).value.trim();
-                    if(val) {
-                        turni.push({ settimana: w, giorno: d, orario: val });
-                    }
+                    if(val) turni.push({ settimana: w, giorno: d, orario: val });
                 }
             }
 
             const pianoData = { dataInizio: dataInizio, cicloSettimane: ciclo, turni: turni };
 
             try {
-                // Tentativo di aggiornamento della colonna piano_orario
                 const { error } = await supabaseClient.from('dipendenti').update({ piano_orario: pianoData }).eq('id', dipId);
                 if (error) throw error;
                 alert("Pianificazione Salvata!");
                 await caricaDati();
-            } catch (err) { 
-                alert("Errore Salvataggio.\n\nHai eseguito il comando SQL per creare la colonna 'piano_orario' in Supabase?\nMessaggio: " + err.message); 
-            }
+                caricaPianoEsistente(); // Ricarica la vista visuale
+            } catch (err) { alert("Errore Salvataggio.\nHai creato la colonna 'piano_orario' in Supabase?\n" + err.message); }
         }
 
         function getOrarioPianificato(dipendente, dataIsoStr) {
             if(!dipendente || !dipendente.piano_orario || !dipendente.piano_orario.dataInizio) return null;
-            
-            let pStart = new Date(dipendente.piano_orario.dataInizio);
-            pStart.setHours(0,0,0,0);
-            
-            let target = new Date(dataIsoStr);
-            target.setHours(0,0,0,0);
-            
+            let pStart = new Date(dipendente.piano_orario.dataInizio); pStart.setHours(0,0,0,0);
+            let target = new Date(dataIsoStr); target.setHours(0,0,0,0);
             if (target < pStart) return null;
 
             let diffTime = Math.abs(target - pStart);
             let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
             let ciclo = dipendente.piano_orario.cicloSettimane || 1;
             let weekIndex = Math.floor(diffDays / 7) % ciclo;
-            
-            // JavaScript getDay(): 0=Dom, 1=Lun. Lo mappo a 0=Lun, 6=Dom
             let dayOfWeek = (target.getDay() + 6) % 7; 
 
             let turno = dipendente.piano_orario.turni.find(t => t.settimana === weekIndex && t.giorno === dayOfWeek);
             return turno ? turno.orario : null;
         }
 
+        function renderizzaCalendarioPianificazione(dipendente) {
+            const griglia = document.getElementById('griglia-calendario-pianificazione');
+            griglia.innerHTML = '';
+            if(!dipendente) return;
 
-        // --- CHIUSURA AUTOMATICA Sospesi ---
-        async function gestisciChiusuraAutomaticaSospesi(timbrature, includiOggi = false) {
-            const oggiStr = new Date().toISOString().split('T')[0];
+            const meseSceltoStr = document.getElementById('filtro-mese').value;
+            if(!meseSceltoStr) return;
+
+            const [anno, mese] = meseSceltoStr.split('-').map(Number);
+            const ggTotali = new Date(anno, mese, 0).getDate();
+            let ggStart = new Date(anno, mese - 1, 1).getDay();
+            ggStart = ggStart === 0 ? 6 : ggStart - 1; 
+
+            for (let i = 0; i < ggStart; i++) {
+                griglia.innerHTML += `<div class="bg-transparent h-12"></div>`;
+            }
+
+            for (let g = 1; g <= ggTotali; g++) {
+                let currentStrDate = `${anno}-${String(mese).padStart(2,'0')}-${String(g).padStart(2,'0')}`;
+                let orarioPianificato = getOrarioPianificato(dipendente, currentStrDate);
+                
+                let badgeOrario = orarioPianificato 
+                    ? `<div class="text-[8px] bg-sky-600/20 text-sky-400 border border-sky-500/30 rounded px-1 text-center py-1 mt-1 leading-tight break-words">${orarioPianificato}</div>` 
+                    : `<div class="text-[8px] text-slate-600 mt-2 italic">Libero</div>`;
+
+                griglia.innerHTML += `
+                    <div class="bg-slate-950 border border-slate-800 h-14 rounded-lg p-1 flex flex-col justify-start shadow-sm">
+                        <span class="text-[9px] font-bold text-slate-500">${g}</span>
+                        ${badgeOrario}
+                    </div>
+                `;
+            }
+        }
+
+        // --- AUTOMAZIONI: CHIUSURA TURNI + RIPOSO AUTOMATICO ---
+        async function eseguiAutomazioni(timbrature) {
+            const oggi = new Date();
+            oggi.setHours(0,0,0,0);
+            
+            // Analizza gli ultimi 15 giorni per limitare il carico
+            let dataLimite = new Date();
+            dataLimite.setDate(dataLimite.getDate() - 15);
+            
             let operazioniInsert = [];
 
-            const raggruppati = timbrature.reduce((acc, t) => {
-                const d = t.orario.split('T')[0];
-                if(!includiOggi && d === oggiStr) return acc; 
-                
-                const dId = t.dipendente_id || (t.dipendenti?.id);
-                if(!dId) return acc;
-
-                if(!acc[d]) acc[d] = {};
-                if(!acc[d][dId]) acc[d][dId] = [];
-                acc[d][dId].push(t);
-                return acc;
-            }, {});
-
-            for (const data in raggruppati) {
-                for (const dId in raggruppati[data]) {
-                    let recs = raggruppati[data][dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                    let ultimoIn = null;
+            dipendentiGlobali.forEach(dip => {
+                for (let d = new Date(dataLimite); d < oggi; d.setDate(d.getDate() + 1)) {
+                    let dayOfWeek = d.getDay(); // 0=Dom, 6=Sab
+                    let y = d.getFullYear();
+                    let m = String(d.getMonth() + 1).padStart(2, '0');
+                    let gg = String(d.getDate()).padStart(2, '0');
+                    let dateStr = `${y}-${m}-${gg}`;
                     
-                    recs.forEach(r => {
+                    let recsDay = timbrature.filter(t => t.dipendente_id === dip.id && t.orario.startsWith(dateStr));
+                    
+                    // 1. Chiusura Uscite Sospese
+                    let arr = [...recsDay].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    let uIn = null;
+                    arr.forEach(r => {
                         let info = analizzaTipoAzione(r.tipo_azione);
-                        if (info.tipo === 'INGRESSO') ultimoIn = r;
-                        else if (info.tipo === 'USCITA') ultimoIn = null;
+                        if (info.tipo === 'INGRESSO') uIn = r;
+                        else if (info.tipo === 'USCITA') uIn = null;
                     });
                     
-                    if (ultimoIn) {
-                        let dataIn = new Date(ultimoIn.orario);
-                        let hourIn = dataIn.getHours();
-                        let minIn = dataIn.getMinutes();
+                    if (uIn) {
+                        let dIn = new Date(uIn.orario);
+                        let isMattina = (dIn.getHours() < 13);
+                        let dOut = new Date(dIn);
+                        if (isMattina) dOut.setHours(12, 30, 0, 0);
+                        else dOut.setHours(19, 0, 0, 0);
                         
-                        let isMattina = (hourIn < 13);
-                        let dataUscita = new Date(dataIn);
-                        
-                        if (isMattina) {
-                            dataUscita.setHours(12, 30, 0, 0);
-                        } else {
-                            dataUscita.setHours(19, 0, 0, 0);
-                        }
-                        
-                        operazioniInsert.push({
-                            dipendente_id: dId,
-                            orario: dataUscita.toISOString(),
-                            tipo_azione: 'USCITA',
-                            latitudine: 0,
-                            longitudine: 0
-                        });
+                        // Compensa timezone locale per salvataggio UTC corretto in Supabase
+                        let dLocalOut = new Date(dOut.getTime() - dOut.getTimezoneOffset() * 60000);
+                        operazioniInsert.push({ dipendente_id: dip.id, orario: dLocalOut.toISOString(), tipo_azione: 'USCITA', latitudine: 0, longitudine: 0 });
+                    }
+
+                    // 2. Controllo Mancate Timbrature -> Inserimento RIPOSO
+                    if (dayOfWeek === 0) continue; // Domenica esclusa
+                    
+                    let hasFerie = recsDay.some(t => t.tipo_azione.startsWith('FERIE'));
+                    let hasRiposoG = recsDay.some(t => t.tipo_azione === 'RIPOSO:Giornata');
+                    if (hasFerie || hasRiposoG) continue; // Giorno già interamente coperto
+                    
+                    let hasRiposoM = recsDay.some(t => t.tipo_azione === 'RIPOSO:Mattina');
+                    let hasRiposoP = recsDay.some(t => t.tipo_azione === 'RIPOSO:Pomeriggio');
+                    
+                    let insM = recsDay.some(t => t.tipo_azione === 'INGRESSO' && new Date(t.orario).getHours() < 13);
+                    let insP = recsDay.some(t => t.tipo_azione === 'INGRESSO' && new Date(t.orario).getHours() >= 13);
+                    
+                    let needsM = false; let needsP = false;
+                    
+                    if (dayOfWeek === 6) { // Sabato
+                        if (!insM && !hasRiposoM) needsM = true; // Solo mattina considerata
+                    } else { // Lunedì - Venerdì
+                        if (!insM && !hasRiposoM) needsM = true;
+                        if (!insP && !hasRiposoP) needsP = true;
+                    }
+                    
+                    let d8am = new Date(y, d.getMonth(), d.getDate(), 8, 0, 0);
+                    let d14pm = new Date(y, d.getMonth(), d.getDate(), 14, 0, 0);
+                    let local8am = new Date(d8am.getTime() - d8am.getTimezoneOffset() * 60000).toISOString();
+                    let local14pm = new Date(d14pm.getTime() - d14pm.getTimezoneOffset() * 60000).toISOString();
+                    
+                    if (needsM && needsP) {
+                        operazioniInsert.push({ dipendente_id: dip.id, orario: local8am, tipo_azione: 'RIPOSO:Giornata', latitudine: 0, longitudine: 0 });
+                    } else {
+                        if (needsM) operazioniInsert.push({ dipendente_id: dip.id, orario: local8am, tipo_azione: 'RIPOSO:Mattina', latitudine: 0, longitudine: 0 });
+                        if (needsP) operazioniInsert.push({ dipendente_id: dip.id, orario: local14pm, tipo_azione: 'RIPOSO:Pomeriggio', latitudine: 0, longitudine: 0 });
                     }
                 }
-            }
+            });
 
             if(operazioniInsert.length > 0) {
                 try {
                     await supabaseClient.from('timbrature').insert(operazioniInsert);
                     return true;
-                } catch(e) { return false; }
+                } catch(e) { console.error("Errore automazione:", e); return false; }
             }
             return false;
         }
 
-        async function forzaChiusuraManuale() {
-            if(!confirm("Vuoi forzare la chiusura di TUTTI i turni aperti (compresi quelli di oggi)?")) return;
-            const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbratureGlobali, true); 
+        async function forzaAutomazioniManuali() {
+            if(!confirm("Vuoi eseguire l'automazione completa sugli ultimi 15 giorni?\nVerranno chiusi i turni aperti e aggiunti i riposi mancanti.")) return;
+            const necessitaRicarica = await eseguiAutomazioni(timbratureGlobali); 
             if(necessitaRicarica) {
-                alert("Turni sospesi chiusi con successo!");
+                alert("Automazioni completate con successo!");
                 await caricaDati();
             } else {
-                alert("Nessun turno sospeso trovato.");
+                alert("Nessuna discrepanza trovata negli ultimi 15 giorni.");
             }
         }
 
         async function caricaDati() {
             try {
-                // Recupero dipendenti e ignoro errori se piano_orario non esiste (non crascia il select *)
                 const { data: dipendenti, error: dErr } = await supabaseClient.from('dipendenti').select('*').order('cognome');
                 if (dErr) throw dErr;
                 dipendentiGlobali = dipendenti;
@@ -594,7 +648,7 @@
                     .order('orario', { ascending: false });
                 if (tErr) throw tErr;
                 
-                const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbrature, false);
+                const necessitaRicarica = await eseguiAutomazioni(timbrature);
                 
                 if (necessitaRicarica) {
                     const { data: nuoveTimbrature } = await supabaseClient
@@ -637,6 +691,13 @@
             idFiltroAttuale = id;
             evidenziaPillCorrente();
             filtraERenderizza();
+            
+            // Se sono nel tab pianificazione, aggiorno la vista calendario anche lì
+            const tabPianificazione = document.getElementById('label-pianificazione');
+            if(!tabPianificazione.classList.contains('hidden')) {
+                document.getElementById('piano-dipendente').value = id;
+                caricaPianoEsistente();
+            }
         }
 
         function evidenziaPillCorrente() {
@@ -749,12 +810,11 @@
             document.getElementById('ore-mese').innerText = totMese.toFixed(1) + 'h';
         }
 
+        // RENDERING CALENDARIO DASHBOARD (Nessun orario teorico mostrato)
         function renderizzaCalendarioSoloOre(filtrate, meseSceltoStr) {
             const griglia = document.getElementById('griglia-calendario-fisico');
             griglia.innerHTML = '';
             if(!meseSceltoStr) return;
-
-            const dipendenteSelezionato = dipendentiGlobali.find(d => String(d.id) === String(idFiltroAttuale));
 
             const [anno, mese] = meseSceltoStr.split('-').map(Number);
             document.getElementById('nome-mese-titolo').innerText = new Date(anno, mese - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
@@ -777,9 +837,6 @@
             }
 
             for (let g = 1; g <= ggTotali; g++) {
-                let currentStrDate = `${anno}-${String(mese).padStart(2,'0')}-${String(g).padStart(2,'0')}`;
-                let orarioPianificato = getOrarioPianificato(dipendenteSelezionato, currentStrDate);
-
                 let oreGiornoTotale = 0;
                 let tipoGiornoSpeciale = null;
                 let dettaglioSpeciale = '';
@@ -808,7 +865,6 @@
                 if (tipoGiornoSpeciale === 'RIPOSO') {
                     badgeOreHtml = `<div class="text-[9px] bg-sky-500 text-white font-bold rounded px-1 text-center py-0.5 leading-tight truncate shadow-sm">Riposo<br>${dettaglioSpeciale}</div>`;
                 } else if (tipoGiornoSpeciale === 'FERIE') {
-                    // Solo etichetta senza ore
                     badgeOreHtml = `<div class="text-[10px] bg-amber-500 text-slate-900 font-bold rounded px-1 text-center py-1.5 leading-tight shadow-sm">Ferie</div>`;
                 } else if (oreGiornoTotale > 0) {
                     badgeOreHtml = `<div class="text-[11px] bg-emerald-500 text-slate-950 font-black rounded px-1 text-center font-mono py-0.5 shadow-sm">${oreGiornoTotale.toFixed(1)}h</div>`;
@@ -816,13 +872,11 @@
                     badgeOreHtml = `<div class="text-[9px] bg-slate-700 text-slate-400 font-bold rounded px-1 text-center py-0.5">Scansioni</div>`;
                 }
 
-                let htmlPianificato = orarioPianificato ? `<div class="text-[7.5px] text-sky-400/80 font-mono tracking-tighter truncate w-full text-center mt-auto leading-none">${orarioPianificato}</div>` : '';
-
+                // Nella Dashboard NON inseriamo più l'orario pianificato (orarioPianificato)
                 let bloccoHtml = `
-                    <div class="bg-slate-900/80 border border-slate-700 h-14 rounded-xl p-1 flex flex-col items-center justify-start shadow-inner overflow-hidden relative">
+                    <div class="bg-slate-900/80 border border-slate-700 h-14 rounded-xl p-1 flex flex-col justify-center items-center shadow-inner relative overflow-hidden">
                         <span class="text-[10px] font-bold text-slate-400 absolute top-0.5 left-1">${g}</span>
-                        <div class="w-full flex justify-center mt-3">${badgeOreHtml}</div>
-                        ${htmlPianificato}
+                        <div class="w-full flex justify-center mt-2">${badgeOreHtml}</div>
                     </div>
                 `;
 
@@ -919,7 +973,7 @@
                     let colAzione = 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
                     let stringaExtra = '';
                     if(info.tipo === 'USCITA') colAzione = 'text-rose-400 bg-rose-400/10 border-rose-500/20';
-                    if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') { colAzione = 'text-amber-400 bg-amber-400/10 border-amber-500/20'; } // Tolto (ore) visivamente
+                    if(info.tipo === 'FERIE' || info.tipo === 'PERMESSO') { colAzione = 'text-amber-400 bg-amber-400/10 border-amber-500/20'; } 
                     if(info.tipo === 'RIPOSO') { colAzione = 'text-sky-400 bg-sky-400/10 border-sky-500/20'; stringaExtra = `(${info.dettaglio})`; }
 
                     htmlBlocco += `
@@ -1045,7 +1099,7 @@
                 });
 
                 if (recordInFasciaUguale.length > 0) {
-                    return alert(`Errore Bloccante:\nHai superato il limite consentito.\nPuoi inserire al massimo 1 IN e 1 OUT per la MATTINA (prima delle 13:00) e 1 IN e 1 OUT per il POMERIGGIO (dalle 13:00 in poi).`);
+                    return alert(`Errore Bloccante:\nHai superato il limite consentito.\nPuoi inserire al massimo 1 IN e 1 OUT per la MATTINA e 1 IN e 1 OUT per il POMERIGGIO.`);
                 }
 
                 operazioniInsert.push({ dipendente_id: dipIdStr, orario: dataSelezionata.toISOString(), tipo_azione: azioneSel, latitudine:0, longitudine:0 });
@@ -1107,12 +1161,11 @@
             } catch(err) { }
         }
 
+        // --- ESPORTAZIONE PDF OTTIMIZZATA (Data grande, Niente ore pianificate) ---
         function generaPDF() {
             if(!idFiltroAttuale) return;
 
             const meseFiltro = document.getElementById('filtro-mese').value; 
-            const dipendenteSelezionato = dipendentiGlobali.find(d => String(d.id) === String(idFiltroAttuale));
-            
             let filtrate = timbratureGlobali.filter(t => {
                 let checkDip = String(t.dipendente_id || (t.dipendenti?.id)) === String(idFiltroAttuale);
                 let checkMese = meseFiltro ? t.orario.startsWith(meseFiltro) : true;
@@ -1149,9 +1202,6 @@
             let accumulationSettimanaPDF = 0;
 
             for (let g = 1; g <= ggTotali; g++) {
-                let currentStrDate = `${anno}-${String(mese).padStart(2,'0')}-${String(g).padStart(2,'0')}`;
-                let orarioPianificato = getOrarioPianificato(dipendenteSelezionato, currentStrDate);
-
                 let oreGiornoTotale = 0;
                 let tipoSpeciale = null;
                 let dettaglioSpeciale = '';
@@ -1178,10 +1228,6 @@
 
                 let contenutoCella = `${g}`;
                 
-                if (orarioPianificato) {
-                    contenutoCella += `\n[${orarioPianificato}]`;
-                }
-
                 if (tipoSpeciale === 'RIPOSO') {
                     contenutoCella += `\n\nRiposo\n${dettaglioSpeciale}`;
                 } else if (tipoSpeciale === 'FERIE') {
@@ -1273,11 +1319,13 @@
                 head: [['Data', 'Ore Totali', 'Sequenza Movimenti']], 
                 body: righeTabella,
                 theme: 'striped',
-                styles: { cellPadding: 2, fontSize: 8, lineColor: [210,210,210], lineWidth: 0.1 },
+                styles: { cellPadding: 3, lineColor: [210,210,210], lineWidth: 0.1 },
                 headStyles: { fillColor: [30, 41, 59], textColor: [255,255,255], fontStyle: 'bold' },
                 columnStyles: {
-                    0: { cellWidth: 25 },
-                    1: { cellWidth: 25, textColor: [16, 185, 129], fontStyle: 'bold' }
+                    // STILE PER RENDERE LA DATA MOLTO PIU' VISIBILE DELLE ORE FATTE
+                    0: { cellWidth: 35, fontStyle: 'bold', fontSize: 11, textColor: [15, 23, 42] }, 
+                    1: { cellWidth: 25, fontSize: 8, textColor: [16, 185, 129] },
+                    2: { fontSize: 8 }
                 }
             });
 
