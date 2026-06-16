@@ -480,7 +480,7 @@
                 if (error) throw error;
                 alert("Pianificazione Salvata!");
                 await caricaDati();
-                caricaPianoEsistente(); // Ricarica la vista visuale
+                caricaPianoEsistente(); // Ricarica la vista
             } catch (err) { alert("Errore Salvataggio.\nHai creato la colonna 'piano_orario' in Supabase?\n" + err.message); }
         }
 
@@ -534,83 +534,106 @@
             }
         }
 
-        // --- AUTOMAZIONI: CHIUSURA TURNI + RIPOSO AUTOMATICO ---
-        async function eseguiAutomazioni(timbrature) {
-            const oggi = new Date();
-            oggi.setHours(0,0,0,0);
-            
-            // Analizza gli ultimi 15 giorni per limitare il carico
-            let dataLimite = new Date();
-            dataLimite.setDate(dataLimite.getDate() - 15);
-            
+        // --- AUTOMAZIONI: CHIUSURA TURNI + RIPOSO AUTOMATICO (CORRETTA) ---
+        async function gestisciChiusuraAutomaticaSospesi(timbrature, includiOggi = false) {
+            const oggiStr = new Date().toISOString().split('T')[0];
             let operazioniInsert = [];
 
-            dipendentiGlobali.forEach(dip => {
-                for (let d = new Date(dataLimite); d < oggi; d.setDate(d.getDate() + 1)) {
-                    let dayOfWeek = d.getDay(); // 0=Dom, 6=Sab
-                    let y = d.getFullYear();
-                    let m = String(d.getMonth() + 1).padStart(2, '0');
-                    let gg = String(d.getDate()).padStart(2, '0');
-                    let dateStr = `${y}-${m}-${gg}`;
+            const raggruppati = timbrature.reduce((acc, t) => {
+                const d = t.orario.split('T')[0];
+                if(!includiOggi && d === oggiStr) return acc; 
+                
+                const dId = t.dipendente_id || (t.dipendenti?.id);
+                if(!dId) return acc;
+
+                if(!acc[d]) acc[d] = {};
+                if(!acc[d][dId]) acc[d][dId] = [];
+                acc[d][dId].push(t);
+                return acc;
+            }, {});
+
+            function chiudiOrfano(inRecord, idDip) {
+                let dIn = new Date(inRecord.orario);
+                let isMattina = dIn.getHours() < 13;
+                let dOut = new Date(dIn.getTime()); 
+                if (isMattina) {
+                    dOut.setHours(12, 30, 0, 0);
+                } else {
+                    dOut.setHours(19, 0, 0, 0);
+                }
+                operazioniInsert.push({
+                    dipendente_id: idDip,
+                    orario: dOut.toISOString(),
+                    tipo_azione: 'USCITA',
+                    latitudine: 0,
+                    longitudine: 0
+                });
+            }
+
+            for (const data in raggruppati) {
+                let parts = data.split('-');
+                let anno = parseInt(parts[0]);
+                let mese = parseInt(parts[1]) - 1;
+                let giorno = parseInt(parts[2]);
+                let dataObj = new Date(anno, mese, giorno);
+                let dayOfWeek = dataObj.getDay();
+
+                for (const dId in raggruppati[data]) {
+                    let recs = raggruppati[data][dId].sort((a,b) => new Date(a.orario) - new Date(b.orario));
+                    let expectedOutFor = null;
                     
-                    let recsDay = timbrature.filter(t => t.dipendente_id === dip.id && t.orario.startsWith(dateStr));
-                    
-                    // 1. Chiusura Uscite Sospese
-                    let arr = [...recsDay].sort((a,b) => new Date(a.orario) - new Date(b.orario));
-                    let uIn = null;
-                    arr.forEach(r => {
+                    // 1. Chiusura Uscite Sospese - LOGICA CRONOLOGICA FIXATA
+                    recs.forEach(r => {
                         let info = analizzaTipoAzione(r.tipo_azione);
-                        if (info.tipo === 'INGRESSO') uIn = r;
-                        else if (info.tipo === 'USCITA') uIn = null;
+                        if (info.tipo === 'INGRESSO') {
+                            if (expectedOutFor !== null) {
+                                // Trovato un altro IN, chiudiamo quello orfano precedente
+                                chiudiOrfano(expectedOutFor, dId);
+                            }
+                            expectedOutFor = r;
+                        } else if (info.tipo === 'USCITA') {
+                            expectedOutFor = null; // Turno chiuso correttamente
+                        }
                     });
                     
-                    if (uIn) {
-                        let dIn = new Date(uIn.orario);
-                        let isMattina = (dIn.getHours() < 13);
-                        let dOut = new Date(dIn);
-                        if (isMattina) dOut.setHours(12, 30, 0, 0);
-                        else dOut.setHours(19, 0, 0, 0);
-                        
-                        // Compensa timezone locale per salvataggio UTC corretto in Supabase
-                        let dLocalOut = new Date(dOut.getTime() - dOut.getTimezoneOffset() * 60000);
-                        operazioniInsert.push({ dipendente_id: dip.id, orario: dLocalOut.toISOString(), tipo_azione: 'USCITA', latitudine: 0, longitudine: 0 });
+                    // Se a fine giornata rimane un IN aperto, chiudiamolo
+                    if (expectedOutFor !== null) {
+                        chiudiOrfano(expectedOutFor, dId);
                     }
 
                     // 2. Controllo Mancate Timbrature -> Inserimento RIPOSO
                     if (dayOfWeek === 0) continue; // Domenica esclusa
                     
-                    let hasFerie = recsDay.some(t => t.tipo_azione.startsWith('FERIE'));
-                    let hasRiposoG = recsDay.some(t => t.tipo_azione === 'RIPOSO:Giornata');
+                    let hasFerie = recs.some(t => t.tipo_azione.startsWith('FERIE'));
+                    let hasRiposoG = recs.some(t => t.tipo_azione === 'RIPOSO:Giornata');
                     if (hasFerie || hasRiposoG) continue; // Giorno già interamente coperto
                     
-                    let hasRiposoM = recsDay.some(t => t.tipo_azione === 'RIPOSO:Mattina');
-                    let hasRiposoP = recsDay.some(t => t.tipo_azione === 'RIPOSO:Pomeriggio');
+                    let hasRiposoM = recs.some(t => t.tipo_azione === 'RIPOSO:Mattina');
+                    let hasRiposoP = recs.some(t => t.tipo_azione === 'RIPOSO:Pomeriggio');
                     
-                    let insM = recsDay.some(t => t.tipo_azione === 'INGRESSO' && new Date(t.orario).getHours() < 13);
-                    let insP = recsDay.some(t => t.tipo_azione === 'INGRESSO' && new Date(t.orario).getHours() >= 13);
+                    let insM = recs.some(t => t.tipo_azione === 'INGRESSO' && new Date(t.orario).getHours() < 13);
+                    let insP = recs.some(t => t.tipo_azione === 'INGRESSO' && new Date(t.orario).getHours() >= 13);
                     
                     let needsM = false; let needsP = false;
                     
                     if (dayOfWeek === 6) { // Sabato
-                        if (!insM && !hasRiposoM) needsM = true; // Solo mattina considerata
+                        if (!insM && !hasRiposoM) needsM = true; // Solo mattina
                     } else { // Lunedì - Venerdì
                         if (!insM && !hasRiposoM) needsM = true;
                         if (!insP && !hasRiposoP) needsP = true;
                     }
                     
-                    let d8am = new Date(y, d.getMonth(), d.getDate(), 8, 0, 0);
-                    let d14pm = new Date(y, d.getMonth(), d.getDate(), 14, 0, 0);
-                    let local8am = new Date(d8am.getTime() - d8am.getTimezoneOffset() * 60000).toISOString();
-                    let local14pm = new Date(d14pm.getTime() - d14pm.getTimezoneOffset() * 60000).toISOString();
+                    let d8am = new Date(anno, mese, giorno, 8, 0, 0);
+                    let d14pm = new Date(anno, mese, giorno, 14, 0, 0);
                     
                     if (needsM && needsP) {
-                        operazioniInsert.push({ dipendente_id: dip.id, orario: local8am, tipo_azione: 'RIPOSO:Giornata', latitudine: 0, longitudine: 0 });
+                        operazioniInsert.push({ dipendente_id: dId, orario: d8am.toISOString(), tipo_azione: 'RIPOSO:Giornata', latitudine: 0, longitudine: 0 });
                     } else {
-                        if (needsM) operazioniInsert.push({ dipendente_id: dip.id, orario: local8am, tipo_azione: 'RIPOSO:Mattina', latitudine: 0, longitudine: 0 });
-                        if (needsP) operazioniInsert.push({ dipendente_id: dip.id, orario: local14pm, tipo_azione: 'RIPOSO:Pomeriggio', latitudine: 0, longitudine: 0 });
+                        if (needsM) operazioniInsert.push({ dipendente_id: dId, orario: d8am.toISOString(), tipo_azione: 'RIPOSO:Mattina', latitudine: 0, longitudine: 0 });
+                        if (needsP) operazioniInsert.push({ dipendente_id: dId, orario: d14pm.toISOString(), tipo_azione: 'RIPOSO:Pomeriggio', latitudine: 0, longitudine: 0 });
                     }
                 }
-            });
+            }
 
             if(operazioniInsert.length > 0) {
                 try {
@@ -622,13 +645,13 @@
         }
 
         async function forzaAutomazioniManuali() {
-            if(!confirm("Vuoi eseguire l'automazione completa sugli ultimi 15 giorni?\nVerranno chiusi i turni aperti e aggiunti i riposi mancanti.")) return;
-            const necessitaRicarica = await eseguiAutomazioni(timbratureGlobali); 
+            if(!confirm("Vuoi eseguire l'automazione su tutti i turni aperti (compresi quelli di oggi)?\nVerranno chiusi i turni in sospeso e aggiunti i riposi mancanti.")) return;
+            const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbratureGlobali, true); 
             if(necessitaRicarica) {
                 alert("Automazioni completate con successo!");
                 await caricaDati();
             } else {
-                alert("Nessuna discrepanza trovata negli ultimi 15 giorni.");
+                alert("Nessuna discrepanza trovata. I registri sono perfetti.");
             }
         }
 
@@ -648,7 +671,8 @@
                     .order('orario', { ascending: false });
                 if (tErr) throw tErr;
                 
-                const necessitaRicarica = await eseguiAutomazioni(timbrature);
+                // Analizziamo silenziosamente il passato all'apertura del software
+                const necessitaRicarica = await gestisciChiusuraAutomaticaSospesi(timbrature, false);
                 
                 if (necessitaRicarica) {
                     const { data: nuoveTimbrature } = await supabaseClient
@@ -692,7 +716,6 @@
             evidenziaPillCorrente();
             filtraERenderizza();
             
-            // Se sono nel tab pianificazione, aggiorno la vista calendario anche lì
             const tabPianificazione = document.getElementById('label-pianificazione');
             if(!tabPianificazione.classList.contains('hidden')) {
                 document.getElementById('piano-dipendente').value = id;
@@ -810,7 +833,7 @@
             document.getElementById('ore-mese').innerText = totMese.toFixed(1) + 'h';
         }
 
-        // RENDERING CALENDARIO DASHBOARD (Nessun orario teorico mostrato)
+        // RENDERING CALENDARIO DASHBOARD (SOLO DATI REALI)
         function renderizzaCalendarioSoloOre(filtrate, meseSceltoStr) {
             const griglia = document.getElementById('griglia-calendario-fisico');
             griglia.innerHTML = '';
@@ -872,7 +895,6 @@
                     badgeOreHtml = `<div class="text-[9px] bg-slate-700 text-slate-400 font-bold rounded px-1 text-center py-0.5">Scansioni</div>`;
                 }
 
-                // Nella Dashboard NON inseriamo più l'orario pianificato (orarioPianificato)
                 let bloccoHtml = `
                     <div class="bg-slate-900/80 border border-slate-700 h-14 rounded-xl p-1 flex flex-col justify-center items-center shadow-inner relative overflow-hidden">
                         <span class="text-[10px] font-bold text-slate-400 absolute top-0.5 left-1">${g}</span>
@@ -1127,11 +1149,10 @@
                 while(currentDate <= end) {
                     let d = new Date(currentDate);
                     d.setHours(8, 0, 0, 0);
-                    let dLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-                    
+                    // Rimosso lo shift del fuso orario, usiamo l'orario effettivo
                     operazioniInsert.push({ 
                         dipendente_id: dipIdStr, 
-                        orario: dLocal.toISOString(), 
+                        orario: d.toISOString(), 
                         tipo_azione: `FERIE:${ore}`, 
                         latitudine: 0, 
                         longitudine: 0 
@@ -1161,7 +1182,7 @@
             } catch(err) { }
         }
 
-        // --- ESPORTAZIONE PDF OTTIMIZZATA (Data grande, Niente ore pianificate) ---
+        // --- ESPORTAZIONE PDF OTTIMIZZATA ---
         function generaPDF() {
             if(!idFiltroAttuale) return;
 
@@ -1322,7 +1343,6 @@
                 styles: { cellPadding: 3, lineColor: [210,210,210], lineWidth: 0.1 },
                 headStyles: { fillColor: [30, 41, 59], textColor: [255,255,255], fontStyle: 'bold' },
                 columnStyles: {
-                    // STILE PER RENDERE LA DATA MOLTO PIU' VISIBILE DELLE ORE FATTE
                     0: { cellWidth: 35, fontStyle: 'bold', fontSize: 11, textColor: [15, 23, 42] }, 
                     1: { cellWidth: 25, fontSize: 8, textColor: [16, 185, 129] },
                     2: { fontSize: 8 }
